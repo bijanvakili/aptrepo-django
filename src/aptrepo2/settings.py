@@ -1,10 +1,20 @@
 # Django settings for aptrepo2 project.
 
+import os
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
+# load the project root
+APTREPO_ROOT = '/oanda/aptrepo'
+if 'APTREPO_ROOT' in os.environ:
+    APTREPO_ROOT = os.environ['APTREPO_ROOT']
+APTREPO_VAR_ROOT = os.path.join(APTREPO_ROOT, 'var')
+APTREPO_SHARE_ROOT =  os.path.join(APTREPO_ROOT, 'share')
+
+
 ADMINS = (
-    # ('Your Name', 'your_email@domain.com'),
+    ('Build Administrator', 'buildadmins@oanda.com'),
 )
 
 MANAGERS = ADMINS
@@ -12,7 +22,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '/home/bijanv/funspace/aptrepo2/var/db/sqlite.db',                      # Or path to database file if using sqlite3.
+        'NAME': os.path.join( APTREPO_VAR_ROOT, 'db/aptrepo.db' ),
         'USER': '',                      # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
@@ -78,9 +88,7 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'aptrepo2.urls'
 
 TEMPLATE_DIRS = (
-    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
+    os.path.join( APTREPO_SHARE_ROOT, 'templates' ),
 )
 
 INSTALLED_APPS = (
@@ -90,7 +98,8 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     # Uncomment the next line to enable the admin:
-    # 'django.contrib.admin',
+    'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
+    'aptrepo'
 )
