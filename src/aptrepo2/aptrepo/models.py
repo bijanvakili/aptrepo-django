@@ -12,9 +12,11 @@ class Package(models.Model):
     package_name = models.CharField(max_length=255, db_index=True)
     architecture = models.CharField(max_length=255)
     version = models.CharField(max_length=255, db_index=True)
-    hash_md5 = models.CharField(max_length=16)
-    hash_sha1 = models.CharField(max_length=20)
-    hash_sha256 = models.CharField(max_length=32)
+    
+    # all hash fields use double the size to store hexadecimal values
+    hash_md5 = models.CharField(max_length=16*2)
+    hash_sha1 = models.CharField(max_length=20*2)
+    hash_sha256 = models.CharField(max_length=32*2)
 
 
 class Distribution(models.Model):
