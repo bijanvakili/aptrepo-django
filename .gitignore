@@ -1,3 +1,4 @@
 var/db/*.db
+var/files/*.deb
 *.pyc
 
