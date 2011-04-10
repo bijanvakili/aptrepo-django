@@ -1,0 +1,23 @@
+<h2>Current package list</h2>
+<table border="1">
+	<tr>
+		<td>Name</td>
+		<td>Version</td>
+		<td>Architecture</td>
+		<td>Path</td>
+		<td>md5</td>
+		<td>sha1</td>
+		<td>sha256</td>
+	</tr>
+	{% for package in packages %}
+	<tr>
+		<td>{{ package.package_name }}</td>
+		<td>{{ package.version }}</td>
+		<td>{{ package.architecture }}</td>
+		<td>{{ package.filepath }}</td>
+		<td>{{ package.hash_md5 }}</td>
+		<td>{{ package.hash_sha1 }}</td>
+		<td>{{ package.hash_sha256 }}</td>
+	</tr>
+	{% endfor %}
+</table>
