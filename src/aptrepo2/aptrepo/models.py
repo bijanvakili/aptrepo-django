@@ -1,4 +1,8 @@
+import hashlib
+import os
 from django.db import models
+from debian_bundle import debfile
+from common import hash_file, AptRepoException
 
 class Package(models.Model):
     """
@@ -18,6 +22,28 @@ class Package(models.Model):
     hash_sha1 = models.CharField(max_length=20*2)
     hash_sha256 = models.CharField(max_length=32*2)
 
+
+    @staticmethod
+    def load_fromfile(filepath):
+        (_, ext) = os.path.splitext(filepath)
+        if ext != '.deb':
+            raise AptRepoException('Invalid extension: {0}'.format(ext))
+        
+        # extract control file information
+        deb = debfile.DebFile(filepath)
+        control = deb.debcontrol()
+        package = Package(filepath=filepath)
+        package.package_name = control['Package']
+        package.architecture = control['Architecture']
+        package.version = control['Version']
+        
+        # compute hashes
+        package.hash_md5 = hash_file(hashlib.md5(), filepath)
+        package.hash_sha1 = hash_file(hashlib.sha1(), filepath)
+        package.hash_sha256 = hash_file(hashlib.sha256(), filepath)
+        
+        return package
+        
 
 class Distribution(models.Model):
     """ 
