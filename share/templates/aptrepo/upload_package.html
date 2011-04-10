@@ -1,0 +1,4 @@
+<form action="/aptrepo/packages/upload/" enctype="multipart/form-data" method="post">{% csrf_token %}
+{{ form.as_p }}
+<input type="submit" value="Upload" />
+</form>
