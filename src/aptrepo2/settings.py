@@ -11,7 +11,10 @@ if 'APTREPO_ROOT' in os.environ:
     APTREPO_ROOT = os.environ['APTREPO_ROOT']
 APTREPO_VAR_ROOT = os.path.join(APTREPO_ROOT, 'var')
 APTREPO_SHARE_ROOT =  os.path.join(APTREPO_ROOT, 'share')
-APTREPO_FILESTORE_ROOT = os.path.join(APTREPO_VAR_ROOT,'files')
+APTREPO_FILESTORE = {
+    'location' : os.path.join(APTREPO_VAR_ROOT,'files'),
+    'hash_depth': 2 
+}
 
 TEST_DATA_ROOT = os.path.join(APTREPO_ROOT, 'test/data')
 
