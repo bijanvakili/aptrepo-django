@@ -10,6 +10,7 @@ class Package(models.Model):
     """
     
     # normalized fields
+    # TODO switch to using a FileField
     filepath = models.CharField(max_length=255, unique=True)
     
     # denormalized

@@ -1,16 +1,18 @@
 from django.shortcuts import render_to_response
-from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.template import RequestContext
 from django import forms
-from aptrepo2.settings import APTREPO_FILESTORE_ROOT
+
 import models
+import storage
 from common import AptRepoException
 
 
-""" Package storage """
-fs = FileSystemStorage(location=APTREPO_FILESTORE_ROOT)
+""" 
+Package storage 
+"""
+_fs = storage.HashedStorage()
 
 
 class UploadPackageForm(forms.Form):
@@ -77,9 +79,8 @@ def _handle_uploaded_file(uploaded_file):
     """ 
     Handles a successfully uploaded files 
     """
-    fs.delete(uploaded_file.name)
-    new_file_path = fs.save(name=uploaded_file.name, content=uploaded_file)
-    new_file_path = fs.path(new_file_path)
+    new_file_path = _fs.save(name=uploaded_file.name, content=uploaded_file)
+    new_file_path = _fs.path(new_file_path)
     package = models.Package.load_fromfile(new_file_path)
     package.save()
     

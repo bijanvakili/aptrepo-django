@@ -7,13 +7,22 @@ import os
 import tempfile
 import shutil
 from debian_bundle import deb822
-from aptrepo2.settings import TEST_DATA_ROOT, APTREPO_FILESTORE_ROOT
+from django.conf import settings
 
 class PackageUploadTest(TestCase):
 
     def setUp(self):
         # remove all previously uploaded Debian files
-        os.system('rm -f {0}/*.deb'.format(APTREPO_FILESTORE_ROOT))
+        root_filestore_dir = settings.APTREPO_FILESTORE['location']
+        filestore_contents = os.listdir(root_filestore_dir)
+        for direntry in filestore_contents:
+            if direntry != 'README':
+                fullpath_entry = os.path.join(root_filestore_dir, direntry)
+                if os.path.isdir(fullpath_entry):
+                    shutil.rmtree(fullpath_entry)
+                else:
+                    os.remove(fullpath_entry)
+                    
         self.client = Client()
 
     def _create_package(self, src_root_dir, pkg_filename):
@@ -32,7 +41,7 @@ class PackageUploadTest(TestCase):
         try:
             pkg_fh, pkg_filename = tempfile.mkstemp(suffix='.deb', prefix='mypackage')
             os.close(pkg_fh)
-            self._create_package(os.path.join(TEST_DATA_ROOT,'test-package'), pkg_filename)
+            self._create_package(os.path.join(settings.TEST_DATA_ROOT,'test-package'), pkg_filename)
             self._upload_package(pkg_filename)
 
         finally:
@@ -85,6 +94,6 @@ class PackageUploadTest(TestCase):
         print response.content
         self.failUnlessEqual(response.status_code, 200)
         
-        # retrieve and verify apt repo files
+        # TODO: retrieve and verify apt repo files
         
         pass
