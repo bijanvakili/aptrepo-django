@@ -1,19 +1,33 @@
 import hashlib
 import os
 from django.db import models
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
 from debian_bundle import debfile
-from common import hash_file, AptRepoException
+from common import AptRepoException, hash_file_by_fh
+
+
+def _get_package_path(instance, filename):
+    """
+    Internal method to segregate Debian package files by md5 hash
+    """
+    prefix = instance.hash_md5[0:settings.APTREPO_FILESTORE['hash_depth']]
+    return os.path.join(prefix, filename)
+
 
 class Package(models.Model):
     """
-    Unique Debian package
+    Unique Debian package entity
     """
     
-    # normalized fields
-    # TODO switch to using a FileField
-    filepath = models.CharField(max_length=255, unique=True)
+    # Package storage
+    _fs = FileSystemStorage(location=settings.APTREPO_FILESTORE['location'])
     
-    # denormalized
+    # normalized fields
+    file = models.FileField(upload_to=_get_package_path, 
+                            max_length=255, storage=_fs, db_index=True)
+    
+    # denormalized fields
     package_name = models.CharField(max_length=255, db_index=True)
     architecture = models.CharField(max_length=255)
     version = models.CharField(max_length=255, db_index=True)
@@ -25,26 +39,40 @@ class Package(models.Model):
 
 
     @staticmethod
-    def load_fromfile(filepath):
-        (_, ext) = os.path.splitext(filepath)
+    def save_from_file(package_file):
+        """
+        Creates and stores a Package instance from an uploaded package file
+        """
+        
+        # check the file extension
+        (_, ext) = os.path.splitext(package_file.name)
         if ext != '.deb':
             raise AptRepoException('Invalid extension: {0}'.format(ext))
+
+        try:
+            # compute hashes
+            package = Package()
+            package.hash_md5 = hash_file_by_fh(hashlib.md5(), package_file)
+            package.hash_sha1 = hash_file_by_fh(hashlib.sha1(), package_file)
+            package.hash_sha256 = hash_file_by_fh(hashlib.sha256(), package_file)
+            
+            # store the file since we need to use standard python file handles
+            package.file.save(package_file.name, package_file)
+            
+            # extract control file information
+            deb = debfile.DebFile(package.file.path)
+            control = deb.debcontrol()
+            package.package_name = control['Package']
+            package.architecture = control['Architecture']
+            package.version = control['Version']
         
-        # extract control file information
-        deb = debfile.DebFile(filepath)
-        control = deb.debcontrol()
-        package = Package(filepath=filepath)
-        package.package_name = control['Package']
-        package.architecture = control['Architecture']
-        package.version = control['Version']
-        
-        # compute hashes
-        package.hash_md5 = hash_file(hashlib.md5(), filepath)
-        package.hash_sha1 = hash_file(hashlib.sha1(), filepath)
-        package.hash_sha256 = hash_file(hashlib.sha256(), filepath)
-        
-        return package
-        
+            package.save()
+            
+        except Exception as e:
+            if package.file.name:
+                Package._fs.delete(package.file.name)
+            raise e
+
 
 class Distribution(models.Model):
     """ 

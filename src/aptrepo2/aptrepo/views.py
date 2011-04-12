@@ -5,14 +5,7 @@ from django.template import RequestContext
 from django import forms
 
 import models
-import storage
 from common import AptRepoException
-
-
-""" 
-Package storage 
-"""
-_fs = storage.HashedStorage()
 
 
 class UploadPackageForm(forms.Form):
@@ -79,10 +72,7 @@ def _handle_uploaded_file(uploaded_file):
     """ 
     Handles a successfully uploaded files 
     """
-    new_file_path = _fs.save(name=uploaded_file.name, content=uploaded_file)
-    new_file_path = _fs.path(new_file_path)
-    package = models.Package.load_fromfile(new_file_path)
-    package.save()
+    models.Package.save_from_file(uploaded_file)
     
 
 def _error_response(exception):
