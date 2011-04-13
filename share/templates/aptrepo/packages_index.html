@@ -4,7 +4,7 @@
 		<td>Name</td>
 		<td>Version</td>
 		<td>Architecture</td>
-		<td>Path</td>
+		<td>Download</td>
 		<td>md5</td>
 		<td>sha1</td>
 		<td>sha256</td>
@@ -14,7 +14,7 @@
 		<td>{{ package.package_name }}</td>
 		<td>{{ package.version }}</td>
 		<td>{{ package.architecture }}</td>
-		<td>{{ package.file.name }}</td>
+		<td><a href="{{ package.file.url }}">{{ package.base_filename }}</a></td>
 		<td>{{ package.hash_md5 }}</td>
 		<td>{{ package.hash_sha1 }}</td>
 		<td>{{ package.hash_sha256 }}</td>

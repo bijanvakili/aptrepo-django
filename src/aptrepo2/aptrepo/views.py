@@ -24,8 +24,7 @@ def packages(request):
             uploaded_file = request.FILES['file']
 
             # store result and redirect to success page
-            _handle_uploaded_file(uploaded_file)        
-            return HttpResponseRedirect(reverse('aptrepo.views.upload_success'))
+            return _handle_uploaded_file(uploaded_file)
         
         elif request.method == 'GET':
             """ Get method at root will list all packages """
@@ -54,10 +53,11 @@ def upload_file(request):
         if request.method == 'POST':
             form = UploadPackageForm(request.POST, request.FILES)
             if form.is_valid():
-                _handle_uploaded_file(request.FILES['file'])
-                return HttpResponseRedirect(reverse('aptrepo.views.upload_success'))
+                return _handle_uploaded_file(request.FILES['file'])
+
         elif request.method == 'GET':
             form = UploadPackageForm()
+            
         else:
             raise AptRepoException('Invalid HTTP method')
 
@@ -73,6 +73,7 @@ def _handle_uploaded_file(uploaded_file):
     Handles a successfully uploaded files 
     """
     models.Package.save_from_file(uploaded_file)
+    return HttpResponseRedirect(reverse('aptrepo.views.upload_success'))
     
 
 def _error_response(exception):
