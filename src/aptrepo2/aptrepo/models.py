@@ -2,7 +2,6 @@ import hashlib
 import os
 from django.db import models
 from django.conf import settings
-from django.core.files.storage import FileSystemStorage
 from debian_bundle import debfile
 from common import AptRepoException, hash_file_by_fh
 
@@ -20,12 +19,9 @@ class Package(models.Model):
     Unique Debian package entity
     """
     
-    # Package storage
-    _fs = FileSystemStorage()
-    
     # normalized fields
     file = models.FileField(upload_to=_get_package_path, 
-                            max_length=255, storage=_fs, db_index=True)
+                            max_length=255, db_index=True)
     
     # denormalized fields
     package_name = models.CharField(max_length=255, db_index=True)
@@ -71,12 +67,12 @@ class Package(models.Model):
             package.package_name = control['Package']
             package.architecture = control['Architecture']
             package.version = control['Version']
-        
+            
             package.save()
             
         except Exception as e:
             if package.file.name:
-                Package._fs.delete(package.file.name)
+                package.file.delete(package.file.name)
             raise e
 
 
