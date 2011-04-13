@@ -13,7 +13,8 @@ class PackageUploadTest(TestCase):
 
     def setUp(self):
         # remove all previously uploaded Debian files
-        root_filestore_dir = settings.APTREPO_FILESTORE['location']
+        root_filestore_dir = os.path.join(settings.MEDIA_ROOT, 
+                                          settings.APTREPO_FILESTORE['subdir'])
         filestore_contents = os.listdir(root_filestore_dir)
         for direntry in filestore_contents:
             if direntry != 'README':
