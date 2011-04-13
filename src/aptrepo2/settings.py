@@ -11,10 +11,6 @@ if 'APTREPO_ROOT' in os.environ:
     APTREPO_ROOT = os.environ['APTREPO_ROOT']
 APTREPO_VAR_ROOT = os.path.join(APTREPO_ROOT, 'var')
 APTREPO_SHARE_ROOT =  os.path.join(APTREPO_ROOT, 'share')
-APTREPO_FILESTORE = {
-    'location' : os.path.join(APTREPO_VAR_ROOT,'files'),
-    'hash_depth': 2 
-}
 
 TEST_DATA_ROOT = os.path.join(APTREPO_ROOT, 'test/data')
 
@@ -60,12 +56,17 @@ USE_L10N = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = ''
+MEDIA_ROOT = os.path.join(APTREPO_VAR_ROOT, 'public') + '/'
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = ''
+MEDIA_URL = '/aptrepo/public/'
+
+APTREPO_FILESTORE = {
+    'subdir' : 'packages',
+    'hash_depth': 2 
+}
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.

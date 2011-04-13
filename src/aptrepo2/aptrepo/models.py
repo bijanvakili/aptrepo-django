@@ -11,8 +11,8 @@ def _get_package_path(instance, filename):
     """
     Internal method to segregate Debian package files by md5 hash
     """
-    prefix = instance.hash_md5[0:settings.APTREPO_FILESTORE['hash_depth']]
-    return os.path.join(prefix, filename)
+    hash_prefix = instance.hash_md5[0:settings.APTREPO_FILESTORE['hash_depth']]
+    return os.path.join(settings.APTREPO_FILESTORE['subdir'], hash_prefix, filename)
 
 
 class Package(models.Model):
@@ -21,7 +21,7 @@ class Package(models.Model):
     """
     
     # Package storage
-    _fs = FileSystemStorage(location=settings.APTREPO_FILESTORE['location'])
+    _fs = FileSystemStorage()
     
     # normalized fields
     file = models.FileField(upload_to=_get_package_path, 
@@ -36,6 +36,12 @@ class Package(models.Model):
     hash_md5 = models.CharField(max_length=16*2)
     hash_sha1 = models.CharField(max_length=20*2)
     hash_sha256 = models.CharField(max_length=32*2)
+    
+    def base_filename(self):
+        """ 
+        Returns the base filename for a Package file 
+        """
+        return os.path.basename(self.file.name)
 
 
     @staticmethod
