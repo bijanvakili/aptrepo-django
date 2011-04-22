@@ -64,7 +64,8 @@ MEDIA_ROOT = os.path.join(APTREPO_VAR_ROOT, 'public') + '/'
 MEDIA_URL = '/aptrepo/public/'
 
 APTREPO_FILESTORE = {
-    'subdir' : 'packages',
+    'metadata_subdir' : 'dists',
+    'packages_subdir' : 'packages',
     'hash_depth': 2 
 }
 
@@ -96,6 +97,8 @@ ROOT_URLCONF = 'aptrepo2.urls'
 TEMPLATE_DIRS = (
     os.path.join( APTREPO_SHARE_ROOT, 'templates' ),
 )
+
+FIXTURE_DIRS = ( TEST_DATA_ROOT )
 
 INSTALLED_APPS = (
     'django.contrib.auth',

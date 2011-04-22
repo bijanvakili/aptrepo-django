@@ -13,10 +13,13 @@ class AptRepoException(Exception):
         return repr(self.message)
 
 
-def hash_file_by_fh(hashfunc, fh):
+def hash_file_by_fh(hashfunc, fh, from_start=True):
     """
     Returns a hexadecimal hash digest for a file using a hashlib algorithm
     """
+    if from_start:
+        fh.seek(0)
+    
     for chunk in iter(lambda: fh.read(HASH_BLOCK_MULTIPLE * hashfunc.block_size), ''):
         hashfunc.update(chunk)
         
@@ -28,3 +31,10 @@ def hash_file(hashfunc, filename):
     """
     with open(filename, 'rb') as fh:
         return hash_file_by_fh(hashfunc, fh)
+
+def hash_string(hashfunc, data_string):
+    """
+    Returns a hexadecimal hash digest for a string
+    """
+    hashfunc.update(data_string)
+    return hashfunc.hexdigest()

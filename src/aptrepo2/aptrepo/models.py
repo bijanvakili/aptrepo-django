@@ -11,27 +11,33 @@ def _get_package_path(instance, filename):
     Internal method to segregate Debian package files by md5 hash
     """
     hash_prefix = instance.hash_md5[0:settings.APTREPO_FILESTORE['hash_depth']]
-    return os.path.join(settings.APTREPO_FILESTORE['subdir'], hash_prefix, filename)
+    return os.path.join(settings.APTREPO_FILESTORE['packages_subdir'], hash_prefix, filename)
 
+
+class UniqueFile(models.Model):
+    """
+    Unique file
+    
+    NOTE: All hash fields use double the size to store hexadecimal values
+    """
+    path = models.FileField(max_length=255, db_index=True)
+    size = models.IntegerField()
+    hash_md5 = models.CharField(max_length=16*2, db_index=True)
+    hash_sha1 = models.CharField(max_length=20*2, db_index=True)
+    hash_sha256 = models.CharField(max_length=32*2, db_index=True)
+    
 
 class Package(models.Model):
     """
     Unique Debian package entity
     """
-    
-    # normalized fields
-    file = models.FileField(upload_to=_get_package_path, 
-                            max_length=255, db_index=True)
+    file = models.ForeignKey('UniqueFile', db_index=True)
     
     # denormalized fields
     package_name = models.CharField(max_length=255, db_index=True)
-    architecture = models.CharField(max_length=255)
+    architecture = models.CharField(max_length=255, db_index=True)
     version = models.CharField(max_length=255, db_index=True)
     
-    # all hash fields use double the size to store hexadecimal values
-    hash_md5 = models.CharField(max_length=16*2)
-    hash_sha1 = models.CharField(max_length=20*2)
-    hash_sha256 = models.CharField(max_length=32*2)
     
     def base_filename(self):
         """ 
@@ -80,16 +86,41 @@ class Distribution(models.Model):
     """ 
     Repo distribution (composite of sections)
     """
-    name = models.CharField(max_length=255)
+    
+    ARCHITECTURE_CHOICES = (
+        (0, 'all'),
+        (1, 'solaris-i386'),
+        (2, 'solaris-sparc'),
+        (3, 'i386'),
+        (4, 'amd64'),
+    )
+    
+    name = models.CharField(max_length=255, unique=True) # a.k.a. 'codename'
+    description = models.TextField()
+    label = models.CharField(max_length=80)
+    suite = models.CharField(max_length=80)
+    origin = models.CharField(max_length=80)
+    creation_date = models.DateTimeField(auto_now_add=True)
+    suppported_architectures = models.CommaSeparatedIntegerField(max_length=80, choices=ARCHITECTURE_CHOICES)
 
+    def get_by_natural_key(self, name):
+        return self.get(name=name)
 
 class Section(models.Model):
     """
     Grouping of packages
     """
-    name = models.CharField(max_length=255)
-    distribution = models.ForeignKey('Distribution') 
+    name = models.CharField(max_length=255, db_index=True)
+    distribution = models.ForeignKey('Distribution', db_index=True)
+    description = models.TextField()
     
+    def get_by_natural_key(self, key):
+        """
+        Identifies the section by the syntax 'distribution:section'
+        """
+        (distribution, section) = key.split(':')
+        return self.get(distribution=distribution, name=section)
+
     
 class PackageInstance(models.Model):
     """ 

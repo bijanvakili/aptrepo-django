@@ -1,0 +1,23 @@
+[
+	{
+		"pk": 1,
+		"model": "aptrepo.distribution",
+		"fields" : {
+			"name" : "test_distribution",
+			"description" : "Test Distribution",
+			"label" : "Test Distribution",
+			"suite" : "testing",
+			"origin" : "OANDA",
+			"suppported_architectures": "3"
+		}
+	}
+	{
+		"pk": 2,
+		"model": "aptrepo.section",
+		"fields" : {
+			"name" : "test_section",
+			"distribution" : "test_distribution",
+			"description" : "Test Section"
+		}
+	}
+]
