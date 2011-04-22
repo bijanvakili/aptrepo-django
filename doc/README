@@ -1,0 +1,56 @@
+General Notes
+-------------
+All commands must be executed as the apt repo system user (www-data).
+
+Assuming GPG home directory is 
+	~/.gnupg (/srv/apt/repos-ng/.gnupg)
+
+(otherwise use --homedir /path/to/home/.gnupg)
+
+
+Creating a new key pair
+-----------------------
+Interactive:
+	gpg --gen-key
+	
+Automated (e.g. usage a file such as 'genkey-input.txt')
+	gpg --gen-key --batch genkey-input.txt < /dev/null
+	
+NOTE: You need a decent source of entropy!
+e.g. run 'ls -R /' in a separate window
+
+Listing keys in the database
+----------------------------
+	gpg --list-keys
+	gpg --list-secret-keys
+	
+
+Exporting Keys
+--------------
+To export the public key for the user 'Test Apt Repository':
+	gpg --export --armor 'Test Apt Repository'
+		OR
+	gpg --export --armor --output pubkey.asc.gpg 'Test Apt Repository'
+	
+	
+To export the private key for the user 'Test Apt Repository': 
+	gpg --export-secret-keys --armor 'Test Apt Repository' 
+		OR
+	gpg --export-secret-keys --armor --output privkey.asc.gpg 'Test Apt Repository'
+	  
+
+Importing Keys
+--------------
+	gpg --import pubkey.asc.gpg privkey.asc.gpg
+	
+	
+Removing Keys
+-------------
+To remove only the public key:
+	gpg --delete-keys 'Test Apt Repository'
+	
+To remove only the private key:
+	gpg --delete-secret-keys 'Test Apt Repository'
+	
+To remove both the private and public key:
+	gpg --delete-secret-and-public-keys 'Test Apt Repository'

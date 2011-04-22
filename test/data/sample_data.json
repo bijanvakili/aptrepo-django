@@ -1,0 +1,28 @@
+[
+ {
+  "pk": 1, 
+  "model": "aptrepo.package", 
+  "fields": {
+   "hash_md5": "40adda619617d1706527cca47afda50f", 
+   "package_name": "openvpn", 
+   "hash_sha1": "da39a3ee5e6b4b0d3255bfef95601890afd80709", 
+   "version": "2.1.1-2", 
+   "architecture": "solaris-i386", 
+   "file": "packages/40/openvpn_2.1.1-2_solaris-i386.deb", 
+   "hash_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+ }, 
+ {
+  "pk": 2, 
+  "model": "aptrepo.package", 
+  "fields": {
+   "hash_md5": "77d7d20887233bc8e70566fd964da814", 
+   "package_name": "oanda-deblint-bcfg2", 
+   "hash_sha1": "da39a3ee5e6b4b0d3255bfef95601890afd80709", 
+   "version": "0.0.2-1-g4fd3469", 
+   "architecture": "all", 
+   "file": "packages/77/oanda-deblint-bcfg2_0.0.2-1-g4fd3469_all.deb", 
+   "hash_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+ }
+]
