@@ -9,7 +9,7 @@ import zlib
 from django.test import TestCase, Client
 from django.conf import settings
 from debian_bundle import deb822, debfile
-import pyme
+import pyme.core
 from common import hash_string, hash_file_by_fh
 
 class PackageUploadTest(TestCase):
@@ -17,20 +17,12 @@ class PackageUploadTest(TestCase):
     fixtures = ['simple_repository.json']
 
     def setUp(self):
-        # remove all previously uploaded Debian files
-        root_filestore_dir = os.path.join(settings.MEDIA_ROOT, 
-                                          settings.APTREPO_FILESTORE['subdir'])
-        filestore_contents = os.listdir(root_filestore_dir)
-        for direntry in filestore_contents:
-            if direntry != 'README':
-                fullpath_entry = os.path.join(root_filestore_dir, direntry)
-                if os.path.isdir(fullpath_entry):
-                    shutil.rmtree(fullpath_entry)
-                else:
-                    os.remove(fullpath_entry)
-                    
+        # remove all metafiles and previously uploaded Debian files
+        self._clean_public_folder(settings.APTREPO_FILESTORE['metadata_subdir'])
+        self._clean_public_folder(settings.APTREPO_FILESTORE['packages_subdir'])
+                            
         # GPG context for signature verification
-        self.gpg_context = pyme.core.Context
+        self.gpg_context = pyme.core.Context()
         self.gpg_context.set_armor(1)
         
         # HTTP client for testing
@@ -39,6 +31,22 @@ class PackageUploadTest(TestCase):
         # distribution and section name
         self.distribution_name = 'test_distribution'
         self.section_name = 'test_section'
+
+
+    def _clean_public_folder(self, subdir_name):
+        """
+        Removes every file in a directory except the root README
+        """
+        root_filestore_dir = os.path.join(settings.MEDIA_ROOT, subdir_name) 
+        filestore_contents = os.listdir(root_filestore_dir)
+        for direntry in filestore_contents:
+            if direntry != 'README':
+                fullpath_entry = os.path.join(root_filestore_dir, direntry)
+                if os.path.isdir(fullpath_entry):
+                    shutil.rmtree(fullpath_entry)
+                else:
+                    os.remove(fullpath_entry)
+        
 
     def _create_package(self, src_root_dir, pkg_filename):
         """
@@ -53,7 +61,9 @@ class PackageUploadTest(TestCase):
         pkg_filename -- Package to upload
         """
         with open(pkg_filename) as f:
-            response = self.client.post('/aptrepo/packages/', {'file' : f})
+            response = self.client.post(
+                '/aptrepo/packages/', {
+                    'file' : f, 'distribution': self.distribution_name, 'section': self.section_name})
             print response.content
             self.failUnlessEqual(response.status_code, 302)
             
@@ -61,7 +71,7 @@ class PackageUploadTest(TestCase):
         """
         Internal method to download a verify text content
         """
-        response = self.client.get('/aptrepo/public/dists/repo.asc.gpg')
+        response = self.client.get(url)
         self.failUnlessEqual(response.status_code, 200)
         return response.content
             
@@ -70,17 +80,18 @@ class PackageUploadTest(TestCase):
         Verifies all the metafiles of the repository
         """
         # retrieve and verify the Release file and signature
-        root_distribution_url = '/aptrepo/public/dists/' + self.distribution_name
+        root_url = '/aptrepo/public'
+        root_distribution_url = root_url + '/dists/' + self.distribution_name
         release_content = self._download_content(root_distribution_url + '/Release')
         release_signature = self._download_content(root_distribution_url + '/Release.gpg')
         self._verify_gpg_signature(release_content, release_signature)
         
         # parse each of the Release file entries
         distribution = deb822.Release(sequence=release_content,
-                                      fields=['Architectures', 'Components', 'md5sum'])
-        for md5_entry in distribution['md5sum']:
-            file_content = self._download_content(root_distribution_url + md5_entry['name'])
-            self.failUnlessEqual(len(file_content), md5_entry['size'])
+                                      fields=['Architectures', 'Components', 'MD5Sum'])
+        for md5_entry in distribution['MD5Sum']:
+            file_content = self._download_content(root_distribution_url + '/' + md5_entry['name'])
+            self.failUnlessEqual(len(file_content), int(md5_entry['size']))
             self.failUnlessEqual(hash_string(hashlib.md5(), file_content), md5_entry['md5sum'])
     
     
@@ -90,16 +101,17 @@ class PackageUploadTest(TestCase):
         """
         
         # retrieve the Release file
-        root_distribution_url = '/aptrepo/public/dists/' + distribution
-        release_content = self._download_content(root_distribution_url + '/Release')
+        root_public_url = '/aptrepo/public/'
+        root_distribution_url = root_public_url + 'dists/{0}/'.format(distribution)
+        release_content = self._download_content(root_distribution_url + 'Release')
         
         # parse the Release file to locate the component set using a Linear search
         package_metadata = None
         distribution = deb822.Release(sequence=release_content,
-                                      fields=['Architectures', 'Components', 'md5sum'])
-        packages_path = '{1}/binary-{2}/Packages'.format(section, architecture)
+                                      fields=['Architectures', 'Components', 'MD5Sum'])
+        packages_path = '{0}/binary-{1}/Packages'.format(section, architecture)
         for md5_entry in distribution['md5sum']:
-            if md5_entry['name'].find(packages_path) > 0:
+            if md5_entry['name'] == packages_path:
                 
                 # download the Packages file and decompress if necessary
                 packages_content = self._download_content(root_distribution_url + md5_entry['name'])
@@ -107,8 +119,7 @@ class PackageUploadTest(TestCase):
                     packages_content = zlib.decompress(packages_content)
                     
                 # parse and do a linear search of the packages
-                package_list = deb822.Packages(sequence=packages_content)
-                for package in package_list:
+                for package in deb822.Packages.iter_paragraphs(sequence=packages_content.splitlines()):
                     if (package['Package'], package['Architecture'], package['Version']) == (package_name, architecture, version):
                         package_metadata = package
                         break
@@ -116,26 +127,31 @@ class PackageUploadTest(TestCase):
                 if package_metadata:
                     break
         
+        self.assertTrue(package_metadata is not None)
+        
         # download the package and inspect it
-        debfile_content = self._download_content(root_distribution_url + package_metadata['Filename'])
-        pkg_fh, pkg_filename = tempfile.mkstemp(suffix='.deb', prefix='downloaded')
+        debfile_content = self._download_content(root_public_url + package_metadata['Filename'])
+        pkg_fd, pkg_filename = tempfile.mkstemp(suffix='.deb', prefix='downloaded')
+        pkg_fh = os.fdopen(pkg_fd, 'wb')
         try:
             # verify package metadata 
-            os.write(pkg_fh, debfile_content)
-            os.lseek(pkg_fh, 0, os.SEEK_SET)
-            deb = debfile.DebFile(fileobj=pkg_fh)
+            pkg_fh.write(debfile_content)
+            pkg_fh.close()
+            deb = debfile.DebFile(filename=pkg_filename)
             debfile_control = deb.debcontrol()
             self.failUnlessEqual(debfile_control['Package'], package_name)
             self.failUnlessEqual(debfile_control['Architecture'], architecture)
             self.failUnlessEqual(debfile_control['Version'], version)
             
             # verify package contents using the available hashes
-            self.failUnlessEqual(hash_file_by_fh(pkg_fh, hashlib.md5()), package_metadata['MD5sum'])
-            self.failUnlessEqual(hash_file_by_fh(pkg_fh, hashlib.sha1()), package_metadata['SHA1'])
-            self.failUnlessEqual(hash_file_by_fh(pkg_fh, hashlib.sha256()), package_metadata['SHA256'])
+            pkg_fh = open(pkg_filename, 'rb')
+            self.failUnlessEqual(hash_file_by_fh(hashlib.md5(), pkg_fh), package_metadata['MD5sum'])
+            self.failUnlessEqual(hash_file_by_fh(hashlib.sha1(), pkg_fh), package_metadata['SHA1'])
+            self.failUnlessEqual(hash_file_by_fh(hashlib.sha256(), pkg_fh), package_metadata['SHA256'])
             
         finally:
-            os.close(pkg_fh)
+            if pkg_fh:
+                pkg_fh.close()
             os.remove(pkg_filename)
 
                 
@@ -145,7 +161,7 @@ class PackageUploadTest(TestCase):
         """
         
         # download the public key
-        public_key_content = self._download_content('/aptrepo/public/dists/repo.asc.gpg')
+        public_key_content = self._download_content('/aptrepo/public/repo.asc.gpg')
         self.gpg_context.op_import(pyme.core.Data(string=public_key_content))
         
         # verify the signature
@@ -154,7 +170,7 @@ class PackageUploadTest(TestCase):
         self.gpg_context.op_verify(signature_data, release_data, None)
         
         result = self.gpg_context.op_verify_result()
-        self.failUnlessEqual(len(result.signatures) == 1)
+        self.failUnlessEqual(len(result.signatures), 1)
         self.failUnlessEqual(result.signatures[0].status, 0)
         self.failUnlessEqual(result.signatures[0].summary, 0)
     
