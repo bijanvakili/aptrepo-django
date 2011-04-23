@@ -3,16 +3,20 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.template import RequestContext
 from django import forms
-
+from django.conf import settings
 import models
 from common import AptRepoException
+from repository import Repository
 
+_REPOSITORY = Repository()
 
 class UploadPackageForm(forms.Form):
     """
     Form class for package uploads
     """
     file = forms.FileField()
+    section = forms.ModelChoiceField(queryset=models.Section.objects.all())
+
 
 def packages(request):
     """ 
@@ -22,9 +26,11 @@ def packages(request):
         if request.method == 'POST':
             """ POST requests will upload a package and create a new record """
             uploaded_file = request.FILES['file']
+            distribution = request.POST['distribution']
+            section = request.POST['section']
 
             # store result and redirect to success page
-            return _handle_uploaded_file(uploaded_file)
+            return _handle_uploaded_file(distribution, section, uploaded_file)
         
         elif request.method == 'GET':
             """ Get method at root will list all packages """
@@ -53,7 +59,10 @@ def upload_file(request):
         if request.method == 'POST':
             form = UploadPackageForm(request.POST, request.FILES)
             if form.is_valid():
-                return _handle_uploaded_file(request.FILES['file'])
+                section = request.cleaned_data['section']
+                return _handle_uploaded_file(section.distribution.name,
+                                             section.name, 
+                                             request.FILES['file'])
 
         elif request.method == 'GET':
             form = UploadPackageForm()
@@ -68,11 +77,11 @@ def upload_file(request):
         return _error_response(e)
 
 
-def _handle_uploaded_file(uploaded_file):
+def _handle_uploaded_file(distribution_name, section_name, uploaded_file):
     """ 
     Handles a successfully uploaded files 
     """
-    models.Package.save_from_file(uploaded_file)
+    _REPOSITORY.add_package(distribution_name, section_name, uploaded_file)
     return HttpResponseRedirect(reverse('aptrepo.views.upload_success'))
     
 
@@ -80,4 +89,7 @@ def _error_response(exception):
     """ 
     Error response 
     """
-    return HttpResponse(content=exception.__str__(), status=406)
+    if settings.DEBUG:
+        raise exception
+    else:
+        return HttpResponse(content=exception.__str__(), status=406)

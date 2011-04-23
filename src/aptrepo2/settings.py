@@ -9,6 +9,7 @@ TEMPLATE_DEBUG = DEBUG
 APTREPO_ROOT = '/oanda/aptrepo'
 if 'APTREPO_ROOT' in os.environ:
     APTREPO_ROOT = os.environ['APTREPO_ROOT']
+APTREPO_CONFIG_ROOT = os.path.join(APTREPO_ROOT, 'etc')
 APTREPO_VAR_ROOT = os.path.join(APTREPO_ROOT, 'var')
 APTREPO_SHARE_ROOT =  os.path.join(APTREPO_ROOT, 'share')
 
@@ -66,6 +67,7 @@ MEDIA_URL = '/aptrepo/public/'
 APTREPO_FILESTORE = {
     'metadata_subdir' : 'dists',
     'packages_subdir' : 'packages',
+    'gpg_publickey' : 'repo.asc.gpg',
     'hash_depth': 2 
 }
 
@@ -76,6 +78,9 @@ ADMIN_MEDIA_PREFIX = '/media/'
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'o0__bdt)eggafe6gp#4*&^+w7ma-bb1y(6n%o7k2u7)!fyk#8w'
+
+# Used for GPG signing files
+GPG_SECRET_KEY = os.path.join(APTREPO_CONFIG_ROOT, 'repo-privatekey.asc.gpg')
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -98,7 +103,9 @@ TEMPLATE_DIRS = (
     os.path.join( APTREPO_SHARE_ROOT, 'templates' ),
 )
 
-FIXTURE_DIRS = ( TEST_DATA_ROOT )
+FIXTURE_DIRS = ( 
+    TEST_DATA_ROOT + '/', 
+)
 
 INSTALLED_APPS = (
     'django.contrib.auth',
@@ -111,4 +118,9 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     'aptrepo'
+)
+
+# use only temporary files for upload handlers
+FILE_UPLOAD_HANDLERS = (
+    "django.core.files.uploadhandler.TemporaryFileUploadHandler", 
 )
