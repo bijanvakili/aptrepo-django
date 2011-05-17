@@ -3,6 +3,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.template import RequestContext
 from django import forms
+from django.core.cache import cache
 from django.conf import settings
 import models
 from common import AptRepoException
@@ -76,6 +77,19 @@ def upload_file(request):
     except Exception as e:
         return _error_response(e)
 
+def get_package_list(distribution, section, architecture, extension):
+    cache_key = '{0}/{1}/binary-{2}/Packages'
+    if extension:
+        cache_key.append(extension)
+    response = HttpResponse()
+    packages_data = cache.get( cache_key )
+    if packages_data:
+        ?? return package_data as text ??
+    else:
+        _REPOSITORY.write_package_list(response, distribution, section, architecture)
+        
+    return response
+        
 
 def _handle_uploaded_file(distribution_name, section_name, uploaded_file):
     """ 

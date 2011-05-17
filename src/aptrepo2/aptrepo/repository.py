@@ -120,7 +120,7 @@ class Repository:
         # TODO implement the remove package operation
         pass
     
-    
+
     def _update_metadata(self, update_packages=False, update_release=True, **kwargs):
         """
         Update of repository metadata (recursive)
@@ -174,55 +174,27 @@ class Repository:
                 self._update_release_list(distribution.name)            
     
     
-    def _update_package_list(self, distribution, section, architecture):
+    def write_package_list(self, fh, distribution, section, architecture):
         """
         Updates a Debian 'Packages' file for a subsection of the repository
+        by writing to a filehandle (fh)
         """
         
-        # TODO Consider computing only Packages.gz when switching to caching
-        
         # update the Packages file
-        meta_dir = os.path.join(settings.APTREPO_FILESTORE['metadata_subdir'],
-                                         distribution,
-                                         section,
-                                         self._BINARYPACKAGES_PREFIX + architecture)
-        rel_packages_filename = os.path.join(meta_dir, self._PACKAGES_FILENAME)
-        abs_packages_filename = os.path.join(settings.MEDIA_ROOT, rel_packages_filename)
         package_instances = models.PackageInstance.objects.filter(section__distribution__name=distribution,
                                                                   section__name=section,
                                                                   package__architecture=architecture)
-        abs_meta_dir = settings.MEDIA_ROOT + meta_dir
-        if not os.path.exists(abs_meta_dir):
-            os.makedirs(abs_meta_dir)
-        packages_fh = None 
-        packages_compressed_fh = None
-        try:
-            packages_fh = open(abs_packages_filename, 'wt') 
-            packages_compressed_fh = gzip.open(abs_packages_filename + '.gz', 'wb')
-            for instance in package_instances:
-                control_data = deb822.Deb822(sequence=instance.package.control)
-                control_data['Filename'] = instance.package.path.name
-                control_data['MD5sum'] = instance.package.hash_md5
-                control_data['SHA1'] = instance.package.hash_sha1
-                control_data['SHA256'] = instance.package.hash_sha256
+        for instance in package_instances:
+            control_data = deb822.Deb822(sequence=instance.package.control)
+            control_data['Filename'] = instance.package.path.name
+            control_data['MD5sum'] = instance.package.hash_md5
+            control_data['SHA1'] = instance.package.hash_sha1
+            control_data['SHA256'] = instance.package.hash_sha256
+            
+            control_data.dump(fh)
+            fh.write('\n')
                 
-                control_data.dump(packages_fh)
-                control_data.dump(packages_compressed_fh)
-                packages_fh.write('\n')
-                packages_compressed_fh.write('\n')
-        except Exception as e:
-            raise e
-        finally:
-            if packages_fh:
-                packages_fh.close()
-            if packages_compressed_fh:
-                packages_compressed_fh.close()     
-                
-        # update the metadata for the Packages file
-        self._set_unique_file(rel_packages_filename)
-        self._set_unique_file(rel_packages_filename + '.gz')
-
-    
+   
     def _update_release_list(self, distribution_name):
         """
         Updates a Debian 'Releases' file for a single distribution
