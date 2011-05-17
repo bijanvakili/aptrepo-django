@@ -27,7 +27,7 @@ class UniqueFile(models.Model):
         """ 
         Returns the base filename 
         """
-        return os.path.basename(self.file.name)
+        return os.path.basename(self.path.name)
 
 class Package(UniqueFile):
     """
