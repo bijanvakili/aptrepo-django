@@ -80,7 +80,7 @@ class PackageUploadTest(TestCase):
         Verifies all the metafiles of the repository
         """
         # retrieve and verify the Release file and signature
-        root_url = '/aptrepo/public'
+        root_url = '/aptrepo'
         root_distribution_url = root_url + '/dists/' + self.distribution_name
         release_content = self._download_content(root_distribution_url + '/Release')
         release_signature = self._download_content(root_distribution_url + '/Release.gpg')
@@ -101,7 +101,7 @@ class PackageUploadTest(TestCase):
         """
         
         # retrieve the Release file
-        root_public_url = '/aptrepo/public/'
+        root_public_url = '/aptrepo/'
         root_distribution_url = root_public_url + 'dists/{0}/'.format(distribution)
         release_content = self._download_content(root_distribution_url + 'Release')
         
@@ -161,7 +161,7 @@ class PackageUploadTest(TestCase):
         """
         
         # download the public key
-        public_key_content = self._download_content('/aptrepo/public/repo.asc.gpg')
+        public_key_content = self._download_content('/aptrepo/dists/repo.asc.gpg')
         self.gpg_context.op_import(pyme.core.Data(string=public_key_content))
         
         # verify the signature

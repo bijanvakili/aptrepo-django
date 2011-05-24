@@ -8,7 +8,6 @@ import models
 from common import AptRepoException
 from repository import Repository
 
-_REPOSITORY = Repository()
 
 class UploadPackageForm(forms.Form):
     """
@@ -17,6 +16,19 @@ class UploadPackageForm(forms.Form):
     file = forms.FileField()
     section = forms.ModelChoiceField(queryset=models.Section.objects.all())
 
+def gpg_public_key(request):
+    """
+    Retrieves the GPG public key
+    """
+    try:
+        if request.method != 'GET':
+            raise AptRepoException('Invalid HTTP method')
+        
+        repository = Repository()
+        return HttpResponse(repository.get_gpg_public_key())
+
+    except Exception as e:
+        return _error_response(e)
 
 def packages(request):
     """ 
@@ -81,7 +93,8 @@ def _handle_uploaded_file(distribution_name, section_name, uploaded_file):
     """ 
     Handles a successfully uploaded files 
     """
-    _REPOSITORY.add_package(distribution_name, section_name, uploaded_file)
+    repository = Repository()
+    repository.add_package(distribution_name, section_name, uploaded_file)
     return HttpResponseRedirect(reverse('aptrepo.views.upload_success'))
     
 
