@@ -71,7 +71,7 @@ def upload_file(request):
         if request.method == 'POST':
             form = UploadPackageForm(request.POST, request.FILES)
             if form.is_valid():
-                section = request.cleaned_data['section']
+                section = form.cleaned_data['section']
                 return _handle_uploaded_file(section.distribution.name,
                                              section.name, 
                                              request.FILES['file'])

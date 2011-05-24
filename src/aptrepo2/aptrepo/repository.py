@@ -28,6 +28,7 @@ class Repository:
         gpg_context = self._load_gpg_context()
         public_key_data = pyme.core.Data()
         gpg_context.op_export(None, 0, public_key_data)
+        public_key_data.seek(0, 0)
         return public_key_data.read()
                 
 
@@ -105,11 +106,10 @@ class Repository:
         package_instance, _ = models.PackageInstance.objects.get_or_create(
             package=package, section=section)
         
-        # update repo metadata(recreate=false, distribution, section, architecture)
+        # update for all architectures
         self._update_metadata(update_packages=True, 
                               distribution=distribution_name,
-                              section=section_name,
-                              architecture=package.architecture)
+                              section=section_name)
         
         # insert action
         models.Action.objects.create(instance=package_instance, action=models.Action.UPLOAD,
@@ -179,8 +179,6 @@ class Repository:
         Updates a Debian 'Packages' file for a subsection of the repository
         """
         
-        # TODO Consider computing only Packages.gz when switching to caching
-        
         # update the Packages file
         meta_dir = os.path.join(settings.APTREPO_FILESTORE['metadata_subdir'],
                                          distribution,
@@ -202,6 +200,7 @@ class Repository:
             for instance in package_instances:
                 control_data = deb822.Deb822(sequence=instance.package.control)
                 control_data['Filename'] = instance.package.path.name
+                control_data['Size'] = str(instance.package.size)
                 control_data['MD5sum'] = instance.package.hash_md5
                 control_data['SHA1'] = instance.package.hash_sha1
                 control_data['SHA256'] = instance.package.hash_sha256
@@ -210,6 +209,11 @@ class Repository:
                 control_data.dump(packages_compressed_fh)
                 packages_fh.write('\n')
                 packages_compressed_fh.write('\n')
+
+            # always write an empty file                
+            packages_fh.write('\n')
+            packages_compressed_fh.write('\n')
+            
         except Exception as e:
             raise e
         finally:
