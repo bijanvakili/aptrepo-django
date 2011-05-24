@@ -1,8 +1,12 @@
 # constants
 HASH_BLOCK_MULTIPLE = 128
+GZIP_EXTENSION = '.gz'
+GPG_EXTENSION = '.gpg'
 
 class AptRepoException(Exception):
-    """ Exceptions for the apt repo """
+    """ 
+    Exceptions for the apt repo
+    """
     
     message = "(Unknown error)"
     
