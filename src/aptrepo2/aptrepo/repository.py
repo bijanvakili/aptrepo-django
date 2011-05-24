@@ -8,7 +8,6 @@ import pyme.constants.sig
 import models, common
 
 # TODO enforce exclusive access for all write operations
-# TODO implement caching of metadata instead of writing to disk
 
 class Repository:
     """
@@ -20,15 +19,16 @@ class Repository:
     _BINARYPACKAGES_PREFIX = 'binary-'
     
     def __init__(self):
-        # publish the GPG public key
+        pass
+    
+    def get_gpg_public_key(self):
+        """
+        Retrieves the GPG public key
+        """
         gpg_context = self._load_gpg_context()
-        gpg_publickey_path = os.path.join(settings.MEDIA_ROOT, settings.APTREPO_FILESTORE['gpg_publickey'])
-        if not os.path.exists(gpg_publickey_path):
-            public_key_data = pyme.core.Data()
-            gpg_context.op_export(None, 0, public_key_data)
-            with open(gpg_publickey_path, 'wt') as publickey_fh:
-                public_key_data.seek(0, 0)
-                publickey_fh.write(public_key_data.read())
+        public_key_data = pyme.core.Data()
+        gpg_context.op_export(None, 0, public_key_data)
+        return public_key_data.read()
                 
 
     def add_package(self, distribution_name, section_name, package_file):
