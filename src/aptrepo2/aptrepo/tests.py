@@ -48,11 +48,24 @@ class PackageUploadTest(TestCase):
                     os.remove(fullpath_entry)
         
 
-    def _create_package(self, src_root_dir, pkg_filename):
+    def _create_package(self, control_map, pkg_filename):
         """
+        Creates a Debian package
         """
-        ret = os.system('dpkg --build {0} {1}'.format(src_root_dir, pkg_filename))
-        self.failUnlessEqual( ret >> 16, 0 )
+        try:
+            pkgsrc_dir = tempfile.mkdtemp()
+            debian_dir = os.path.join(pkgsrc_dir,'DEBIAN') 
+            os.mkdir(debian_dir)
+            with open(os.path.join(debian_dir,'control'), 'wt') as fh_control:
+                control_map.dump(fh_control)
+            
+            ret = os.system('dpkg --build {0} {1}'.format(pkgsrc_dir, pkg_filename))
+            self.failUnlessEqual( ret >> 16, 0 )
+            
+        finally:
+            if pkgsrc_dir is not None:
+                shutil.rmtree(pkgsrc_dir)
+            
     
     def _upload_package(self, pkg_filename):
         """
@@ -181,9 +194,19 @@ class PackageUploadTest(TestCase):
         """
         pkg_filename = None
         try:
+            control_map = deb822.Deb822()
+            control_map['Package'] = 'test-package'
+            control_map['Version'] = '1.01'
+            control_map['Section'] = 'oanda'
+            control_map['Priority'] = 'optional'
+            control_map['Architecture'] = 'all'
+            control_map['Depends'] = 'vim'
+            control_map['Maintainer'] = 'Bijan Vakili <bvakili@oanda.com>'
+            control_map['Description'] = 'Test package for apt repo test suite'
+            
             pkg_fh, pkg_filename = tempfile.mkstemp(suffix='.deb', prefix='mypackage')
             os.close(pkg_fh)
-            self._create_package(os.path.join(settings.TEST_DATA_ROOT,'test-package'), pkg_filename)
+            self._create_package(control_map, pkg_filename)
             self._upload_package(pkg_filename)
 
         finally:
@@ -214,19 +237,11 @@ class PackageUploadTest(TestCase):
             package_names.append(control_map['Package'])
             
             pkg_filename = None
-            pkgsrc_dir = None
             try:
-                # create package source directory
-                pkgsrc_dir = tempfile.mkdtemp()
-                debian_dir = os.path.join(pkgsrc_dir,'DEBIAN') 
-                os.mkdir(debian_dir)
-                with open(os.path.join(debian_dir,'control'), 'wt') as fh_control:
-                    control_map.dump(fh_control)
-                
                 # create the package
                 pkg_fh, pkg_filename = tempfile.mkstemp(suffix='.deb', prefix=control_map['Package'])
                 os.close(pkg_fh)
-                self._create_package(pkgsrc_dir, pkg_filename)
+                self._create_package(control_map, pkg_filename)
                 
                 # upload the package
                 self._upload_package(pkg_filename)
@@ -234,8 +249,6 @@ class PackageUploadTest(TestCase):
             finally:
                 if pkg_filename is not None:
                     os.remove(pkg_filename)
-                if pkgsrc_dir is not None:
-                    shutil.rmtree(pkgsrc_dir)
         
         # retrieve package list
         response = self.client.get('/aptrepo/packages/')

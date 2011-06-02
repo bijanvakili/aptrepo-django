@@ -1,8 +1,0 @@
-Package: test-package
-Version: 1.01
-Section: oanda
-Priority: optional
-Architecture: all
-Depends: vim
-Maintainer: Bijan Vakili <bvakili@oanda.com>
-Description: Test package for apt repo test suite
