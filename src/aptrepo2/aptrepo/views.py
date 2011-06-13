@@ -15,6 +15,7 @@ class UploadPackageForm(forms.Form):
     """
     file = forms.FileField()
     section = forms.ModelChoiceField(queryset=models.Section.objects.all())
+    
 
 def gpg_public_key(request):
     """
@@ -63,6 +64,13 @@ def upload_success(request):
     return HttpResponse("Package successfully uploaded.")
 
 
+def remove_success(request):
+    """
+    Successful removal view
+    """
+    return HttpResponse("Package successfully removed.")
+
+
 def upload_file(request):
     """ 
     Provides a form to upload packages
@@ -87,6 +95,35 @@ def upload_file(request):
         
     except Exception as e:
         return _error_response(e)
+    
+    
+def delete_package_instance(request):
+    """
+    Basic HTTP POST call to remove a package instance
+    """
+    try:
+        if request.method != 'POST':
+            raise AptRepoException('Invalid HTTP method')
+        
+        # extract the package instance identifier
+        package_instance_id = 0
+        if 'package_instance' in request.POST:
+            package_instance_id = request.POST['package_instance']
+        else:
+            package_instance = models.PackageInstance.objects.get(
+                section__distribution__name=request.POST['distribution'],
+                section__name=request.POST['section'],
+                package__package_name=request.POST['name'],
+                package__architecture=request.POST['architecture'],
+                package__version=request.POST['version'])
+            if package_instance is None:
+                raise AptRepoException("Package instance not found for removal")
+            package_instance_id = package_instance.id
+            
+        return _handle_remove_package(package_instance_id)
+        
+    except Exception as e:
+        return _error_response(e)
 
 
 def _handle_uploaded_file(distribution_name, section_name, uploaded_file):
@@ -97,6 +134,13 @@ def _handle_uploaded_file(distribution_name, section_name, uploaded_file):
     repository.add_package(distribution_name, section_name, uploaded_file)
     return HttpResponseRedirect(reverse('aptrepo.views.upload_success'))
     
+def _handle_remove_package(package_instance_id):
+    """
+    Handles removing packages
+    """
+    repository = Repository()
+    repository.remove_package(package_instance_id)
+    return HttpResponseRedirect(reverse('aptrepo.views.remove_success'))
 
 def _error_response(exception):
     """ 

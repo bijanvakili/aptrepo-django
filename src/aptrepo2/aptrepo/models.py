@@ -1,6 +1,6 @@
 import os
 from django.db import models
-
+from django.core.files.storage import default_storage
 
 def uniquefile_upload_path(instance, filename):
     """
@@ -28,6 +28,13 @@ class UniqueFile(models.Model):
         Returns the base filename 
         """
         return os.path.basename(self.path.name)
+
+    def delete(self):
+        """
+        Removes the file
+        """
+        default_storage.delete(self.path.name)
+        super(UniqueFile, self).delete()
 
 class Package(UniqueFile):
     """
@@ -127,7 +134,7 @@ class Action(models.Model):
         (COPY, 'copy')
     )
 
-    instance = models.ForeignKey('PackageInstance')
+    section = models.ForeignKey('Section')
     action = models.IntegerField(choices=_ACTION_TYPE_CHOICES)
     user = models.CharField(max_length=255) 
     details = models.TextField()

@@ -8,6 +8,7 @@ import pyme.constants.sig
 import models, common
 
 # TODO enforce exclusive access for all write operations
+# TODO pruning of packages and Actions
 
 class Repository:
     """
@@ -112,13 +113,41 @@ class Repository:
                               section=section_name)
         
         # insert action
-        models.Action.objects.create(instance=package_instance, action=models.Action.UPLOAD,
+        # TODO change to include request user
+        models.Action.objects.create(section=section, action=models.Action.UPLOAD,
                                      user=package_instance.creator) 
 
         
-    def remove_package(self, distribution, section, package_name, architecture, version):
-        # TODO implement the remove package operation
-        pass
+    def remove_package(self, package_instance_id):
+        """
+        Removes a package instance
+
+        If there are no instances referencing the actual package, it will be removed as well
+        """
+        
+        # remove the instance
+        package_instance = models.PackageInstance.objects.get(id=package_instance_id)
+        package_id = package_instance.package.id 
+        package_instance.delete()
+
+        # remove the referenced package if it no longer exists
+        package_reference_count = models.PackageInstance.objects.filter(package__id=package_id).count()
+        package = models.Package.objects.get(id=package_id)
+        if package_reference_count == 0:
+            package.delete()
+        
+        # update for the package list for the specific section and architecture
+        section = models.Section.objects.get(name=package_instance.section.name)
+        self._update_metadata(update_packages=True, 
+                              distribution=section.distribution.name,
+                              section=section.name,
+                              architecture=package_instance.package.architecture)
+        
+        # insert action
+        # TODO change to include request user
+        models.Action.objects.create(section=section, action=models.Action.DELETE,
+                                     user="who?")
+
     
     
     def _update_metadata(self, update_packages=False, update_release=True, **kwargs):
