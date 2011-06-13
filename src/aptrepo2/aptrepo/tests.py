@@ -187,6 +187,32 @@ class PackageUploadTest(TestCase):
         self.failUnlessEqual(result.signatures[0].status, 0)
         self.failUnlessEqual(result.signatures[0].summary, 0)
     
+    def _remove_package(self, package_name, version, architecture):
+        """
+        Removes a specified package instance
+        """
+        response = self.client.post(
+            '/aptrepo/packages/delete', {
+                'distribution' : self.distribution_name, 'section' : self.section_name,
+                'name' : package_name, 'version': version, 'architecture': architecture})
+        self.failUnlessEqual(response.status_code, 302)
+        
+    def _exists_package(self, package_name, version, architecture):
+        """
+        Inspects a section to determine whether a package exists
+        """
+        packages_url = '/aptrepo/dists/{0}/{1}/binary-{2}/Packages'.format(self.distribution_name, 
+                                                                           self.section_name, 
+                                                                           architecture)
+        packages_content = self._download_content(packages_url)
+
+        # do a linear search for the target package        
+        for package in deb822.Packages.iter_paragraphs(sequence=packages_content.splitlines()):
+            if (package['Package'], package['Architecture'], package['Version']) == (package_name, architecture, version):
+                return True
+
+        return False
+        
     
     def test_single_package_upload(self):
         """ 
@@ -194,6 +220,7 @@ class PackageUploadTest(TestCase):
         """
         pkg_filename = None
         try:
+            # create the package
             control_map = deb822.Deb822()
             control_map['Package'] = 'test-package'
             control_map['Version'] = '1.01'
@@ -207,7 +234,18 @@ class PackageUploadTest(TestCase):
             pkg_fh, pkg_filename = tempfile.mkstemp(suffix='.deb', prefix='mypackage')
             os.close(pkg_fh)
             self._create_package(control_map, pkg_filename)
+            
+            # test uploading the package
             self._upload_package(pkg_filename)
+            self.assertTrue(self._exists_package(control_map['Package'], control_map['Version'], 
+                            control_map['Architecture']))
+            
+            # test removing the package
+            self._remove_package(control_map['Package'], control_map['Version'], 
+                                 control_map['Architecture'])
+            self._verify_repo_metadata()
+            self.assertFalse(self._exists_package(control_map['Package'], control_map['Version'], 
+                             control_map['Architecture']))
 
         finally:
             if pkg_filename is not None:
