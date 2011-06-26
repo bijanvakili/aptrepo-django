@@ -21,7 +21,10 @@ class PackageUploadTest(TestCase):
         # remove all metafiles and previously uploaded Debian files
         self._clean_public_folder(settings.APTREPO_FILESTORE['metadata_subdir'])
         self._clean_public_folder(settings.APTREPO_FILESTORE['packages_subdir'])
-        shutil.rmtree(settings.CACHES['default']['LOCATION'])
+        cache_dir = settings.CACHES['default']['LOCATION']
+        if os.path.exists(cache_dir):
+            shutil.rmtree(cache_dir)
+        
                             
         # GPG context for signature verification
         self.gpg_context = pyme.core.Context()
@@ -91,7 +94,7 @@ class PackageUploadTest(TestCase):
         distribution = deb822.Release(sequence=release_content,
                                       fields=['Architectures', 'Components', 'MD5Sum'])
         for md5_entry in distribution['MD5Sum']:
-            file_content = self._download_content(self._ROOT_WEBDIR + '/' + md5_entry['name'])
+            file_content = self._download_content(root_distribution_url + '/' + md5_entry['name'])
             self.failUnlessEqual(len(file_content), int(md5_entry['size']))
             self.failUnlessEqual(hash_string(hashlib.md5(), file_content), md5_entry['md5sum'])
     
@@ -104,7 +107,7 @@ class PackageUploadTest(TestCase):
         # retrieve the Release file
         root_distribution_url = self._ROOT_WEBDIR + '/dists/{0}/'.format(distribution)
         release_content = self._download_content(root_distribution_url + 'Release')
-        packages_path = 'dists/{0}/{1}/binary-{2}/Packages'.format(distribution, section, architecture)
+        packages_path = '{0}/binary-{1}/Packages'.format(section, architecture)
         
         # parse the Release file to locate the component set using a Linear search
         package_metadata = None
@@ -115,7 +118,7 @@ class PackageUploadTest(TestCase):
             if md5_entry['name'] == packages_path:
                 
                 # download the Packages file and decompress if necessary
-                packages_content = self._download_content(self._ROOT_WEBDIR + '/' + md5_entry['name'])
+                packages_content = self._download_content(root_distribution_url + md5_entry['name'])
                 if md5_entry['name'].endswith('.gz'):
                     packages_content = zlib.decompress(packages_content)
                     

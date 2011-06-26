@@ -1,4 +1,3 @@
-import zlib 
 from django.shortcuts import render_to_response
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
@@ -60,7 +59,7 @@ def upload_file(request):
         if request.method == 'POST':
             form = UploadPackageForm(request.POST, request.FILES)
             if form.is_valid():
-                section = request.cleaned_data['section']
+                section = form.cleaned_data['section']
                 return _handle_uploaded_file(section.distribution.name,
                                              section.name, 
                                              request.FILES['file'])
@@ -101,7 +100,13 @@ def package_list(request, distribution, section, architecture, extension=None):
             raise AptRepoException('Invalid HTTP method')
 
         # NOTE: caching is not employed for package list
-        is_compressed = extension == GZIP_EXTENSION
+                  
+        is_compressed = False
+        if extension == GZIP_EXTENSION:
+            is_compressed = True
+        elif extension != '':
+            return HttpResponse(status_code=404)
+            
         mimetype = 'text/plain'
         if is_compressed:
             mimetype = 'application/gzip'
@@ -136,7 +141,7 @@ def release_list(request, distribution, extension):
             data = releases_data
 
         # return the response
-        return HttpResponse(data)
+        return HttpResponse(data, mimetype = 'text/plain')
 
     except Exception as e:
         return _error_response(e)
