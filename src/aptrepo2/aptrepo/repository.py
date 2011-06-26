@@ -2,6 +2,7 @@ import gzip
 import hashlib
 import os
 import shutil
+import struct
 import tempfile
 from django.conf import settings
 from django.core.cache import cache
@@ -178,9 +179,6 @@ class Repository:
             control_data.dump(fh)
             fh.write('\n')
         
-        # create final newline to ensure empty lists do not result in 
-        # zero-length files
-        fh.write('\n')
    
     def _refresh_releases_data(self, distribution_name):
         """
@@ -232,15 +230,34 @@ class Repository:
                     tmp_fh.flush()
                     tmp_file_size = tmp_fh.tell()
                     
-                    # create the compressed version
-                    compressed_fh = gzip.open(compressed_filename, 'wb')
+                    # create the compressed version using a timestamp (mtime) of 0
+                    # 
+                    # TODO Remove conditions around mtime once python v2.7 becomes the minimum 
+                    # supported version
+                    gzip_params = {'filename':compressed_filename, 'mode':'wb', 'compresslevel':9}
+                    if common.get_python_version() >= 2.7:
+                        gzip_params['mtime'] = 0 
+                    
+                    compressed_fh = gzip.GzipFile(**gzip_params)
                     tmp_fh.seek(0)
                     shutil.copyfileobj(fsrc=tmp_fh, fdst=compressed_fh)
                     compressed_fh.close()
                     compressed_fh = None
+
+                    # for python v2.6 and earlier, we need to manually set the mtime field to
+                    # zero.  This starts at position 4 of the file (see RFC 1952)                    
+                    if common.get_python_version() < 2.7:
+                        compressed_fh = open(compressed_filename, 'rb+')
+                        compressed_fh.seek(4)
+                        compressed_fh.write(struct.pack('<i',0))
+                        compressed_fh.close()
+                        compressed_fh = None
+
+                    
                     compressed_file_size = os.path.getsize(compressed_filename)
                         
                     packages_path = self._get_packages_path(distribution_name, section, architecture)
+                    rel_packages_path = self._get_packages_relative_path(section, architecture)
                     tmp_fh.seek(0)
                     cache.set( packages_path, tmp_fh.read() )
                     compressed_fh = open(compressed_filename, 'rb')
@@ -263,11 +280,11 @@ class Repository:
                         release_hashes[type].append(
                             ' {0} {1} {2}'.format(common.hash_file_by_fh(hashfunc, tmp_fh), 
                                                   tmp_file_size, 
-                                                  packages_path))
+                                                  rel_packages_path))
                         release_hashes[type].append(
                             ' {0} {1} {2}'.format(common.hash_file(hashfunc_compressed, compressed_filename), 
                                                   compressed_file_size, 
-                                                  packages_path + common.GZIP_EXTENSION))
+                                                  rel_packages_path + common.GZIP_EXTENSION))
 
         finally:                        
             if tmp_fh:
@@ -331,11 +348,19 @@ class Repository:
 
 
     def _get_packages_path(self, distribution, section, architecture):
-        packages_path = '{0}/{1}/{2}/{3}-{4}/{5}'.format(
+        packages_path = '{0}/{1}/{2}'.format(
             settings.APTREPO_FILESTORE['metadata_subdir'],
-            distribution, section, self._BINARYPACKAGES_PREFIX, architecture, 
+            distribution, 
+            self._get_packages_relative_path(section, architecture))
+        return packages_path
+    
+
+    def _get_packages_relative_path(self, section, architecture):
+        packages_path = '{0}/{1}-{2}/{3}'.format(
+            section, self._BINARYPACKAGES_PREFIX, architecture, 
             self._PACKAGES_FILENAME)
         return packages_path
+
 
     def _get_releases_path(self, distribution):
         releases_path = '{0}/{1}/{2}'.format(
