@@ -68,7 +68,6 @@ class Repository:
         cached_data = cache.get(releases_path)
         if not cached_data:
             (releases_data, releases_signature) = self._refresh_releases_data(distribution)
-            cache.set(releases_path, (releases_data, releases_signature) )
         else:
             (releases_data, releases_signature) = cached_data
             
@@ -182,10 +181,12 @@ class Repository:
    
     def _refresh_releases_data(self, distribution_name):
         """
-        Returns (releases, signature) where 
+        Computes and caches the metadata files for a distribution 
         
-        releases is a Debian 'Releases' file for a single distribution
-        signature is the associated GPG signature
+        Returns (releases, signature) where:
+        
+        releases  - Debian 'Releases' file for a single distribution
+        signature - associated GPG signature for the 'Releases' file
         """
         
         distribution = models.Distribution.objects.get(name=distribution_name)
@@ -215,9 +216,10 @@ class Repository:
         tmp_fh = None
         compressed_fh = None
         try:
-            tmp_fd, tmp_filename = tempfile.mkstemp(prefix='Packages')
+            tmp_fd, tmp_filename = tempfile.mkstemp(prefix=self._PACKAGES_FILENAME)
             compressed_filename = tmp_filename + common.GZIP_EXTENSION
             tmp_fh = os.fdopen(tmp_fd, 'wb+')
+            compressed_fh = open(compressed_filename, 'wb+')
             
             for section in sections:
                 for architecture in architectures:
@@ -234,55 +236,41 @@ class Repository:
                     # 
                     # TODO Remove conditions around mtime once python v2.7 becomes the minimum 
                     # supported version
-                    gzip_params = {'filename':compressed_filename, 'mode':'wb', 'compresslevel':9}
+                    compressed_fh.seek(0)
+                    compressed_fh.truncate(0)
+                    gzip_params = {
+                                   'filename':self._PACKAGES_FILENAME, 'mode':'wb', 'compresslevel':9, 
+                                   'fileobj':compressed_fh}
                     if common.get_python_version() >= 2.7:
                         gzip_params['mtime'] = 0 
                     
-                    compressed_fh = gzip.GzipFile(**gzip_params)
+                    gzip_fh = gzip.GzipFile(**gzip_params)
                     tmp_fh.seek(0)
-                    shutil.copyfileobj(fsrc=tmp_fh, fdst=compressed_fh)
-                    compressed_fh.close()
-                    compressed_fh = None
+                    shutil.copyfileobj(fsrc=tmp_fh, fdst=gzip_fh)
+                    gzip_fh.close()
+                    compressed_file_size = compressed_fh.tell()
 
                     # for python v2.6 and earlier, we need to manually set the mtime field to
                     # zero.  This starts at position 4 of the file (see RFC 1952)                    
                     if common.get_python_version() < 2.7:
-                        compressed_fh = open(compressed_filename, 'rb+')
                         compressed_fh.seek(4)
                         compressed_fh.write(struct.pack('<i',0))
-                        compressed_fh.close()
-                        compressed_fh = None
 
-                    
-                    compressed_file_size = os.path.getsize(compressed_filename)
-                        
                     packages_path = self._get_packages_path(distribution_name, section, architecture)
                     rel_packages_path = self._get_packages_relative_path(section, architecture)
                     tmp_fh.seek(0)
                     cache.set( packages_path, tmp_fh.read() )
-                    compressed_fh = open(compressed_filename, 'rb')
+                    compressed_fh.seek(0)
                     cache.set( packages_path + common.GZIP_EXTENSION, compressed_fh.read(compressed_file_size) )
-                    compressed_fh.close()
-                    compressed_fh = None
                     
                     # hash the package list for each hash function
                     for type in hash_types:
-                        hashfunc = None
-                        if type == 'MD5Sum':
-                            hashfunc = hashlib.md5()
-                        elif type == 'SHA1':
-                            hashfunc = hashlib.sha1()
-                        else:
-                            hashfunc = hashlib.sha256()
-                            
-                        hashfunc_compressed = hashfunc.copy() 
-                        
                         release_hashes[type].append(
-                            ' {0} {1} {2}'.format(common.hash_file_by_fh(hashfunc, tmp_fh), 
+                            ' {0} {1} {2}'.format(common.hash_file_by_fh(self._get_hashfunc(type), tmp_fh), 
                                                   tmp_file_size, 
                                                   rel_packages_path))
                         release_hashes[type].append(
-                            ' {0} {1} {2}'.format(common.hash_file(hashfunc_compressed, compressed_filename), 
+                            ' {0} {1} {2}'.format(common.hash_file_by_fh(self._get_hashfunc(type), compressed_fh), 
                                                   compressed_file_size, 
                                                   rel_packages_path + common.GZIP_EXTENSION))
 
@@ -312,9 +300,8 @@ class Repository:
         release_signature_data.seek(0, 0)
         release_signature = release_signature_data.read()
         
-        releases_path = self._get_releases_path(distribution) 
-        cache.set( releases_path, release_contents )
-        cache.set( releases_path + common.GPG_EXTENSION, release_signature ) 
+        releases_path = self._get_releases_path(distribution)
+        cache.set(releases_path, (release_contents, release_signature) )
         
         return (release_contents, release_signature)
 
@@ -367,3 +354,13 @@ class Repository:
             settings.APTREPO_FILESTORE['metadata_subdir'],
             distribution, self._RELEASE_FILENAME)
         return releases_path
+    
+    
+    def _get_hashfunc(self, hash_name):
+        name = hash_name.lower()
+        if name == 'md5' or name == 'md5sum':
+            return hashlib.md5()
+        elif name == 'sha1':
+            return hashlib.sha1()
+        elif name == 'sha256':
+            return hashlib.sha256()
