@@ -6,6 +6,7 @@ import struct
 import tempfile
 from django.conf import settings
 from django.core.cache import cache
+from django.db.models import Q
 from debian_bundle import deb822, debfile
 import pyme.core
 import pyme.constants.sig
@@ -21,6 +22,7 @@ class Repository:
     _RELEASE_FILENAME = 'Release'
     _PACKAGES_FILENAME = 'Packages'
     _BINARYPACKAGES_PREFIX = 'binary'
+    _ARCHITECTURE_ALL = 'all'
     
     def __init__(self):
         pass
@@ -95,7 +97,9 @@ class Repository:
         #       class cannot django file types and must use direct filenames.
         deb = debfile.DebFile(filename=package_file.temporary_file_path())
         control = deb.debcontrol()
-        if control['Architecture'] not in distribution.get_architecture_list():
+        if control['Architecture'] != self._ARCHITECTURE_ALL and \
+            control['Architecture'] not in distribution.get_architecture_list():
+            
             raise common.AptRepoException(
                 'Invalid architecture for distribution ({0}) : {1}'.format(
                     distribution_name, control['Architecture']))
@@ -165,15 +169,18 @@ class Repository:
         """
         Writes a package list for a repository section
         """
-        package_instances = models.PackageInstance.objects.filter(section__distribution__name=distribution,
-                                                                  section__name=section,
-                                                                  package__architecture=architecture)
+        package_instances = models.PackageInstance.objects.filter(
+                                                                  Q(section__distribution__name=distribution),
+                                                                  Q(section__name=section),
+                                                                  Q(package__architecture=architecture) | 
+                                                                  Q(package__architecture=self._ARCHITECTURE_ALL))
         for instance in package_instances:
             control_data = deb822.Deb822(sequence=instance.package.control)
             control_data['Filename'] = instance.package.path.name
             control_data['MD5sum'] = instance.package.hash_md5
             control_data['SHA1'] = instance.package.hash_sha1
             control_data['SHA256'] = instance.package.hash_sha256
+            control_data['Size'] = str(instance.package.size)
             
             control_data.dump(fh)
             fh.write('\n')

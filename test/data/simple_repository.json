@@ -8,7 +8,7 @@
 			"label" : "Test Distribution",
 			"suite" : "testing",
 			"origin" : "OANDA",
-			"suppported_architectures": "0,3"
+			"suppported_architectures": "0,1"
 		}
 	},
 	{
