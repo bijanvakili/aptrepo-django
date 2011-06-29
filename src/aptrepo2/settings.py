@@ -124,3 +124,11 @@ INSTALLED_APPS = (
 FILE_UPLOAD_HANDLERS = (
     "django.core.files.uploadhandler.TemporaryFileUploadHandler", 
 )
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.join(APTREPO_VAR_ROOT, 'cache'),
+        'TIMEOUT': 3600
+    }
+}

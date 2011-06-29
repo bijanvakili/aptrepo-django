@@ -15,11 +15,16 @@ from common import hash_string, hash_file_by_fh
 class PackageUploadTest(TestCase):
 
     fixtures = ['simple_repository.json']
+    _ROOT_WEBDIR = '/aptrepo'
 
     def setUp(self):
         # remove all metafiles and previously uploaded Debian files
         self._clean_public_folder(settings.APTREPO_FILESTORE['metadata_subdir'])
         self._clean_public_folder(settings.APTREPO_FILESTORE['packages_subdir'])
+        cache_dir = settings.CACHES['default']['LOCATION']
+        if os.path.exists(cache_dir):
+            shutil.rmtree(cache_dir)
+        
                             
         # GPG context for signature verification
         self.gpg_context = pyme.core.Context()
@@ -75,7 +80,7 @@ class PackageUploadTest(TestCase):
         """
         with open(pkg_filename) as f:
             response = self.client.post(
-                '/aptrepo/packages/', {
+                self._ROOT_WEBDIR + '/packages/', {
                     'file' : f, 'distribution': self.distribution_name, 'section': self.section_name})
             print response.content
             self.failUnlessEqual(response.status_code, 302)
@@ -93,8 +98,7 @@ class PackageUploadTest(TestCase):
         Verifies all the metafiles of the repository
         """
         # retrieve and verify the Release file and signature
-        root_url = '/aptrepo'
-        root_distribution_url = root_url + '/dists/' + self.distribution_name
+        root_distribution_url = self._ROOT_WEBDIR + '/dists/' + self.distribution_name
         release_content = self._download_content(root_distribution_url + '/Release')
         release_signature = self._download_content(root_distribution_url + '/Release.gpg')
         self._verify_gpg_signature(release_content, release_signature)
@@ -114,16 +118,16 @@ class PackageUploadTest(TestCase):
         """
         
         # retrieve the Release file
-        root_public_url = '/aptrepo/'
-        root_distribution_url = root_public_url + 'dists/{0}/'.format(distribution)
+        root_distribution_url = self._ROOT_WEBDIR + '/dists/{0}/'.format(distribution)
         release_content = self._download_content(root_distribution_url + 'Release')
+        packages_path = '{0}/binary-{1}/Packages'.format(section, architecture)
         
         # parse the Release file to locate the component set using a Linear search
         package_metadata = None
-        distribution = deb822.Release(sequence=release_content,
+        release_data = deb822.Release(sequence=release_content,
                                       fields=['Architectures', 'Components', 'MD5Sum'])
-        packages_path = '{0}/binary-{1}/Packages'.format(section, architecture)
-        for md5_entry in distribution['md5sum']:
+        
+        for md5_entry in release_data['md5sum']:
             if md5_entry['name'] == packages_path:
                 
                 # download the Packages file and decompress if necessary
@@ -143,7 +147,7 @@ class PackageUploadTest(TestCase):
         self.assertTrue(package_metadata is not None)
         
         # download the package and inspect it
-        debfile_content = self._download_content(root_public_url + package_metadata['Filename'])
+        debfile_content = self._download_content(self._ROOT_WEBDIR + '/' + package_metadata['Filename'])
         pkg_fd, pkg_filename = tempfile.mkstemp(suffix='.deb', prefix='downloaded')
         pkg_fh = os.fdopen(pkg_fd, 'wb')
         try:
@@ -174,7 +178,7 @@ class PackageUploadTest(TestCase):
         """
         
         # download the public key
-        public_key_content = self._download_content('/aptrepo/dists/repo.asc.gpg')
+        public_key_content = self._download_content(self._ROOT_WEBDIR + '/dists/repo.asc.gpg')
         self.gpg_context.op_import(pyme.core.Data(string=public_key_content))
         
         # verify the signature
@@ -226,7 +230,7 @@ class PackageUploadTest(TestCase):
             control_map['Version'] = '1.01'
             control_map['Section'] = 'oanda'
             control_map['Priority'] = 'optional'
-            control_map['Architecture'] = 'all'
+            control_map['Architecture'] = 'i386'
             control_map['Depends'] = 'vim'
             control_map['Maintainer'] = 'Bijan Vakili <bvakili@oanda.com>'
             control_map['Description'] = 'Test package for apt repo test suite'
@@ -289,7 +293,7 @@ class PackageUploadTest(TestCase):
                     os.remove(pkg_filename)
         
         # retrieve package list
-        response = self.client.get('/aptrepo/packages/')
+        response = self.client.get(self._ROOT_WEBDIR + '/packages/')
         print response.content
         self.failUnlessEqual(response.status_code, 200)
 

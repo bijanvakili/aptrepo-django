@@ -1,0 +1,58 @@
+REST API DESIGN
+===============
+
+Nouns:
+	Distribution
+	Section
+	Package
+	Package instance
+	Action (recorded)
+
+Verbs
+	GET
+	POST (server determines the final URI)
+	DELETE
+	?copy?
+
+
+Representations:
+	XML
+	JSON
+	YAML
+
+		(use Content-type from URL)
+
+	.deb (for packages only)
+	deb822 (for Packages and Sections only)
+		.gz
+
+DESIGN:
+
+	Resources: 
+		Debian packages, 
+		GPG public key
+		section
+		distribution
+
+	/keys
+		/repo.gpg
+	/package
+		/<hashprefix>/name_version_architecture.deb
+		/name/version/architecture
+
+	/dists/distribution/
+		Release(.gpg)
+		/section
+			/instance/
+				/<id>
+				/
+			/action/
+			Packages(.gz)
+
+	POST Debian packages generate
+
+TODO
+====
+- enforce exclusive access for all write operations
+- pruning of packages and Actions
+- support for admin (SQLite) and LDAP users

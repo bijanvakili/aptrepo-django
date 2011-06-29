@@ -64,11 +64,10 @@ class Distribution(models.Model):
     objects = DistributionManager()
     
     _ARCHITECTURE_CHOICES = (
-        (0, 'all'),
-        (1, 'solaris-i386'),
-        (2, 'solaris-sparc'),
-        (3, 'i386'),
-        (4, 'amd64'),
+        (0, 'i386'),
+        (1, 'amd64'),
+        (2, 'solaris-i386'),
+        (3, 'solaris-sparc'),
     )
     
     name = models.CharField(max_length=255, unique=True) # a.k.a. 'codename'
