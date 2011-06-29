@@ -1,14 +1,16 @@
 import gzip
 import hashlib
 import os
+import shutil
+import struct
+import tempfile
 from django.conf import settings
+from django.core.cache import cache
+from django.db.models import Q
 from debian_bundle import deb822, debfile
 import pyme.core
 import pyme.constants.sig
 import models, common
-
-# TODO enforce exclusive access for all write operations
-# TODO pruning of packages and Actions
 
 class Repository:
     """
@@ -17,21 +19,62 @@ class Repository:
 
     _RELEASE_FILENAME = 'Release'
     _PACKAGES_FILENAME = 'Packages'
-    _BINARYPACKAGES_PREFIX = 'binary-'
+    _BINARYPACKAGES_PREFIX = 'binary'
+    _ARCHITECTURE_ALL = 'all'
     
     def __init__(self):
         pass
-    
+
     def get_gpg_public_key(self):
         """
-        Retrieves the GPG public key
+        Retrieves the GPG public key as ASCII text
         """
+        cache_key = settings.APTREPO_FILESTORE['gpg_publickey']
+        gpg_public_key = cache.get(cache_key)
+        if gpg_public_key:
+            return gpg_public_key
+        
+        # return the GPG public key as ASCII text
         gpg_context = self._load_gpg_context()
         public_key_data = pyme.core.Data()
         gpg_context.op_export(None, 0, public_key_data)
         public_key_data.seek(0, 0)
-        return public_key_data.read()
-                
+        gpg_public_key = public_key_data.read()
+        
+        cache.set(cache_key, gpg_public_key)
+        return gpg_public_key
+
+    
+    def get_packages(self, distribution, section, architecture, compressed=False):
+        """
+        Retrieve the packages data
+        """
+        packages_path = self._get_packages_path(distribution, section, architecture)
+        if compressed:
+            packages_path = packages_path + common.GZIP_EXTENSION
+        packages_data = cache.get(packages_path)
+        if not packages_data:
+            self._refresh_releases_data(distribution)
+            packages_data = cache.get(packages_path)
+            
+        return packages_data
+
+    
+    def get_release_data(self, distribution):
+        """
+        Retrieve the release data
+        """
+        releases_path = self._get_releases_path(distribution)
+        releases_data = None
+        releases_signature = None
+        cached_data = cache.get(releases_path)
+        if not cached_data:
+            (releases_data, releases_signature) = self._refresh_releases_data(distribution)
+        else:
+            (releases_data, releases_signature) = cached_data
+            
+        return (releases_data, releases_signature)            
+        
 
     def add_package(self, distribution_name, section_name, package_file):
         """
@@ -54,7 +97,9 @@ class Repository:
         #       class cannot django file types and must use direct filenames.
         deb = debfile.DebFile(filename=package_file.temporary_file_path())
         control = deb.debcontrol()
-        if control['Architecture'] not in distribution.get_architecture_list():
+        if control['Architecture'] != self._ARCHITECTURE_ALL and \
+            control['Architecture'] not in distribution.get_architecture_list():
+            
             raise common.AptRepoException(
                 'Invalid architecture for distribution ({0}) : {1}'.format(
                     distribution_name, control['Architecture']))
@@ -107,15 +152,11 @@ class Repository:
         package_instance, _ = models.PackageInstance.objects.get_or_create(
             package=package, section=section)
         
-        # update for all architectures
-        self._update_metadata(update_packages=True, 
-                              distribution=distribution_name,
-                              section=section_name)
-        
         # insert action
-        # TODO change to include request user
         models.Action.objects.create(section=section, action=models.Action.UPLOAD,
-                                     user=package_instance.creator) 
+                                     user=package_instance.creator)
+        
+        self._clear_cache(distribution_name)
 
         
     def remove_package(self, package_instance_id):
@@ -138,10 +179,7 @@ class Repository:
         
         # update for the package list for the specific section and architecture
         section = models.Section.objects.get(name=package_instance.section.name)
-        self._update_metadata(update_packages=True, 
-                              distribution=section.distribution.name,
-                              section=section.name,
-                              architecture=package_instance.package.architecture)
+        self._clear_cache(section.distribution.name)
         
         # insert action
         # TODO change to include request user
@@ -149,160 +187,133 @@ class Repository:
                                      user="who?")
 
     
-    
-    def _update_metadata(self, update_packages=False, update_release=True, **kwargs):
+    def _write_package_list(self, fh, distribution, section, architecture):
         """
-        Update of repository metadata (recursive)
-        
-        update_packages - Flag indicating whether to recreate Packages file(s)
-        update_release  - Flag indicating whether to recreate Release file(s)
-        
-        Optional keyword arguments include:
-        
-        distribution - Update only a single distribution
-        section      - Update only a single section (distribution must be specified)
-        architecture - Update only an architecture set (distribution and section must be specified) 
+        Writes a package list for a repository section
         """
-        # determine which distributions are involved in this update        
-        distributions = None
-        if kwargs.has_key('distribution'):
-            distributions = models.Distribution.objects.filter(name=kwargs['distribution'])
-        else:
-            distributions = models.Distribution.objects.all()
-        
-        # update any Packages files as necessary
-        if update_packages:
-            if kwargs.has_key('architecture'):
-                self._update_package_list(kwargs['distribution'], 
-                                          kwargs['section'], 
-                                          kwargs['architecture'])
-                
-            elif kwargs.has_key('section'):    
-                architectures = distributions[0].get_architecture_list()
-                for architecture in architectures:
-                    self._update_metadata(update_packages=True, update_release=False,
-                                          distribution=kwargs['distribution'], 
-                                          section=kwargs['section'], 
-                                          architecture=architecture)
-                    
-            elif kwargs.has_key('distribution'):
-                sections = models.Section.objects.filter(distribution=distributions[0])
-                for section in sections:
-                    self._update_metadata(update_packages=True, update_release=False,
-                                          distribution=kwargs['distribution'], 
-                                          section=section.name)
-                    
-            else:
-                for distribution in distributions:
-                    self._update_metadata(update_packages=True, update_release=False,
-                                          distribution=distribution.name)
-        
-        # update any Release files as necessary
-        if update_release:
-            for distribution in distributions:
-                self._update_release_list(distribution.name)            
-    
-    
-    def _update_package_list(self, distribution, section, architecture):
-        """
-        Updates a Debian 'Packages' file for a subsection of the repository
-        """
-        
-        # update the Packages file
-        meta_dir = os.path.join(settings.APTREPO_FILESTORE['metadata_subdir'],
-                                         distribution,
-                                         section,
-                                         self._BINARYPACKAGES_PREFIX + architecture)
-        rel_packages_filename = os.path.join(meta_dir, self._PACKAGES_FILENAME)
-        abs_packages_filename = os.path.join(settings.MEDIA_ROOT, rel_packages_filename)
-        package_instances = models.PackageInstance.objects.filter(section__distribution__name=distribution,
-                                                                  section__name=section,
-                                                                  package__architecture=architecture)
-        abs_meta_dir = settings.MEDIA_ROOT + meta_dir
-        if not os.path.exists(abs_meta_dir):
-            os.makedirs(abs_meta_dir)
-        packages_fh = None 
-        packages_compressed_fh = None
-        try:
-            packages_fh = open(abs_packages_filename, 'wt') 
-            packages_compressed_fh = gzip.open(abs_packages_filename + '.gz', 'wb')
-            for instance in package_instances:
-                control_data = deb822.Deb822(sequence=instance.package.control)
-                control_data['Filename'] = instance.package.path.name
-                control_data['Size'] = str(instance.package.size)
-                control_data['MD5sum'] = instance.package.hash_md5
-                control_data['SHA1'] = instance.package.hash_sha1
-                control_data['SHA256'] = instance.package.hash_sha256
-                
-                control_data.dump(packages_fh)
-                control_data.dump(packages_compressed_fh)
-                packages_fh.write('\n')
-                packages_compressed_fh.write('\n')
-
-            # always write an empty file                
-            packages_fh.write('\n')
-            packages_compressed_fh.write('\n')
+        package_instances = models.PackageInstance.objects.filter(
+                                                                  Q(section__distribution__name=distribution),
+                                                                  Q(section__name=section),
+                                                                  Q(package__architecture=architecture) | 
+                                                                  Q(package__architecture=self._ARCHITECTURE_ALL))
+        for instance in package_instances:
+            control_data = deb822.Deb822(sequence=instance.package.control)
+            control_data['Filename'] = instance.package.path.name
+            control_data['MD5sum'] = instance.package.hash_md5
+            control_data['SHA1'] = instance.package.hash_sha1
+            control_data['SHA256'] = instance.package.hash_sha256
+            control_data['Size'] = str(instance.package.size)
             
-        except Exception as e:
-            raise e
-        finally:
-            if packages_fh:
-                packages_fh.close()
-            if packages_compressed_fh:
-                packages_compressed_fh.close()     
-                
-        # update the metadata for the Packages file
-        self._set_unique_file(rel_packages_filename)
-        self._set_unique_file(rel_packages_filename + '.gz')
-
-    
-    def _update_release_list(self, distribution_name):
-        """
-        Updates a Debian 'Releases' file for a single distribution
-        """
-        distribution = models.Distribution.objects.get(name=distribution_name)
+            control_data.dump(fh)
+            fh.write('\n')
         
-        # create new release with standard data
+   
+    def _refresh_releases_data(self, distribution_name):
+        """
+        Computes and caches the metadata files for a distribution 
+        """
+        
+        distribution = models.Distribution.objects.get(name=distribution_name)
+        sections = models.Section.objects.filter(distribution=distribution).values_list('name', flat=True)
+        architectures = distribution.get_architecture_list()
+
+        # create new release with header        
         release = {}
         release['Origin'] = distribution.origin
         release['Label'] = distribution.label
         release['Codename'] = distribution.name
         release['Date'] = distribution.creation_date.strftime('%a, %d %b %Y %H:%M:%S %z UTC')
         release['Description'] = distribution.description
-        release['Architectures'] = ' '.join(distribution.get_architecture_list())
-        release['Components'] = ' '.join(models.Section.objects.filter(
-            distribution__name=distribution_name).values_list('name', flat=True))
+        release['Architectures'] = ' '.join(architectures)
+        release['Components'] = ' '.join(sections)
 
-        release_path_prefix = os.path.join(settings.APTREPO_FILESTORE['metadata_subdir'], 
-                                           distribution_name)
-        metafiles = models.UniqueFile.objects.filter(path__startswith=release_path_prefix)
-        release_filename = os.path.join(settings.MEDIA_ROOT, 
-                                        release_path_prefix, 
-                                        self._RELEASE_FILENAME)
-        release_hash_entries = {'MD5Sum':[], 'SHA1':[], 'SHA256':[]}
-        with open(release_filename, 'wt') as release_fh:            
-            for k,v in release.items():
-                release_fh.write('{0}: {1}\n'.format(k, v))
+        hash_types = ['MD5Sum', 'SHA1', 'SHA256']
+        release_hashes = {}
+        for h in hash_types:
+            release_hashes[h] = []
+
+        release_data = []
+        for k,v in release.items():
+            release_data.append('{0}: {1}'.format(k, v))
             
-            for metafile in metafiles:
-                metafile_path = str(metafile.path).replace(release_path_prefix + '/', '', 1)
-                release_hash_entries['MD5Sum'].append(
-                    ' {0} {1} {2}'.format(metafile.hash_md5, metafile.size, metafile_path)
-                )
-                release_hash_entries['SHA1'].append(
-                    ' {0} {1} {2}'.format(metafile.hash_sha1, metafile.size, metafile_path)
-                )
-                release_hash_entries['SHA256'].append(
-                    ' {0} {1} {2}'.format(metafile.hash_sha256, metafile.size, metafile_path)
-                )
+        # compute hashes for all package lists
+        tmp_fh = None
+        compressed_fh = None
+        try:
+            tmp_fd, tmp_filename = tempfile.mkstemp(prefix=self._PACKAGES_FILENAME)
+            compressed_filename = tmp_filename + common.GZIP_EXTENSION
+            tmp_fh = os.fdopen(tmp_fd, 'wb+')
+            compressed_fh = open(compressed_filename, 'wb+')
+            
+            for section in sections:
+                for architecture in architectures:
+
+                    # create the Packages file            
+                    tmp_fh.seek(0)
+                    tmp_fh.truncate(0)
+                    self._write_package_list(tmp_fh, distribution_name, section, 
+                                             architecture)
+                    tmp_fh.flush()
+                    tmp_file_size = tmp_fh.tell()
+                    
+                    # create the compressed version using a timestamp (mtime) of 0
+                    # 
+                    # TODO Remove conditions around mtime once python v2.7 becomes the minimum 
+                    # supported version
+                    compressed_fh.seek(0)
+                    compressed_fh.truncate(0)
+                    gzip_params = {
+                                   'filename':self._PACKAGES_FILENAME, 'mode':'wb', 'compresslevel':9, 
+                                   'fileobj':compressed_fh}
+                    if common.get_python_version() >= 2.7:
+                        gzip_params['mtime'] = 0 
+                    
+                    gzip_fh = gzip.GzipFile(**gzip_params)
+                    tmp_fh.seek(0)
+                    shutil.copyfileobj(fsrc=tmp_fh, fdst=gzip_fh)
+                    gzip_fh.close()
+                    compressed_file_size = compressed_fh.tell()
+
+                    # for python v2.6 and earlier, we need to manually set the mtime field to
+                    # zero.  This starts at position 4 of the file (see RFC 1952)                    
+                    if common.get_python_version() < 2.7:
+                        compressed_fh.seek(4)
+                        compressed_fh.write(struct.pack('<i',0))
+
+                    packages_path = self._get_packages_path(distribution_name, section, architecture)
+                    rel_packages_path = self._get_packages_relative_path(section, architecture)
+                    tmp_fh.seek(0)
+                    cache.set( packages_path, tmp_fh.read() )
+                    compressed_fh.seek(0)
+                    cache.set( packages_path + common.GZIP_EXTENSION, compressed_fh.read(compressed_file_size) )
+                    
+                    # hash the package list for each hash function
+                    for type in hash_types:
+                        release_hashes[type].append(
+                            ' {0} {1} {2}'.format(common.hash_file_by_fh(self._get_hashfunc(type), tmp_fh), 
+                                                  tmp_file_size, 
+                                                  rel_packages_path))
+                        release_hashes[type].append(
+                            ' {0} {1} {2}'.format(common.hash_file_by_fh(self._get_hashfunc(type), compressed_fh), 
+                                                  compressed_file_size, 
+                                                  rel_packages_path + common.GZIP_EXTENSION))
+
+        finally:                        
+            if tmp_fh:
+                tmp_fh.close()
+            if compressed_fh:
+                compressed_fh.close()
+            os.remove(tmp_filename)
+            if os.path.exists(compressed_filename):
+                os.remove(compressed_filename)
+                    
+        for hash_type, hash_list in release_hashes.items():
+            release_data.append(hash_type + ':')
+            release_data.extend( hash_list )
                 
-            for hash_type, hash_list in release_hash_entries.items():
-                release_fh.write(hash_type + ':\n')
-                release_fh.write('\n'.join(hash_list) + '\n')
-                
-        # GPG sign the release file
-        # (use ASCII filenames as Unicode not currently supported)
-        release_plain_data = pyme.core.Data(file=release_filename.encode('ascii', 'ignore'))
+        # create GPG signature for release data
+        release_contents = '\n'.join(release_data)
+        release_plain_data = pyme.core.Data(release_contents)
         release_signature_data = pyme.core.Data()
         modes = pyme.constants.sig.mode
         gpg_context = self._load_gpg_context()
@@ -311,23 +322,13 @@ class Repository:
                                           modes.DETACH)
         pyme.errors.errorcheck(sign_result)
         release_signature_data.seek(0, 0)
-        with open(release_filename + '.gpg', 'wt') as release_gpg_fh:
-            release_gpg_fh.write(release_signature_data.read())
-    
-    
-    def _set_unique_file(self, filename):
-        """
-        Updates or creates a unique file entry in the database
-        """
-        abs_filename = os.path.join(settings.MEDIA_ROOT, filename)
-        unique_file, _ = models.UniqueFile.objects.get_or_create(path=filename)
-        unique_file.size = os.path.getsize(abs_filename)
-        unique_file.hash_md5 = common.hash_file(hashlib.md5(), abs_filename)
-        unique_file.hash_sha1 = common.hash_file(hashlib.sha1(), abs_filename)
-        unique_file.hash_sha256 = common.hash_file(hashlib.sha256(), abs_filename)
-        unique_file.save()
+        release_signature = release_signature_data.read()
         
-        return unique_file
+        releases_path = self._get_releases_path(distribution)
+        cache.set(releases_path, (release_contents, release_signature) )
+        
+        return (release_contents, release_signature)
+
 
     def _load_gpg_context(self):
         """
@@ -342,3 +343,49 @@ class Repository:
         pyme.errors.errorcheck(gpgme_result.imports[0].result)
         
         return gpg_context
+
+    
+    def _clear_cache(self, distribution_name):
+        distribution = models.Distribution.objects.get(name=distribution_name)
+        sections = models.Section.objects.filter(distribution=distribution).values_list('name', flat=True)
+        architectures = distribution.get_architecture_list()
+        
+        for section in sections:
+            for architecture in architectures:
+                packages_path = self._get_packages_path(distribution_name, section, architecture)
+                cache.delete_many([ packages_path, packages_path + common.GZIP_EXTENSION ])
+        
+        releases_path = self._get_releases_path(distribution_name)
+        cache.delete_many([releases_path, releases_path + common.GPG_EXTENSION])
+
+
+    def _get_packages_path(self, distribution, section, architecture):
+        packages_path = '{0}/{1}/{2}'.format(
+            settings.APTREPO_FILESTORE['metadata_subdir'],
+            distribution, 
+            self._get_packages_relative_path(section, architecture))
+        return packages_path
+    
+
+    def _get_packages_relative_path(self, section, architecture):
+        packages_path = '{0}/{1}-{2}/{3}'.format(
+            section, self._BINARYPACKAGES_PREFIX, architecture, 
+            self._PACKAGES_FILENAME)
+        return packages_path
+
+
+    def _get_releases_path(self, distribution):
+        releases_path = '{0}/{1}/{2}'.format(
+            settings.APTREPO_FILESTORE['metadata_subdir'],
+            distribution, self._RELEASE_FILENAME)
+        return releases_path
+    
+    
+    def _get_hashfunc(self, hash_name):
+        name = hash_name.lower()
+        if name == 'md5' or name == 'md5sum':
+            return hashlib.md5()
+        elif name == 'sha1':
+            return hashlib.sha1()
+        elif name == 'sha256':
+            return hashlib.sha256()

@@ -5,7 +5,7 @@ from django.template import RequestContext
 from django import forms
 from django.conf import settings
 import models
-from common import AptRepoException
+from common import AptRepoException, GZIP_EXTENSION, GPG_EXTENSION
 from repository import Repository
 
 
@@ -126,10 +126,66 @@ def delete_package_instance(request):
         return _error_response(e)
 
 
+def package_list(request, distribution, section, architecture, extension=None):
+    """
+    Retrieve a package list
+    """
+    try:
+        if request.method != 'GET':
+            raise AptRepoException('Invalid HTTP method')
+
+        # NOTE: caching is not employed for package list
+                  
+        is_compressed = False
+        if extension == GZIP_EXTENSION:
+            is_compressed = True
+        elif extension != '':
+            return HttpResponse(status_code=404)
+            
+        mimetype = 'text/plain'
+        if is_compressed:
+            mimetype = 'application/gzip'
+        repository = Repository()
+        response = HttpResponse(mimetype=mimetype)
+        response.content = repository.get_packages(distribution, section, architecture,
+                                                   is_compressed)
+        response['Content-Length'] = len(response.content)
+        if is_compressed:
+            response['Content-Encoding'] = 'gzip'
+            
+        return response
+    
+    except Exception as e:
+        return _error_response(e)
+        
+
+def release_list(request, distribution, extension):
+    """
+    Retrieves a Releases metafile list
+    """
+    try:
+        if request.method != 'GET':
+            raise AptRepoException('Invalid HTTP method')
+
+        repository = Repository()
+        (releases_data, signature_data) = repository.get_release_data(distribution)
+        data = None
+        if extension == GPG_EXTENSION:
+            data = signature_data
+        else:
+            data = releases_data
+
+        # return the response
+        return HttpResponse(data, mimetype = 'text/plain')
+
+    except Exception as e:
+        return _error_response(e)
+
 def _handle_uploaded_file(distribution_name, section_name, uploaded_file):
     """ 
     Handles a successfully uploaded files 
     """
+    # add the package
     repository = Repository()
     repository.add_package(distribution_name, section_name, uploaded_file)
     return HttpResponseRedirect(reverse('aptrepo.views.upload_success'))
