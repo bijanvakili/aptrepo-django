@@ -1,58 +1,73 @@
+TODO
+====
+- REST API and test cases
+- copy operation
+- pruning of packages and Actions
+- RSS feeds
+- enforce exclusive access for all write operations
+- admin interface
+- permissions w/support for admin (SQLite) and LDAP users
+- proper web UI templates and interface
+- Apache and nginx deployment
+- packaging/distribution
+
 REST API DESIGN
 ===============
 
-Nouns:
-	Distribution
-	Section
-	Package
-	Package instance
-	Action (recorded)
+PUT - idempotent, requires all content and the specific location
+POST - not idempotent, requires only partial content and allows server to determine the rest
 
-Verbs
-	GET
+Nouns & Associated verbs:
+	GPG public key (retrieve)
+	Distribution (retrieve)
+	Section (retrieve)
+	Package (retrieve, update, delete)
+	Package instance (upload, retrieve, delete, copy)
+	Action (retrieve)
+
+	read - GET
+	create
 	POST (server determines the final URI)
 	DELETE
-	?copy?
+	PUT (copy)
 
 
 Representations:
 	XML
 	JSON
 	YAML
-
-		(use Content-type from URL)
-
 	.deb (for packages only)
-	deb822 (for Packages and Sections only)
-		.gz
+	deb822, .gz (for Packages and Sections only)
 
-DESIGN:
+	(use Content-type from URL)
+	
 
-	Resources: 
-		Debian packages, 
-		GPG public key
-		section
-		distribution
-
-	/keys
-		/repo.gpg
+URL DESIGN:
+	(standard content)
+	/keys			(GET)
+		/repo.gpg	(GET)
 	/package
-		/<hashprefix>/name_version_architecture.deb
-		/name/version/architecture
+		/<hashprefix>/<name>_<version>_<architecture>.deb	(GET) 
 
-	/dists/distribution/
-		Release(.gpg)
-		/section
-			/instance/
-				/<id>
-				/
-			/action/
-			Packages(.gz)
+	/dists/<distribution>/	(GET)
+		Release(.gpg)		(GET)
+		/<section>			(GET)
+			Packages(.gz)	(GET)
+			<.deb>			(POST) does an upload
+			/upload			(GET, POST)
+			/delete			(GET, POST)
+			/copy			(GET, POST)
+			/result			(GET, depends on parameters passed in)
 
-	POST Debian packages generate
-
-TODO
-====
-- enforce exclusive access for all write operations
-- pruning of packages and Actions
-- support for admin (SQLite) and LDAP users
+	(REST API)
+	/api
+		/packages
+			/<name>/<version>/<architecture>	(GET,PUT*,DELETE*)  (*) change all instances  
+		/dists	(GET)
+			/<distribution> (GET)
+				/<section>	(GET)
+				/packages		(POST(uplad or copy another instance))
+					<instance.id>						(GET, DELETE)
+					/<name>/<version>/<architecture>	(GET, DELETE)
+				/actions/
+					<id>		(GET)
