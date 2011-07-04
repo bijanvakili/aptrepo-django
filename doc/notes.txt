@@ -60,14 +60,20 @@ URL DESIGN:
 			/result			(GET, depends on parameters passed in)
 
 	(REST API)
-	/api
+	/api/
 		/packages
-			/<name>/<version>/<architecture>	(GET,PUT*,DELETE*)  (*) change all instances  
+			/?id=<id>							(GET)
+			/<name>/<version>/<architecture>	(GET,DELETE*)
+  
 		/dists	(GET)
-			/<distribution> (GET)
-				/<section>	(GET)
-				/packages		(POST(uplad or copy another instance))
-					<instance.id>						(GET, DELETE)
+			/?distribution_id=<id>	(GET)
+			/<distribution name> 	(GET)
+			/?section_id=<id>	(GET)
+			/?instance_id=<id>						(GET, DELETE)
+
+			/<distribution name>/<section>			(GET)
+					/packages		(GET, POST(upload or copy another instance))
 					/<name>/<version>/<architecture>	(GET, DELETE)
-				/actions/
-					<id>		(GET)
+			/actions/
+				?distribution=<id>&section=<id>&max=<n> (GET)
+				<id>		(GET)
