@@ -97,7 +97,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 )
 
-ROOT_URLCONF = 'aptrepo2.urls'
+ROOT_URLCONF = 'server.urls'
 
 TEMPLATE_DIRS = (
     os.path.join( APTREPO_SHARE_ROOT, 'templates' ),
