@@ -11,11 +11,13 @@ from django.conf import settings
 from debian_bundle import deb822, debfile
 import pyme.core
 from common import hash_string, hash_file_by_fh
+import client.api
 
 class PackageUploadTest(TestCase):
 
     fixtures = ['simple_repository.json']
     _ROOT_WEBDIR = '/aptrepo'
+    _ROOT_APIDIR = '/aptrepo/api'
 
     def setUp(self):
         # remove all metafiles and previously uploaded Debian files
@@ -30,8 +32,9 @@ class PackageUploadTest(TestCase):
         self.gpg_context = pyme.core.Context()
         self.gpg_context.set_armor(1)
         
-        # HTTP client for testing
+        # HTTP and REST client for testing
         self.client = Client()
+        self.apiclient = client.api.AptRepoClient()
         
         # distribution and section name
         self.distribution_name = 'test_distribution'
@@ -307,3 +310,68 @@ class PackageUploadTest(TestCase):
             
             self._verify_package_download(self.distribution_name, self.section_name, 
                                           package_name, test_architecture, version)
+
+    def test_rest_api(self):
+        """
+        Tests the REST API
+        """
+
+        # query the empty repository
+        distribution_list = self.clientapi.get_distribution_list()
+        self.assertIn(self.distribution_name, distribution_list, 'Verify distribution list')
+        
+        distribution_metadata = self.clientapi.get_distribution_metadata(name=self.distribution_name)
+        self.assertIsNotNone(distribution_metadata)
+        self.assertEqual(distribution_metadata.description, 'Test Distribution')
+        self.assertEqual(distribution_metadata.sections[0].description, 'Test Section')
+        
+        section_id = distribution_metadata.sections[0].id 
+        
+        section_data = self.clientapi.get_section_data(section_id)
+        self.assertIsNotNone(section_data)
+        self.assertEqual(section_data.name, 'test_section')
+        self.assertEqual(section_data.description, 'Test Section')
+        
+        package_list = self.clientapi.list_section_packages(section_id)
+        self.assertEqual(len(package_list), 0)
+        
+        # upload a single package and check the result
+        pkg_filename = None
+        try:
+            # create the package
+            control_map = deb822.Deb822()
+            control_map['Package'] = 'test-package'
+            control_map['Version'] = '1.01'
+            control_map['Section'] = 'oanda'
+            control_map['Priority'] = 'optional'
+            control_map['Architecture'] = 'i386'
+            control_map['Depends'] = 'vim'
+            control_map['Maintainer'] = 'Bijan Vakili <bvakili@oanda.com>'
+            control_map['Description'] = 'Test package for apt repo test suite'
+            pkg_fh, pkg_filename = tempfile.mkstemp(suffix='.deb', prefix='mypackage')
+            os.close(pkg_fh)
+            self._create_package(control_map, pkg_filename)
+            
+            # upload the package
+            self.clientapi.upload_package(id=section_id, filename=pkg_filename)
+            
+        finally:
+            if pkg_filename is not None:
+                os.remove(pkg_filename)
+
+        # check the metadata
+        package_list = self.clientapi.list_section_packages(section_id)
+        self.assertEqual(len(package_list), 1)
+        package_instance_id = package_list[0].id
+        self._verify_repo_metadata()
+        
+        # remove the package
+        self.clientapi.delete_package_instance(package_instance_id)
+        package_list = self.clientapi.list_section_packages(section_id)
+        self.assertEqual(len(package_list), 0)
+        self._verify_repo_metadata()
+
+        # check the resulting actions
+        action_list = self.list_actions(section_id=section_id)
+        self.assertEqual(len(action_list), 2)        
+

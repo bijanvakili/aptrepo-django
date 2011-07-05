@@ -52,10 +52,8 @@ class AptRepoClient:
         username -- Optional username for authentication
         password -- Optional password for authentication
         """
-        
-        if url is None:
-            self.urlprefix = self._DEFAULT_API_URL
-        else:
+        self.urlprefix = self._DEFAULT_API_URL
+        if url:
             self.urlprefix = url
         
         # setup password authentication for REST connections
