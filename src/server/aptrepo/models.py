@@ -133,7 +133,8 @@ class Action(models.Model):
         (COPY, 'copy')
     )
 
-    section = models.ForeignKey('Section')
+    section = models.ForeignKey('Section', db_index=True)
+    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
     action = models.IntegerField(choices=_ACTION_TYPE_CHOICES)
     user = models.CharField(max_length=255) 
     details = models.TextField()
@@ -141,5 +142,3 @@ class Action(models.Model):
 
     def __unicode__(self):
         return '({0}) {1} - {2}'.format(self.user, self.action, self.instance)
-
-    

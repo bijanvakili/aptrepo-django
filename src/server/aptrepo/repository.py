@@ -22,9 +22,6 @@ class Repository:
     _BINARYPACKAGES_PREFIX = 'binary'
     _ARCHITECTURE_ALL = 'all'
     
-    def __init__(self):
-        pass
-
     def get_gpg_public_key(self):
         """
         Retrieves the GPG public key as ASCII text
@@ -83,6 +80,8 @@ class Repository:
         distribution_name - distribution to add package
         section_name - section within distribution to add package
         package_file - instance of TemporaryUploadedFile
+        
+        Returns the new instance id
         """
         # check preconditions
         (_, ext) = os.path.splitext(package_file.name)
@@ -157,6 +156,36 @@ class Repository:
                                      user=package_instance.creator)
         
         self._clear_cache(distribution_name)
+        return package_instance.id
+        
+    def clone_package(self, package_id=None, instance_id=None, dest_distribution_name, dest_section_name):
+        """
+        Clones a package to create another instance
+        """
+        
+        # locate the target section and the source package
+        target_section = models.Section.objects.get(distribution__name=dest_distribution_name, 
+                                                    name=dest_section_name)
+        src_package = None
+        if package_id:
+            src_package=models.Package.objects.get(package_id)
+        elif instance_id:
+            src_instance=models.PackageInstance.objects.get(instance_id)
+            if src_instance.section.id == target_section.id:
+                raise common.AptRepoException('Cannot clone into the same section')
+            src_package=src_instance.package
+        
+        # create the new instance
+        # TODO set the creator
+        package_instance = models.PackageInstance.objects.create(package=src_package,
+                                                                 section=target_section)
+        
+        # insert action
+        models.Action.objects.create(section=target_section, action=models.Action.COPY,
+                                     user=package_instance.creator)
+        
+        self._clear_cache(dest_distribution_name)
+        return package_instance.id
 
         
     def remove_package(self, package_instance_id):
@@ -185,7 +214,40 @@ class Repository:
         # TODO change to include request user
         models.Action.objects.create(section=section, action=models.Action.DELETE,
                                      user="who?")
+        
+        
+    def remove_all_package_instances(self, package_id):
+        """
+        Removes all instances of a package
+        """
+        instances = models.PackageInstance.objects.filter(package__id=package_id)
+        for instance in instances:
+            self.remove_package(package_instance_id=instance.id)
 
+    
+    def get_actions(self, distribution_id=None, section_id=None, 
+                    min_timestamp=None, max_timestamp=None, max_items=None):
+        """
+        Retrieves actions
+        """
+        # construct query based on restrictions
+        query_args = []
+        if distribution_id:
+            query_args.append(Q(section__distribution_id=distribution_id))
+        if section_id:
+            query_args.append(Q(section_id=section_id))
+        if min_timestamp:
+            query_args.append(Q(timestamp__gte=min_timestamp))
+        if max_timestamp:
+            query_args.append(Q(timetsamp__lte=max_timestamp))
+            
+        # execute the query and return the result
+        actions = models.Action.objects.filter(*query_args).order_by('timestamp')
+        if max_items:
+            return actions[:max_items]
+        else:
+            return actions
+        
     
     def _write_package_list(self, fh, distribution, section, architecture):
         """

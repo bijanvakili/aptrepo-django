@@ -40,18 +40,22 @@ class AptRepoClient:
     """
 
     _DEFAULT_API_URL = 'http://127.0.0.1:8000/aptrepo/api'
-    _DISTS_PREFIX = 'dists/'
+    _DISTS_PREFIX = 'distributions/'
+    _SECTIONS_PREFIX = 'sections/'
     _ACTIONS_PREFIX = 'actions/'
     _PACKAGES_SUFFIX = '/packages'
+    _PACKAGES_PREFIX = '/packages/'
     
     def __init__(self, url=None, username=None, password=None, timeout=None):
         """
         Constructor to set up an API connection
         
-        url -- URL to Apt repo server (defaults to http://127.0.0.1:8000/aptrepo/api)
+        url -- URL to Apt repo server (defaults to _DEFAULT_API_URL)
         username -- Optional username for authentication
         password -- Optional password for authentication
         """
+        
+        # set the url
         self.urlprefix = self._DEFAULT_API_URL
         if url:
             self.urlprefix = url
@@ -87,7 +91,7 @@ class AptRepoClient:
         return self._get_request(self._DISTS_PREFIX)        
     
     
-    def get_distribution_metadata(self, id=None, name=None):
+    def get_distribution_metadata(self, id):
         """
         Retrieves the metadata for a distribution
     
@@ -95,15 +99,7 @@ class AptRepoClient:
         OR 
         distribution -- Distribution name
         """
-        url = self._DISTS_PREFIX
-        if id:
-            url = url + '?' + urllib.urlencode({'distribution_id':id})
-        elif name:
-            url = url + '/' + name
-        else:
-            raise AptRepoClientException(
-                'Must specify either \'id\' or \'name\' for distribution')
-            
+        url = self._DISTS_PREFIX + '/' + id
         return self._get_request(url)
     
     
@@ -177,20 +173,35 @@ class AptRepoClient:
         Filter parameters are as follows:
         
         distrubtion_id -- distribution
-        section_id -- section 
-        max -- maximum number of actions to retrieve
+        section_id -- section
+        min_timestamp -- Lower bound on timestamp
+        max_timestamp -- Upper bound on timestamp 
+        max_items -- maximum number of actions to retrieve
         """
-        url = self._ACTIONS_PREFIX + '/?' + urllib.urlencode(kwargs)
+        url = ''
+        if kwargs['distribution_id']:
+            if kwargs['section_id']:
+                url = '{0}{1}/{2}{3}/{4}'.format(self._DISTS_PREFIX, kwargs['distribution_id'],
+                                                       self._SECTIONS_PREFIX, kwargs['section_id'],
+                                                       self._ACTIONS_PREFIX)
+            else:
+                url = '{0}{1}/{2}'.format(self._DISTS_PREFIX, kwargs['distribution_id'],
+                                                       self._ACTIONS_PREFIX)
+        elif kwargs['section_id']:
+            url = '{0}{1}/{2}'.format(self._SECTIONS_PREFIX, kwargs['section_id'],
+                                                   self._ACTIONS_PREFIX)
+        else:
+            url = self._ACTIONS_PREFIX
+        
+        restrictions = {}
+        for k in ('min_timestamp', 'max_timestamp', 'max_items'): 
+            if k in kwargs:
+                restrictions[k] = kwargs[k]
+            
+            url = url + '?' + urllib.urlencode(restrictions)
+            
         self._get_request(url)
         
-    def get_action(self, id):
-        """
-        Retrieves detailed information for an action
-        
-        id -- action ID
-        """
-        url = self._ACTIONS_PREFIX + '/' + str(id)
-        self._get_request(url)
             
     def _package_url(self, id=None, name=None, version=None, architecture=None):
         """
@@ -202,11 +213,11 @@ class AptRepoClient:
         version -- Package version string
         architecture -- Architecture string for package (i386, amd64, all, etc.)
         """
-        url = ''
+        url = self._PACKAGES_PREFIX
         if id:
-            url = str(id)
+            url = url + str(id)
         elif name and version and architecture:
-            url = '{0}/{1}/{2}'.format(name, version, architecture)
+            url = url + '{0}/{1}/{2}'.format(name, version, architecture)
         else:
             raise AptRepoClientException(
                 'Must specify either \'id\' or \'name,version,architecture\' for package')
@@ -222,17 +233,13 @@ class AptRepoClient:
         distribution_name -- Distribution name
         section_name -- Section name
         """
-        url = self._DISTS_PREFIX
         if id:
-            url = url + '?' + urllib.urlencode({'section_id':id})
+            return self._SECTIONS_PREFIX + '/' + id
         elif distribution_name and section_name:
-            url = url + '{0}/{1}'.format(distribution_name, section_name)
+            return self._DISTS_PREFIX + '/' + '{0}/{1}'.format(distribution_name, section_name)
         else:
             raise AptRepoClientException(
                 'Must specify either \'id\' or \'distribution_name,section_name\' for section')
-
-        return url
-
 
     def _get_request(self, url):
         """
