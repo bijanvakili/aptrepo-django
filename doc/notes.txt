@@ -1,7 +1,7 @@
 TODO
 ====
 - REST API and test cases
-- copy operation
+- copy operation (web UI)
 - pruning of packages and Actions
 - RSS feeds
 - enforce exclusive access for all write operations
@@ -39,7 +39,7 @@ Representations:
 	.deb (for packages only)
 	deb822, .gz (for Packages and Sections only)
 
-	(use Content-type from URL)
+	(use ?format HTTP parameter)
 	
 
 URL DESIGN:
@@ -61,19 +61,23 @@ URL DESIGN:
 
 	(REST API)
 	/api/
+		/actions	(GET)
+			?min_timestamp=XX&max_timestamp=XX
 		/packages
-			/?id=<id>							(GET)
-			/<name>/<version>/<architecture>	(GET,DELETE*)
-  
-		/dists	(GET)
-			/?distribution_id=<id>	(GET)
-			/<distribution name> 	(GET)
-			/?section_id=<id>	(GET)
-			/?instance_id=<id>						(GET, DELETE)
+			/<id>								(GET)
+			/<name>/<version>/<architecture>	(GET,DELETE)
 
-			/<distribution name>/<section>			(GET)
-					/packages		(GET, POST(upload or copy another instance))
-					/<name>/<version>/<architecture>	(GET, DELETE)
-			/actions/
-				?distribution=<id>&section=<id>&max=<n> (GET)
-				<id>		(GET)
+		/distributions	(GET)
+			/<id>					(GET)
+			/<distribution name> 	(GET)
+				/actions		(GET)
+					<id>		(GET)
+				/sections				(GET)
+					/<section_name>		(GET)
+						/packages		(GET, POST(upload or copy another instance))
+							/<id>								(GET, DELETE)
+							/<name>/<version>/<architecture>	(GET, DELETE)
+						/actions		(GET)
+		/sections (GET)
+			/<id>		(GET)
+				/actions	(GET)
