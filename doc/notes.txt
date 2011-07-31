@@ -1,13 +1,13 @@
 TODO
 ====
 - REST API and test cases
-- copy operation (web UI)
-- pruning of packages and Actions
+- pruning of packages and Actions (through manage.py)
 - RSS feeds
-- enforce exclusive access for all write operations
 - admin interface
-- permissions w/support for admin (SQLite) and LDAP users
 - proper web UI templates and interface
+	- copy operation (web UI)
+- enforce exclusive access for all write operations
+- permissions w/support for admin (SQLite) and LDAP users
 - Apache and nginx deployment
 - packaging/distribution
 
@@ -43,9 +43,10 @@ Representations:
 	
 
 URL DESIGN:
+/aptrepo
 	(standard content)
-	/keys			(GET)
-		/repo.gpg	(GET)
+	/keys				(GET)
+		/publickey.gpg	(GET)
 	/package
 		/<hashprefix>/<name>_<version>_<architecture>.deb	(GET) 
 
@@ -62,22 +63,25 @@ URL DESIGN:
 	(REST API)
 	/api/
 		/actions	(GET)
-			?min_timestamp=XX&max_timestamp=XX
-		/packages
+			?min_timestamp=XX&max_timestamp=XX	(GET)		*query
 			/<id>								(GET)
-			/<name>/<version>/<architecture>	(GET,DELETE)
-
+		/packages
+			/<id>												(GET,DELETE)
+			/deb822/<name>/<version>/<architecture>				(GET,DELETE)
+			
+		/package-instances
+				/<id>			(GET, DELETE)
+				/deb822/<name>/<version>/<architecture>				(GET,DELETE)
+					
 		/distributions	(GET)
 			/<id>					(GET)
-			/<distribution name> 	(GET)
 				/actions		(GET)
 					<id>		(GET)
+					*query
 				/sections				(GET)
-					/<section_name>		(GET)
-						/packages		(GET, POST(upload or copy another instance))
-							/<id>								(GET, DELETE)
-							/<name>/<version>/<architecture>	(GET, DELETE)
-						/actions		(GET)
-		/sections (GET)
+				
+		/sections 		(GET)
 			/<id>		(GET)
-				/actions	(GET)
+			/package-instances	(GET, POST(upload or copy another instance))
+				/deb822/<name>/<version>/<architecture>				(GET,DELETE)
+			/actions	(GET)

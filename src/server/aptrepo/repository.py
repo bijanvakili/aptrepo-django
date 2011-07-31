@@ -158,7 +158,7 @@ class Repository:
         self._clear_cache(distribution_name)
         return package_instance.id
         
-    def clone_package(self, package_id=None, instance_id=None, dest_distribution_name, dest_section_name):
+    def clone_package(self, dest_distribution_name, dest_section_name, package_id=None, instance_id=None):
         """
         Clones a package to create another instance
         """
@@ -233,9 +233,9 @@ class Repository:
         # construct query based on restrictions
         query_args = []
         if distribution_id:
-            query_args.append(Q(section__distribution_id=distribution_id))
+            query_args.append(Q(section__distribution__id=distribution_id))
         if section_id:
-            query_args.append(Q(section_id=section_id))
+            query_args.append(Q(section__id=section_id))
         if min_timestamp:
             query_args.append(Q(timestamp__gte=min_timestamp))
         if max_timestamp:

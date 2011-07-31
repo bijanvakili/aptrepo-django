@@ -11,7 +11,10 @@ from django.conf import settings
 from debian_bundle import deb822, debfile
 import pyme.core
 from common import hash_string, hash_file_by_fh
+
+# TODO Fix this import so that django can run tests from the CLI instead of Eclipse
 import client.api
+
 
 class PackageUploadTest(TestCase):
 
@@ -181,7 +184,8 @@ class PackageUploadTest(TestCase):
         """
         
         # download the public key
-        public_key_content = self._download_content(self._ROOT_WEBDIR + '/dists/repo.asc.gpg')
+        public_key_content = self._download_content(
+            '{0}/dists/{1}'.format(self._ROOT_WEBDIR, settings.APTREPO_FILESTORE['gpg_publickey']))
         self.gpg_context.op_import(pyme.core.Data(string=public_key_content))
         
         # verify the signature
@@ -317,22 +321,25 @@ class PackageUploadTest(TestCase):
         """
 
         # query the empty repository
-        distribution_list = self.clientapi.get_distribution_list()
-        self.assertIn(self.distribution_name, distribution_list, 'Verify distribution list')
+        distribution_list = self.apiclient.get_distribution_list()
+        self.assertEqual(len(distribution_list), 1)
+        self.assertEqual(self.distribution_name, distribution_list[0]['name'], 'Verify distribution list')
         
-        distribution_metadata = self.clientapi.get_distribution_metadata(name=self.distribution_name)
+        distribution_metadata = self.apiclient.get_distribution_metadata(distribution_list[0]['id'])
         self.assertIsNotNone(distribution_metadata)
-        self.assertEqual(distribution_metadata.description, 'Test Distribution')
-        self.assertEqual(distribution_metadata.sections[0].description, 'Test Section')
+        self.assertEqual(distribution_metadata['description'], 'Test Distribution')
         
-        section_id = distribution_metadata.sections[0].id 
+        sections = self.apiclient.list_sections(distribution_list[0]['id'])
+        self.assertEqual(sections[0]['description'], 'Test Section')
         
-        section_data = self.clientapi.get_section_data(section_id)
+        section_id = sections[0]['id'] 
+        
+        section_data = self.apiclient.get_section_data(section_id)
         self.assertIsNotNone(section_data)
-        self.assertEqual(section_data.name, 'test_section')
-        self.assertEqual(section_data.description, 'Test Section')
+        self.assertEqual(section_data['name'], 'test_section')
+        self.assertEqual(section_data['description'], 'Test Section')
         
-        package_list = self.clientapi.list_section_packages(section_id)
+        package_list = self.apiclient.list_section_packages(section_id)
         self.assertEqual(len(package_list), 0)
         
         # upload a single package and check the result
@@ -353,25 +360,25 @@ class PackageUploadTest(TestCase):
             self._create_package(control_map, pkg_filename)
             
             # upload the package
-            self.clientapi.upload_package(id=section_id, filename=pkg_filename)
+            self.apiclient.upload_package(section_id, filename=pkg_filename)
             
         finally:
             if pkg_filename is not None:
                 os.remove(pkg_filename)
 
         # check the metadata
-        package_list = self.clientapi.list_section_packages(section_id)
+        package_list = self.apiclient.list_section_packages(section_id)
         self.assertEqual(len(package_list), 1)
-        package_instance_id = package_list[0].id
+        package_instance_id = package_list[0]['id']
         self._verify_repo_metadata()
         
         # remove the package
-        self.clientapi.delete_package_instance(package_instance_id)
-        package_list = self.clientapi.list_section_packages(section_id)
+        self.apiclient.delete_package_instance(package_instance_id)
+        package_list = self.apiclient.list_section_packages(section_id)
         self.assertEqual(len(package_list), 0)
         self._verify_repo_metadata()
 
         # check the resulting actions
-        action_list = self.list_actions(section_id=section_id)
+        action_list = self.apiclient.list_actions(section_id=section_id)
         self.assertEqual(len(action_list), 2)        
 
