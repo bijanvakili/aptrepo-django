@@ -67,7 +67,7 @@ MEDIA_URL = '/aptrepo/public/'
 APTREPO_FILESTORE = {
     'metadata_subdir' : 'dists',
     'packages_subdir' : 'packages',
-    'gpg_publickey' : 'repo.asc.gpg',
+    'gpg_publickey' : 'publickey.gpg',
     'hash_depth': 2 
 }
 

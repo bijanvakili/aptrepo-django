@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
 import json
-import poster.encode
-import poster.streaminghttp
 import urllib
-import urllib2
+import httpclient
 
 
 """
@@ -26,14 +24,6 @@ class AptRepoClientException:
         return self.message
 
 
-class HTTPDeleteRequest(urllib2.Request):
-    """
-    Derived class for making HTTP DELETE requests
-    """
-    def get_method(self):
-        return 'DELETE'    
-
-    
 class AptRepoClient:
     """
     Client REST API
@@ -43,7 +33,7 @@ class AptRepoClient:
     _DISTS_PREFIX = 'distributions/'
     _SECTIONS_PREFIX = 'sections/'
     _ACTIONS_PREFIX = 'actions/'
-    _PACKAGES_SUFFIX = '/packages'
+    _INSTANCES_SUFFIX = 'package-instances/'
     _PACKAGES_PREFIX = '/packages/'
     
     def __init__(self, url=None, username=None, password=None, timeout=None):
@@ -56,18 +46,13 @@ class AptRepoClient:
         """
         
         # set the url
-        self.urlprefix = self._DEFAULT_API_URL
+        urlprefix = self._DEFAULT_API_URL
         if url:
-            self.urlprefix = url
-        
-        # setup password authentication for REST connections
-        password_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        password_manager.add_password(None, self.url, username, password)
-        handlers = []
-        handlers.append(urllib2.HTTPBasicAuthHandler(password_manager))
-        handlers.append(poster.streaminghttp.get_handlers())
-        self.urlclient = urllib2.build_opener(handlers)
-        self.timeout = None
+            urlprefix = url
+
+        # setup the client        
+        client_factory = httpclient.HttpClientFactory()
+        self.client = client_factory.create_client(baseurl=urlprefix, timeout=timeout)
     
 
     def get_package_metadata(self, id=None, name=None, version=None, architecture=None):
@@ -99,11 +84,22 @@ class AptRepoClient:
         OR 
         distribution -- Distribution name
         """
-        url = self._DISTS_PREFIX + '/' + id
+        url = self._DISTS_PREFIX + str(id)
+        return self._get_request(url)
+    
+    def list_sections(self, distribution_id):
+        """
+        Retrieves a list of sections
+        
+        distribution_id -- (Optional) only list section in the selected distribution
+        """
+        url = self._DISTS_PREFIX + str(distribution_id) + '/'
+        if distribution_id:
+            url = url + self._SECTIONS_PREFIX
         return self._get_request(url)
     
     
-    def get_section_data(self, id=None, distribution_name=None, section_name=None):
+    def get_section_data(self, id):
         """
         Retrieves the metadata for a repository section
         
@@ -112,10 +108,10 @@ class AptRepoClient:
         distribution_name -- Distribution name
         section_name -- Section name
         """
-        return self._get_request(self._section_url(id, distribution_name, section_name))
+        return self._get_request(self._section_url(id))
 
 
-    def list_section_packages(self, id=None, distribution_name=None, section_name=None):
+    def list_section_packages(self, id):
         """
         Retrieves the list of packages for a repository section
         
@@ -124,15 +120,14 @@ class AptRepoClient:
         distribution_name -- Distribution name
         section_name -- Section name
         """
-        return self._get_request(self._section_url(id, distribution_name, section_name) + 
-                                 self._PACKAGES_SUFFIX)
+        return self._get_request(self._section_url(id) + '/' + self._INSTANCES_SUFFIX)
         
         
-    def upload_package(self, id=None, distribution_name=None, section_name=None, filename=None, fileobj=None):
+    def upload_package(self, section_id, filename=None, fileobj=None):
         
         data = {}
         try:
-            url = self._section_url(id, distribution_name, section_name) + self._PACKAGES_SUFFIX
+            url = self._section_url(section_id) + '/' + self._INSTANCES_SUFFIX
             if fileobj:
                 data['file'] = fileobj
             else:
@@ -141,12 +136,11 @@ class AptRepoClient:
             return self._post_request(url, data)
         
         finally:
-            if not fileobj:
+            if ('file' in data) and not fileobj:
                 data['file'].close()
                 
-    def copy_package(self, src_id, dest_distribution_name, dest_section_name):
-        url = self._section_url(distribution=dest_distribution_name, 
-                                section=dest_section_name) + self._PACKAGES_SUFFIX
+    def copy_package(self, src_id, dest_section_id):
+        url = self._section_url(dest_section_id) + '/' + self._INSTANCES_SUFFIX
         self._post_request(url, {'id': src_id})
         
         
@@ -154,8 +148,7 @@ class AptRepoClient:
         """
         Deletes a package instance from a section
         """
-        url = self._DISTS_PREFIX + '/?' + \
-            urllib.urlencode({'instance_id':instance_id})
+        url = self._INSTANCES_SUFFIX + str(instance_id)
         self._delete_request(url)
         
     def delete_all_package_instances(self, id=None, name=None, version=None, 
@@ -179,7 +172,7 @@ class AptRepoClient:
         max_items -- maximum number of actions to retrieve
         """
         url = ''
-        if kwargs['distribution_id']:
+        if 'distribution_id' in kwargs:
             if kwargs['section_id']:
                 url = '{0}{1}/{2}{3}/{4}'.format(self._DISTS_PREFIX, kwargs['distribution_id'],
                                                        self._SECTIONS_PREFIX, kwargs['section_id'],
@@ -187,7 +180,7 @@ class AptRepoClient:
             else:
                 url = '{0}{1}/{2}'.format(self._DISTS_PREFIX, kwargs['distribution_id'],
                                                        self._ACTIONS_PREFIX)
-        elif kwargs['section_id']:
+        elif 'section_id' in kwargs:
             url = '{0}{1}/{2}'.format(self._SECTIONS_PREFIX, kwargs['section_id'],
                                                    self._ACTIONS_PREFIX)
         else:
@@ -198,9 +191,10 @@ class AptRepoClient:
             if k in kwargs:
                 restrictions[k] = kwargs[k]
             
+        if len(restrictions) > 0:
             url = url + '?' + urllib.urlencode(restrictions)
             
-        self._get_request(url)
+        return self._get_request(url)
         
             
     def _package_url(self, id=None, name=None, version=None, architecture=None):
@@ -224,45 +218,30 @@ class AptRepoClient:
             
         return url    
     
-    def _section_url(self, id=None, distribution_name=None, section_name=None):
+    def _section_url(self, id):
         """
         Constructs an URL for a section
         
         id -- Integer unique identifier for the section
-        OR        
-        distribution_name -- Distribution name
-        section_name -- Section name
         """
-        if id:
-            return self._SECTIONS_PREFIX + '/' + id
-        elif distribution_name and section_name:
-            return self._DISTS_PREFIX + '/' + '{0}/{1}'.format(distribution_name, section_name)
-        else:
-            raise AptRepoClientException(
-                'Must specify either \'id\' or \'distribution_name,section_name\' for section')
+        return self._SECTIONS_PREFIX + str(id)
 
     def _get_request(self, url):
         """
         Internal method for GET requests
         """
-        page = self.urlclient.open(url='{0}/{1}'.format(self.urlprefix, url), 
-                                   timeout=self.timeout)
-        return json.load(page)
+        page = self.client.get(url)
+        return json.loads(page)
     
     def _post_request(self, url, data):
         """
         Internal method for POST requests
         """
-        datagen, headers = poster.encode.multipart_encode(data)
-        request = urllib2.Request(url='{0}/{1}'.format(self.urlprefix, url),
-                                  datagen, headers)
-        
-        page = self.urlclient.open(url=request, timeout=self.timeout)
-        return json.load(page)
+        page = self.client.post(url, data)
+        return json.loads(page)
 
     def _delete_request(self, url):
         """
         Internal method for DELETE requests
         """
-        request = HTTPDeleteRequest(url='{0}/{1}'.format(self.urlprefix, url))
-        self.urlclient.open(url=request, timeout=self.timeout)
+        self.client.delete(url)
