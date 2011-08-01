@@ -1,6 +1,7 @@
 from django.shortcuts import render_to_response
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
+from django.views.decorators.csrf import csrf_protect
 from django.template import RequestContext
 from django import forms
 from django.conf import settings
@@ -71,6 +72,7 @@ def remove_success(request):
     return HttpResponse("Package successfully removed.")
 
 
+@csrf_protect
 def upload_file(request):
     """ 
     Provides a form to upload packages

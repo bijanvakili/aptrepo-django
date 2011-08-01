@@ -2,6 +2,7 @@
 Unit tests for apt repo
 """
 import hashlib
+import json
 import os
 import shutil
 import tempfile
@@ -11,10 +12,6 @@ from django.conf import settings
 from debian_bundle import deb822, debfile
 import pyme.core
 from common import hash_string, hash_file_by_fh
-
-# TODO Fix this import so that django can run tests from the CLI instead of Eclipse
-import client.api
-
 
 class PackageUploadTest(TestCase):
 
@@ -37,7 +34,6 @@ class PackageUploadTest(TestCase):
         
         # HTTP and REST client for testing
         self.client = Client()
-        self.apiclient = client.api.AptRepoClient()
         
         # distribution and section name
         self.distribution_name = 'test_distribution'
@@ -78,18 +74,36 @@ class PackageUploadTest(TestCase):
                 shutil.rmtree(pkgsrc_dir)
             
     
-    def _upload_package(self, pkg_filename):
+    def _upload_package(self, pkg_filename, section_name=None):
         """
         Internal method to upload a package to the apt repo
         
-        pkg_filename -- Package to upload
+        pkg_filename -- Filename of package to upload
         """
+        if not section_name:
+            section_name = self.section_name
+        
         with open(pkg_filename) as f:
             response = self.client.post(
                 self._ROOT_WEBDIR + '/packages/', {
                     'file' : f, 'distribution': self.distribution_name, 'section': self.section_name})
             print response.content
             self.failUnlessEqual(response.status_code, 302)
+            
+    def _upload_package_via_api(self, section_id, pkg_filename):
+        """
+        Internal method to upload a package via the API.
+        Returns the new instance object (converted from JSON)
+        
+        section_id -- Target section to upload to
+        pkg_filename -- Filename of package to upload
+        """
+        with open(pkg_filename) as f:
+            response = self.client.post(
+                self._ROOT_APIDIR + '/sections/' + str(section_id) + '/package-instances', {
+                    'file' : f})
+            self.failUnlessEqual(response.status_code, 200)
+            return json.loads(response.content)
             
     def _download_content(self, url):
         """
@@ -98,6 +112,20 @@ class PackageUploadTest(TestCase):
         response = self.client.get(url)
         self.failUnlessEqual(response.status_code, 200)
         return response.content
+    
+    def _download_json_object(self, url):
+        """
+        Downloads and converts JSON object to a python object
+        """
+        content = self._download_content(url)
+        return json.loads(content)
+    
+    def _delete(self, url):
+        """
+        Runs an HTTP delete operation
+        """
+        response = self.client.delete(url)
+        self.failUnlessEqual(response.status_code, 204)
             
     def _verify_repo_metadata(self):
         """
@@ -321,25 +349,27 @@ class PackageUploadTest(TestCase):
         """
 
         # query the empty repository
-        distribution_list = self.apiclient.get_distribution_list()
+        distributions_url = self._ROOT_APIDIR + '/distributions'
+        distribution_list = self._download_json_object(distributions_url)
         self.assertEqual(len(distribution_list), 1)
         self.assertEqual(self.distribution_name, distribution_list[0]['name'], 'Verify distribution list')
-        
-        distribution_metadata = self.apiclient.get_distribution_metadata(distribution_list[0]['id'])
+
+        test_distribution_url = distributions_url + '/' + str(distribution_list[0]['id'])
+        distribution_metadata = self._download_json_object(test_distribution_url)
         self.assertIsNotNone(distribution_metadata)
         self.assertEqual(distribution_metadata['description'], 'Test Distribution')
         
-        sections = self.apiclient.list_sections(distribution_list[0]['id'])
+        sections = self._download_json_object(test_distribution_url + '/sections')
         self.assertEqual(sections[0]['description'], 'Test Section')
         
-        section_id = sections[0]['id'] 
-        
-        section_data = self.apiclient.get_section_data(section_id)
+        test_section_url = self._ROOT_APIDIR + '/sections/' + str(sections[0]['id'])
+        section_data = self._download_json_object(test_section_url)
         self.assertIsNotNone(section_data)
         self.assertEqual(section_data['name'], 'test_section')
         self.assertEqual(section_data['description'], 'Test Section')
         
-        package_list = self.apiclient.list_section_packages(section_id)
+        packages_url = test_section_url + '/package-instances'
+        package_list = self._download_json_object(packages_url)
         self.assertEqual(len(package_list), 0)
         
         # upload a single package and check the result
@@ -360,25 +390,26 @@ class PackageUploadTest(TestCase):
             self._create_package(control_map, pkg_filename)
             
             # upload the package
-            self.apiclient.upload_package(section_id, filename=pkg_filename)
+            self._upload_package_via_api(section_id=sections[0]['id'], 
+                                                   pkg_filename=pkg_filename)
             
         finally:
             if pkg_filename is not None:
                 os.remove(pkg_filename)
 
         # check the metadata
-        package_list = self.apiclient.list_section_packages(section_id)
+        packages_url = test_section_url + '/package-instances'
+        package_list = self._download_json_object(packages_url)
         self.assertEqual(len(package_list), 1)
-        package_instance_id = package_list[0]['id']
         self._verify_repo_metadata()
         
         # remove the package
-        self.apiclient.delete_package_instance(package_instance_id)
-        package_list = self.apiclient.list_section_packages(section_id)
+        self._delete(self._ROOT_APIDIR + '/package-instances/' + str(package_list[0]['id']))
+        package_list = self._download_json_object(packages_url)
         self.assertEqual(len(package_list), 0)
         self._verify_repo_metadata()
 
         # check the resulting actions
-        action_list = self.apiclient.list_actions(section_id=section_id)
+        action_list = self._download_json_object(test_section_url + '/actions')
         self.assertEqual(len(action_list), 2)        
 

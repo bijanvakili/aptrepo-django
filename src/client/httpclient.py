@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import abc
+import types
 
 """
 Module that supports multiple implementations of an HTTP client
@@ -18,7 +19,7 @@ class HttpClientException(Exception):
         self.message = message
         
     def __str__(self):
-        return repr(self.message)
+        return self.message
     
 
 class HttpImplementationInfo:
@@ -28,6 +29,22 @@ class HttpImplementationInfo:
     def __init__(self, name, available=False):
         self.name = name
         self.available = available
+       
+        
+class PostDataFileObject:
+    """
+    Encapsulates a file to upload
+    """
+    def __init__(self, fileobj=None, filename=None):
+        self.fileobj = None
+        self.filename = None
+        
+        if fileobj:
+            self.fileobj = fileobj
+        elif filename:
+            self.filename = filename
+        else:
+            raise HttpClientException('No file data provided') 
 
 # TODO Determine if the import tests can be moved into HttpClientFactory
 
@@ -39,18 +56,11 @@ http client library implementations
 2) cURL
 3) Python urllib(2)
 """
-E_DJANGO, E_PYCURL, E_URLLIB = range(3)
+E_PYCURL, E_URLLIB = range(2)
 _HTTP_IMPLEMENTATION_INFO = { 
-    E_DJANGO : HttpImplementationInfo('django.test'), 
     E_PYCURL : HttpImplementationInfo('pycurl'), 
     E_URLLIB : HttpImplementationInfo('urllib'), 
 }
-try:
-    import django.test
-    _HTTP_IMPLEMENTATION_INFO[E_DJANGO].available = True
-except ImportError:
-    _HTTP_IMPLEMENTATION_INFO[E_DJANGO].available = False
-    
 
 try:
     import urllib2
@@ -114,6 +124,17 @@ class HttpClientBase(object):
         else:
             return url
     
+    def _raise_error(self, status_code, message=None):
+        """
+        Utility method to throw an exception due to an HTTP status code
+        """
+        error_message = "Status code: {0}".format(status_code)
+        if message:
+            if isinstance(message, types.StringType):
+                error_message = error_message + "\n" + message
+            else:
+                error_message = error_message + "\n" + message.getvalue()
+        raise HttpClientException(error_message)
 
 
 class HttpClientFactory:
@@ -157,44 +178,12 @@ class HttpClientFactory:
         
         # instantiate the appropriate client
         httpclient = None
-        if id_implementation == E_DJANGO:
-            httpclient = DjangoClient(baseurl, timeout)
-        elif id_implementation == E_PYCURL:
+        if id_implementation == E_PYCURL:
             httpclient = PyCurlClient(baseurl, timeout)
         elif id_implementation == E_URLLIB:
             httpclient = UrlLibClient(baseurl, timeout)
             
         return httpclient
-    
-    
-class DjangoClient(HttpClientBase):
-    """
-    Django test client implementation
-    """
-    def __init__(self, baseurl, timeout):
-        super(DjangoClient, self).__init__(baseurl, timeout)
-        self.client = django.test.Client()
-        
-    def get(self, url):
-        response = self.client.get(self._compute_url(url))
-        if response.status_code != 200:
-            self._raise_with_statuscode(response.status_code) 
-        return response.content
-
-    def post(self, url, data):
-        response = self.client.post(self._compute_url(url), data)        
-        if response.status_code != 200:
-            self._raise_with_statuscode(response.status_code) 
-        return response.content
- 
-    def delete(self, url):
-        response = self.client.delete(self._compute_url(url))
-        if response.status_code != 204:
-            self._raise_with_statuscode(response.status_code) 
-        
-        
-    def _raise_with_statuscode(self, status_code):
-        raise HttpClientException('Status code: {0}'.format(status_code))
     
 
 class PyCurlClient(HttpClientBase):
@@ -208,19 +197,46 @@ class PyCurlClient(HttpClientBase):
         (client, response_buffer) = self._make_client(url)
         client.setopt(pycurl.HTTPGET, True)
         client.perform()
+        rc = client.getinfo(pycurl.HTTP_CODE) 
+        if rc != 200:
+            self._raise_error(rc, response_buffer)
+        
         return response_buffer.getvalue()
     
     def post(self, url, data):
         (client, response_buffer) = self._make_client(url)
         client.setopt(pycurl.POST, True)
-        client.setopt(pycurl.HTTPPOST, data)
+        
+        postdata = []
+        for k in data:
+            # TODO Allow for file handles
+            # - As of 7.19.0, pycurl doesn't support CURLFORM_BUFFER in form uploads.
+            #    Patch is available here and pending approval: 
+            #    http://sourceforge.net/tracker/?func=detail&aid=2982491&group_id=28236&atid=392779
+            if isinstance(data[k], PostDataFileObject):
+                if data[k].fileobj:
+                    raise HttpClientException('pycurl does not support uploading by handle')
+                else:
+                    postdata.append( (k, (pycurl.FORM_FILE, data[k].filename)) )
+            else:
+                postdata.append( (k, data[k]) )
+        
+        client.setopt(pycurl.HTTPPOST, postdata)
         client.perform()
+        rc = client.getinfo(pycurl.HTTP_CODE) 
+        if rc != 200:
+            self._raise_error(rc, response_buffer)
+        
         return response_buffer.getvalue()
     
     def delete(self, url):
         (client, response_buffer) = self._make_client(url)        
         client.setopt(pycurl.CUSTOMREQUEST, 'DELETE')
         client.perform()
+        rc = client.getinfo(pycurl.HTTP_CODE) 
+        if rc != 204:
+            self._raise_error(rc, response_buffer)
+        
         return response_buffer.getvalue()
         
     def _make_client(self, url):
@@ -231,9 +247,10 @@ class PyCurlClient(HttpClientBase):
         """
         client = pycurl.Curl()
         client.setopt(pycurl.URL, self._compute_url(url))
-        client.setopt(pycurl.TIMEOUT, self.timeout)
+        if self.timeout:
+            client.setopt(pycurl.TIMEOUT, self.timeout)
         response_buffer = StringIO.StringIO()
-        client.setopt(pycurl.WRITEFUNCTION, buffer)
+        client.setopt(pycurl.WRITEFUNCTION, response_buffer.write)
         return (client, response_buffer)
 
 
