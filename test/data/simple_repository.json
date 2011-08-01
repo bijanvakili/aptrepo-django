@@ -8,6 +8,7 @@
 			"label" : "Test Distribution",
 			"suite" : "testing",
 			"origin" : "OANDA",
+			"creation_date" : "2011-01-01 00:05:00",
 			"suppported_architectures": "0,1"
 		}
 	},

@@ -122,31 +122,48 @@ class AptRepoClient:
         """
         return self._get_request(self._section_url(id) + '/' + self._INSTANCES_SUFFIX)
         
+    def get_package_instance(self, 
+                             package_instance_id=None, 
+                             section_id=None, 
+                             name=None, version=None, architecture=None):
+        url = None
+        if package_instance_id:
+            url = self._INSTANCES_SUFFIX + '/' + str(package_instance_id)
+        else:
+            url = '{0}{1}/{2}deb822/{3}/{4}/{5}'.format(self._SECTIONS_PREFIX,
+                                                          section_id,
+                                                          self._INSTANCES_SUFFIX,
+                                                          name, version, architecture)
+        return self._get_request(url)
         
     def upload_package(self, section_id, filename=None, fileobj=None):
+        """
+        Uploads a package
         
+        filename -- filename of file to upload
+        fileobj -- file object of file to upload
+        """
+        url = self._section_url(section_id) + '/' + self._INSTANCES_SUFFIX
         data = {}
-        try:
-            url = self._section_url(section_id) + '/' + self._INSTANCES_SUFFIX
-            if fileobj:
-                data['file'] = fileobj
-            else:
-                data['file'] = open(filename, 'rb')
+        data['file'] = httpclient.PostDataFileObject(filename=filename, fileobj=fileobj)
+        return self._post_request(url, data)
                 
-            return self._post_request(url, data)
+    def copy_package(self, src_instance_id, dest_section_id):
+        """
+        Copies a package instance
         
-        finally:
-            if ('file' in data) and not fileobj:
-                data['file'].close()
-                
-    def copy_package(self, src_id, dest_section_id):
+        src_instance_id - instance id of the source package to copy
+        dest_section_id - destination section id to create new instance
+        """
         url = self._section_url(dest_section_id) + '/' + self._INSTANCES_SUFFIX
-        self._post_request(url, {'id': src_id})
+        self._post_request(url, {'id': src_instance_id})
         
         
     def delete_package_instance(self, instance_id):
         """
         Deletes a package instance from a section
+        
+        instance_id -- id of instance to delete
         """
         url = self._INSTANCES_SUFFIX + str(instance_id)
         self._delete_request(url)

@@ -16,7 +16,7 @@ class AptRepoException(Exception):
         self.message = message
         
     def __str__(self):
-        return repr(self.message)
+        return self.message
 
 
 def hash_file_by_fh(hashfunc, fh, from_start=True):

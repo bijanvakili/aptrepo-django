@@ -10,7 +10,7 @@ action_resource=Resource(handler=handlers.ActionHandler)
 
 urlpatterns = patterns('',
     # Packages
-    (r'^packages/deb822/(?P<name>\w+)/(?P<version>\w+)/(?P<architecture>\w+)/{0,1}$', 
+    (r'^packages/deb822/(?P<package_name>[^/]+)/(?P<version>[^/]+)/(?P<architecture>[^/]+)/{0,1}$', 
      package_resource),    
     (r'^packages/(?P<id>\d+)/{0,1}$', package_resource),
     
@@ -28,7 +28,7 @@ urlpatterns = patterns('',
      package_instance_resource),
     (r'^sections/(?P<section_id>\d+)/package-instances/{0,1}$', 
      package_instance_resource),
-    (r'^sections/(?P<section_id>\d+)/package-instances/deb822/(?P<package_name>\w+)/(?P<version>\w+)/(?P<architecture>\w+)/{0,1}$', 
+    (r'^sections/(?P<section_id>\d+)/package-instances/deb822/(?P<package_name>[^/]+)/(?P<version>[^/]+)/(?P<architecture>[^/]+)/{0,1}$', 
      package_instance_resource),
     
     # Actions
