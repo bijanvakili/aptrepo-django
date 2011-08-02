@@ -46,36 +46,6 @@ class PostDataFileObject:
         else:
             raise HttpClientException('No file data provided') 
 
-# TODO Determine if the import tests can be moved into HttpClientFactory
-
-
-"""
-http client library implementations
-
-1) Django test client (default)
-2) cURL
-3) Python urllib(2)
-"""
-E_PYCURL, E_URLLIB = range(2)
-_HTTP_IMPLEMENTATION_INFO = { 
-    E_PYCURL : HttpImplementationInfo('pycurl'), 
-    E_URLLIB : HttpImplementationInfo('urllib'), 
-}
-
-try:
-    import urllib2
-    import poster
-    _HTTP_IMPLEMENTATION_INFO[E_URLLIB].available = True
-except ImportError:
-    _HTTP_IMPLEMENTATION_INFO[E_URLLIB].available = False
-
-try:
-    import pycurl
-    import StringIO
-    _HTTP_IMPLEMENTATION_INFO[E_PYCURL].available = True
-except ImportError:
-    _HTTP_IMPLEMENTATION_INFO[E_PYCURL].available = False        
-
 
 class HttpClientBase(object):
     """
@@ -137,15 +107,36 @@ class HttpClientBase(object):
         raise HttpClientException(error_message)
 
 
+E_PYCURL, E_URLLIB = range(2)
+
 class HttpClientFactory:
     """
     Factory class to construct an HTTP client
     """
    
     def __init__(self):
-        pass
+        
+        self._HTTP_IMPLEMENTATION_INFO = { 
+            E_PYCURL : HttpImplementationInfo('pycurl'), 
+            E_URLLIB : HttpImplementationInfo('urllib'), 
+        }
+        
+        try:
+            __import__('urllib2')
+            __import__('poster')
+            self._HTTP_IMPLEMENTATION_INFO[E_URLLIB].available = True
+        except ImportError:
+            self._HTTP_IMPLEMENTATION_INFO[E_URLLIB].available = False
+        
+        try:
+            __import__('pycurl')
+            __import__('StringIO')
+            self._HTTP_IMPLEMENTATION_INFO[E_PYCURL].available = True
+        except ImportError:
+            self._HTTP_IMPLEMENTATION_INFO[E_PYCURL].available = False        
     
-    def create_client(self, baseurl, id_implementation=None, name_implementation=None, timeout=None):
+    def create_client(self, baseurl, timeout=None,
+                      id_implementation=None, name_implementation=None):
         """
         Construct a new HTTP client
         
@@ -154,10 +145,10 @@ class HttpClientFactory:
         """
         
         if id_implementation is not None:
-            if id_implementation >= len(_HTTP_IMPLEMENTATION_INFO):
+            if id_implementation >= len(self._HTTP_IMPLEMENTATION_INFO):
                 raise HttpClientException('Unknown implementation ID: {0}'.format(id_implementation))
         elif name_implementation:
-            for id,info in _HTTP_IMPLEMENTATION_INFO.items():
+            for id,info in self._HTTP_IMPLEMENTATION_INFO.items():
                 if info.name == name_implementation:
                     id_implementation = id
             
@@ -167,7 +158,7 @@ class HttpClientFactory:
             
         # Search for the first available implementation if none was found
         if not id_implementation:
-            for id, info in _HTTP_IMPLEMENTATION_INFO.items():
+            for id, info in self._HTTP_IMPLEMENTATION_INFO.items():
                 if info.available:
                     id_implementation = id
                     break 
@@ -188,16 +179,19 @@ class HttpClientFactory:
 
 class PyCurlClient(HttpClientBase):
     """
-    PyCurl test client implementation
+    PyCurl HTTP client implementation
     """
+    
     def __init__(self, baseurl, timeout):
         super(PyCurlClient, self).__init__(baseurl, timeout)
+        self.pycurl = __import__('pycurl')
+        self.StringIO = __import__('StringIO') 
                 
     def get(self, url):
         (client, response_buffer) = self._make_client(url)
-        client.setopt(pycurl.HTTPGET, True)
+        client.setopt(self.pycurl.HTTPGET, True)
         client.perform()
-        rc = client.getinfo(pycurl.HTTP_CODE) 
+        rc = client.getinfo(self.pycurl.HTTP_CODE) 
         if rc != 200:
             self._raise_error(rc, response_buffer)
         
@@ -205,7 +199,7 @@ class PyCurlClient(HttpClientBase):
     
     def post(self, url, data):
         (client, response_buffer) = self._make_client(url)
-        client.setopt(pycurl.POST, True)
+        client.setopt(self.pycurl.POST, True)
         
         postdata = []
         for k in data:
@@ -217,13 +211,13 @@ class PyCurlClient(HttpClientBase):
                 if data[k].fileobj:
                     raise HttpClientException('pycurl does not support uploading by handle')
                 else:
-                    postdata.append( (k, (pycurl.FORM_FILE, data[k].filename)) )
+                    postdata.append( (k, (self.pycurl.FORM_FILE, data[k].filename)) )
             else:
                 postdata.append( (k, data[k]) )
         
-        client.setopt(pycurl.HTTPPOST, postdata)
+        client.setopt(self.pycurl.HTTPPOST, postdata)
         client.perform()
-        rc = client.getinfo(pycurl.HTTP_CODE) 
+        rc = client.getinfo(self.pycurl.HTTP_CODE) 
         if rc != 200:
             self._raise_error(rc, response_buffer)
         
@@ -231,9 +225,9 @@ class PyCurlClient(HttpClientBase):
     
     def delete(self, url):
         (client, response_buffer) = self._make_client(url)        
-        client.setopt(pycurl.CUSTOMREQUEST, 'DELETE')
+        client.setopt(self.pycurl.CUSTOMREQUEST, 'DELETE')
         client.perform()
-        rc = client.getinfo(pycurl.HTTP_CODE) 
+        rc = client.getinfo(self.pycurl.HTTP_CODE) 
         if rc != 204:
             self._raise_error(rc, response_buffer)
         
@@ -245,36 +239,33 @@ class PyCurlClient(HttpClientBase):
         
         Return (client, response_buffer)
         """
-        client = pycurl.Curl()
-        client.setopt(pycurl.URL, self._compute_url(url))
+        client = self.pycurl.Curl()
+        client.setopt(self.pycurl.URL, self._compute_url(url))
         if self.timeout:
-            client.setopt(pycurl.TIMEOUT, self.timeout)
-        response_buffer = StringIO.StringIO()
-        client.setopt(pycurl.WRITEFUNCTION, response_buffer.write)
+            client.setopt(self.pycurl.TIMEOUT, self.timeout)
+        response_buffer = self.StringIO.StringIO()
+        client.setopt(self.pycurl.WRITEFUNCTION, response_buffer.write)
         return (client, response_buffer)
 
 
 class UrlLibClient(HttpClientBase):
-    
-    class HTTPDeleteRequest(urllib2.Request):
-        """
-        Derived class for making HTTP DELETE requests
-        """
-        def get_method(self):
-            return 'DELETE'    
-    
+    """
+    urllib HTTP client implementation
+    """
     
     def __init__(self, baseurl, timeout):
         super(UrlLibClient, self).__init__(baseurl, timeout)
+        self.urllib2 = __import__('urllib2')
+        self.poster = __import__('poster') 
 
         # setup password authentication for REST connections
-        handlers = poster.streaminghttp.get_handlers()
+        handlers = self.poster.streaminghttp.get_handlers()
         """
         password_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
         password_manager.add_password(None, self.url, username, password)
         handlers.append(urllib2.HTTPBasicAuthHandler(password_manager))
         """
-        self.urlclient = urllib2.build_opener(*handlers)
+        self.urlclient = self.urllib2.build_opener(*handlers)
 
     def get(self, url):
         """
@@ -300,8 +291,8 @@ class UrlLibClient(HttpClientBase):
                         open_files.append(fh)
                         post_data[k] = fh
                 
-            datagen, headers = poster.encode.multipart_encode(post_data)
-            request = urllib2.Request(self._compute_url(url), datagen, headers)
+            datagen, headers = self.poster.encode.multipart_encode(post_data)
+            request = self.urllib2.Request(self._compute_url(url), datagen, headers)
             response = self.urlclient.open(request, timeout=self.timeout)
             return response.read()
         
@@ -313,5 +304,14 @@ class UrlLibClient(HttpClientBase):
         """
         Internal method for DELETE requests
         """
-        request = self.HTTPDeleteRequest(url=self._compute_url(url))
+
+        class HTTPDeleteRequest(self.urllib2.Request):
+            """
+            Derived class for making HTTP DELETE requests
+            """
+            def get_method(self):
+                return 'DELETE'    
+        
+        
+        request = HTTPDeleteRequest(url=self._compute_url(url))
         self.urlclient.open(request, timeout=self.timeout)
