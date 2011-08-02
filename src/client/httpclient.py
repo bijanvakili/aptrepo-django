@@ -268,35 +268,50 @@ class UrlLibClient(HttpClientBase):
         super(UrlLibClient, self).__init__(baseurl, timeout)
 
         # setup password authentication for REST connections
-        handlers = []
+        handlers = poster.streaminghttp.get_handlers()
         """
         password_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
         password_manager.add_password(None, self.url, username, password)
         handlers.append(urllib2.HTTPBasicAuthHandler(password_manager))
         """
-        handlers.append(poster.streaminghttp.get_handlers())
-        self.urlclient = urllib2.build_opener(handlers)
+        self.urlclient = urllib2.build_opener(*handlers)
 
     def get(self, url):
         """
         Internal method for GET requests
         """
-        return self.urlclient.open(url=self._compute_url(url),  
-                                   timeout=self.timeout)
+        response = self.urlclient.open(self._compute_url(url),  
+                                       timeout=self.timeout)
+        return response.read()
     
-    def _post_request(self, url, data):
+    def post(self, url, data):
         """
         Internal method for POST requests
         """
-        datagen, headers = poster.encode.multipart_encode(data)
-        request = urllib2.Request(url=self._compute_url(url), 
-                                  data=datagen, headers=headers)
-        return self.urlclient.open(url=request, timeout=self.timeout)
+        open_files = []
+        try:
+            post_data = {}
+            for k in data:
+                if isinstance(data[k], PostDataFileObject):
+                    if data[k].fileobj:
+                        post_data[k] = data[k].fileobj
+                    else:
+                        fh = open(data[k].filename, 'rb')
+                        open_files.append(fh)
+                        post_data[k] = fh
+                
+            datagen, headers = poster.encode.multipart_encode(post_data)
+            request = urllib2.Request(self._compute_url(url), datagen, headers)
+            response = self.urlclient.open(request, timeout=self.timeout)
+            return response.read()
+        
+        finally:
+            for fh in open_files:
+                fh.close()
 
-
-    def _delete_request(self, url):
+    def delete(self, url):
         """
         Internal method for DELETE requests
         """
         request = self.HTTPDeleteRequest(url=self._compute_url(url))
-        self.urlclient.open(url=request, timeout=self.timeout)
+        self.urlclient.open(request, timeout=self.timeout)
