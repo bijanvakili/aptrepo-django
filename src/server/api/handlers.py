@@ -170,7 +170,7 @@ class PackageInstanceHandler(BaseAptRepoHandler):
             repository = Repository()
             section = server.aptrepo.models.Section.objects.get(id=section_id)
             new_instance_id = None
-            if request.FILES['file']:
+            if 'file' in request.FILES:
                 uploaded_file = request.FILES['file']
                 new_instance_id = repository.add_package(section.distribution.name, 
                                                          section.name, 
@@ -179,10 +179,12 @@ class PackageInstanceHandler(BaseAptRepoHandler):
             else:
                 clone_args = {'dest_distribution_name' : section.distribution.name,
                               'dest_section_name' : section.name }
-                if request.data['source_id']:
-                    clone_args['instance_id'] = request.data['instance_id']
-                elif request.data['package_id']:
-                    clone_args['package_id'] = request.data['package_id']
+                if 'source_id' in request.POST:
+                    clone_args['instance_id'] = request.POST['instance_id']
+                elif 'package_id' in request.POST:
+                    clone_args['package_id'] = request.POST['package_id']
+                else:
+                    return rc.BAD_REQUEST
                 new_instance_id = repository.clone_package(**clone_args)
     
             return self.model.objects.get(id=new_instance_id)
