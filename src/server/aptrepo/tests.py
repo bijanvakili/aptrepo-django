@@ -12,12 +12,13 @@ from django.conf import settings
 from debian_bundle import deb822, debfile
 import pyme.core
 from common import hash_string, hash_file_by_fh
+import models
 
-class PackageUploadTest(TestCase):
+class BaseAptRepoTest(TestCase):
 
-    fixtures = ['simple_repository.json']
     _ROOT_WEBDIR = '/aptrepo'
     _ROOT_APIDIR = '/aptrepo/api'
+    _DEFAULT_ARCHITECTURE = 'i386'
 
     def setUp(self):
         # remove all metafiles and previously uploaded Debian files
@@ -35,10 +36,39 @@ class PackageUploadTest(TestCase):
         # HTTP and REST client for testing
         self.client = Client()
         
-        # distribution and section name
-        self.distribution_name = 'test_distribution'
-        self.section_name = 'test_section'
+    def _make_common_debcontrol(self):
+        control_map = deb822.Deb822()
+        control_map['Package'] = 'test-package'
+        control_map['Version'] = '1.00'
+        control_map['Section'] = 'oanda'
+        control_map['Priority'] = 'optional'
+        control_map['Architecture'] = self._DEFAULT_ARCHITECTURE
+        control_map['Maintainer'] = 'Bijan Vakili <bvakili@oanda.com>'
+        control_map['Description'] = 'Test package for apt repo test suite'
+        
+        return control_map
 
+    def _download_content(self, url, data={}):
+        """
+        Internal method to download a verify text content
+        """
+        response = self.client.get(url, data)
+        self.failUnlessEqual(response.status_code, 200)
+        return response.content
+    
+    def _download_json_object(self, url, data={}):
+        """
+        Downloads and converts JSON object to a python object
+        """
+        content = self._download_content(url, data)
+        return json.loads(content)
+
+    def _delete(self, url):
+        """
+        Runs an HTTP delete operation
+        """
+        response = self.client.delete(url)
+        self.failUnlessEqual(response.status_code, 204)
 
     def _clean_public_folder(self, subdir_name):
         """
@@ -53,7 +83,19 @@ class PackageUploadTest(TestCase):
                     shutil.rmtree(fullpath_entry)
                 else:
                     os.remove(fullpath_entry)
+
+class SimpleRepositoryTest(BaseAptRepoTest):
+
+    fixtures = ['simple_repository.json']
+
+    def setUp(self):
+
+        # initialize base class
+        super(SimpleRepositoryTest, self).setUp()
         
+        # distribution and section name
+        self.distribution_name = 'test_distribution'
+        self.section_name = 'test_section'        
 
     def _create_package(self, control_map, pkg_filename):
         """
@@ -104,28 +146,6 @@ class PackageUploadTest(TestCase):
                     'file' : f})
             self.failUnlessEqual(response.status_code, 200)
             return json.loads(response.content)
-            
-    def _download_content(self, url):
-        """
-        Internal method to download a verify text content
-        """
-        response = self.client.get(url)
-        self.failUnlessEqual(response.status_code, 200)
-        return response.content
-    
-    def _download_json_object(self, url):
-        """
-        Downloads and converts JSON object to a python object
-        """
-        content = self._download_content(url)
-        return json.loads(content)
-    
-    def _delete(self, url):
-        """
-        Runs an HTTP delete operation
-        """
-        response = self.client.delete(url)
-        self.failUnlessEqual(response.status_code, 204)
             
     def _verify_repo_metadata(self):
         """
@@ -260,15 +280,9 @@ class PackageUploadTest(TestCase):
         pkg_filename = None
         try:
             # create the package
-            control_map = deb822.Deb822()
-            control_map['Package'] = 'test-package'
+            control_map = self._make_common_debcontrol()
             control_map['Version'] = '1.01'
-            control_map['Section'] = 'oanda'
-            control_map['Priority'] = 'optional'
-            control_map['Architecture'] = 'i386'
             control_map['Depends'] = 'vim'
-            control_map['Maintainer'] = 'Bijan Vakili <bvakili@oanda.com>'
-            control_map['Description'] = 'Test package for apt repo test suite'
             
             pkg_fh, pkg_filename = tempfile.mkstemp(suffix='.deb', prefix='mypackage')
             os.close(pkg_fh)
@@ -301,14 +315,11 @@ class PackageUploadTest(TestCase):
         # create 5 packages and upload them
         package_names = []
         for id in range(0,num_packages):
-            control_map = deb822.Deb822()
+            control_map = self._make_common_debcontrol()
             control_map['Package'] = 'test-package{0}'.format(id)
             control_map['Version'] = '1.0{0}'.format(id)
-            control_map['Section'] = 'oanda'
-            control_map['Priority'] = 'optional'
             control_map['Architecture'] = test_architecture
             control_map['Depends'] = 'python'
-            control_map['Maintainer'] = 'Bijan Vakili <bvakili@oanda.com>'
             control_map['Description'] = 'Test package {0}'.format(id)
             
             package_names.append(control_map['Package'])
@@ -376,14 +387,9 @@ class PackageUploadTest(TestCase):
         pkg_filename = None
         try:
             # create the package
-            control_map = deb822.Deb822()
-            control_map['Package'] = 'test-package'
+            control_map = self._make_common_debcontrol()
             control_map['Version'] = '1.01'
-            control_map['Section'] = 'oanda'
-            control_map['Priority'] = 'optional'
-            control_map['Architecture'] = 'i386'
             control_map['Depends'] = 'vim'
-            control_map['Maintainer'] = 'Bijan Vakili <bvakili@oanda.com>'
             control_map['Description'] = 'Test package for apt repo test suite'
             pkg_fh, pkg_filename = tempfile.mkstemp(suffix='.deb', prefix='mypackage')
             os.close(pkg_fh)
@@ -413,3 +419,129 @@ class PackageUploadTest(TestCase):
         action_list = self._download_json_object(test_section_url + '/actions')
         self.assertEqual(len(action_list), 2)        
 
+
+class LargeRepositoryTest(BaseAptRepoTest):
+
+    fixtures = ['simple_repository.json']
+
+    _TOTAL_PACKAGES = 200
+
+    def setUp(self):
+
+        # initialize base class
+        super(LargeRepositoryTest, self).setUp()
+
+        # create pre-uploaded packages (with no Debian files though) along with associated
+        # instances and upload actions
+        section = models.Section.objects.get(name='test_section', 
+                                             distribution__name='test_distribution')
+        self.section_id = section.id
+        
+        for i in xrange(200):
+            control_map = self._make_common_debcontrol()
+            control_map['Package'] = 'test-package' + str(i)
+            control_map['Version'] = '2.{0:03d}'.format(i)
+            control_map['Description'] = str(i)
+            
+            package = models.Package()
+            package.package_name = control_map['Package']
+            package.architecture = control_map['Architecture']
+            package.version = control_map['Version']
+            package.control = control_map.dump()
+            package.path = '/XXX'
+            package.size = 100
+            package.hash_md5 = 'XXX' 
+            package.hash_sha1 = 'XXX'
+            package.hash_sha256 = 'XXX'
+            package.save()
+            
+            instance = models.PackageInstance.objects.create(package=package, section=section,
+                                                             creator='testuser')
+            action = models.Action()
+            action.section = section
+            action.action = models.Action.UPLOAD
+            action.user = instance.creator
+            action.comment = 'For testing'
+            action.details = self._make_details(package.__dict__) 
+            action.save()
+            
+    def _make_details(self, package):
+        return '{0},{1},{2}'.format(package['package_name'], package['version'],
+                                    package['architecture']) 
+
+    def test_rest_api_constraints(self):
+        
+        lot_size = 10
+        for i in xrange(self._TOTAL_PACKAGES / lot_size):
+            constraint_params = {'offset': i * lot_size, 'limit':lot_size}
+            
+            # retrieve package lists
+            packages_url = self._ROOT_APIDIR + '/packages'
+            package_list = self._download_json_object(packages_url, constraint_params)
+            
+            # for debugging purposes
+            #print i
+            
+            self.assertEqual(len(package_list), lot_size)
+            
+            # retrieve the package instance list for that section
+            instances_url = self._ROOT_APIDIR + '/sections/' + str(self.section_id) + '/package-instances'
+            instance_list = self._download_json_object(instances_url, constraint_params)
+            self.assertEqual(len(instance_list), lot_size)
+            
+            # retrieve the actions
+            actions_url = self._ROOT_APIDIR + '/sections/' + str(self.section_id) + '/actions'
+            action_list = self._download_json_object(actions_url, constraint_params)
+            self.assertEqual(len(action_list), lot_size)  
+
+            # check results
+            for j in xrange(lot_size): 
+                correct_id = i * lot_size + j
+                
+                self.assertEqual(package_list[j]['package_name'], 'test-package' + str(correct_id) )
+                self.assertEqual(package_list[j]['version'], '2.{0:03d}'.format(correct_id) )
+                self.assertEqual(package_list[j]['architecture'], self._DEFAULT_ARCHITECTURE)
+                
+                self.assertEqual(instance_list[j]['package']['package_name'], 'test-package' + str(correct_id))
+                self.assertEqual(instance_list[j]['package']['version'], '2.{0:03d}'.format(correct_id) )
+                self.assertEqual(instance_list[j]['package']['architecture'], self._DEFAULT_ARCHITECTURE)
+                
+                self.assertEqual(action_list[j]['section']['id'], self.section_id )
+                self.assertEqual(action_list[j]['user'], 'testuser')
+                self.assertEqual(action_list[j]['action'], models.Action.UPLOAD)
+                self.assertEqual(action_list[j]['details'], self._make_details(package_list[j]))
+        
+
+        def _verify_testdata_range(self, offset, limit, expected_list):
+            constraint_params = {'offset': offset, 'limit': limit}
+            instances_url = self._ROOT_APIDIR + '/sections/' + str(self.section_id) + '/package-instances'
+            instance_list = self._download_json_object(instances_url, constraint_params)
+            
+            self.assertLessEqual(len(instance_list), limit)
+            self.assertequal(len(instance_list), len(expected_list))
+            for i in xrange(len(expected_list)):
+                self.assertEqual(instance_list[i]['package']['package_name'], 
+                                 'test-package' + str(expected_list[i]))
+                
+            actions_url = self._ROOT_APIDIR + '/sections/' + str(self.section_id) + '/actions' 
+            action_list = self._download_content(actions_url, constraint_params)     
+            self.assertLessEqual(len(action_list), limit)
+            self.assertequal(len(action_list), len(expected_list))
+            for i in xrange(len(action_list)):
+                self.assertEqual(action_list[i]['details'], self._make_details(instance_list[i]['package']))
+
+        def test_constraints_after_deletion(self):
+
+            # remove and test ranges        
+            packages_url = self._ROOT_APIDIR + '/packages/'
+            self._delete(packages_url + str(200))
+            self._verify_testdata_range(190, 10, xrange(190,9) )
+            
+            self._delete(packages_url + str(100))
+            self._verify_testdata_range(98, 5,[98,99,101,102,103] )
+            
+            self._delete(packages_url + str(10))
+            self._delete(packages_url + str(0))
+            self._verify_testdata_range(0, 10, [1,2,3,4,5,6,7,8,9,11] )
+            self._verify_testdata_range(9, 5, [9,11,12,13,14] )
+            

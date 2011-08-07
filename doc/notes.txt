@@ -1,6 +1,5 @@
 TODO
 ====
-- REST API and test cases
 - pruning of packages and Actions (through manage.py)
 - RSS feeds
 - admin interface
@@ -59,6 +58,11 @@ URL DESIGN:
 			/delete			(GET, POST)
 			/copy			(GET, POST)
 			/result			(GET, depends on parameters passed in)
+			/rss			(GET)
+			
+	Restriction params:
+		offset, limit, descending=?
+		
 
 	(REST API)
 	/api/
