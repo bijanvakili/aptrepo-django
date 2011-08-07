@@ -226,9 +226,9 @@ class Repository:
 
     
     def get_actions(self, distribution_id=None, section_id=None, 
-                    min_timestamp=None, max_timestamp=None, max_items=None):
+                    min_ts=None, max_ts=None):
         """
-        Retrieves actions
+        Retrieves repository actions
         """
         # construct query based on restrictions
         query_args = []
@@ -236,17 +236,14 @@ class Repository:
             query_args.append(Q(section__distribution__id=distribution_id))
         if section_id:
             query_args.append(Q(section__id=section_id))
-        if min_timestamp:
-            query_args.append(Q(timestamp__gte=min_timestamp))
-        if max_timestamp:
-            query_args.append(Q(timetsamp__lte=max_timestamp))
+        if min_ts:
+            query_args.append(Q(timestamp__gte=min_ts))
+        if max_ts:
+            query_args.append(Q(timetsamp__lte=max_ts))
             
         # execute the query and return the result
         actions = models.Action.objects.filter(*query_args).order_by('timestamp')
-        if max_items:
-            return actions[:max_items]
-        else:
-            return actions
+        return actions
         
     
     def _write_package_list(self, fh, distribution, section, architecture):

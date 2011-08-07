@@ -26,6 +26,28 @@ class BaseAptRepoHandler(BaseHandler):
             raise HttpStatusCode(response)
         else:
             return response
+        
+    def _constrain_queryset(self, request, db_result, default_limit):
+        """
+        Constrain a DB query result based on common HTTP parameters:
+        
+        offset -- Start of the range (defaults to 0)
+        limit -- Maximum number of items to return (defaults to 'default_limit')
+        descending -- Should the results should be in reverse order (defaults to False)
+        """
+        min = 0
+        if 'offset' in request.GET:
+            min = int(request.GET['offset']) 
+        
+        max = default_limit
+        if 'limit' in request.GET:
+            max = min + int(request.GET['limit'])
+        
+        resultset = db_result[min:max]
+        if 'descending' in request.GET and request.GET['descending']:
+            resultset = resultset.reverse()
+            
+        return resultset
 
 class PackageHandler(BaseAptRepoHandler):
     """
@@ -33,10 +55,17 @@ class PackageHandler(BaseAptRepoHandler):
     """
     allowed_methods = ('GET', 'DELETE')
     model = server.aptrepo.models.Package
+    _DEFAULT_MAX_PACKAGES = 100
     
-    def read(self, request, id=None, package_name=None, version=None, architecture=None):
+    def read(self, request, **kwargs):
+        # if no arguments were specified, return all package
+        if (len(kwargs) == 0):
+            return self._constrain_queryset(request, self.model.objects.all(), 
+                                            self._DEFAULT_MAX_PACKAGES)
+        
+        # otherwise, search for a specific package
         try:
-            return self._find_package(id, package_name, version, architecture)
+            return self._find_package(**kwargs)
         except ObjectDoesNotExist:
             return rc.NOT_FOUND
 
@@ -113,6 +142,8 @@ class PackageInstanceHandler(BaseAptRepoHandler):
     model = server.aptrepo.models.PackageInstance
     fields = ('id', 'package', 'creator', 'creation_date')
     
+    _DEFAULT_MAX_INSTANCES = 100
+    
     def read(self, request, instance_id=None, section_id=None, 
              package_name=None, version=None, architecture=None):
         
@@ -133,13 +164,16 @@ class PackageInstanceHandler(BaseAptRepoHandler):
                                                                          architecture) 
                 return resp
             
-        # return all packages in a section
+        # return all packages in a section (within constrained limits)
         elif section_id:
-            return self.model.objects.filter(section__id=section_id)
-        # show that displaying all package instances in the entire repository
-        # is disallowed
+            section_instances = self.model.objects.filter(section__id=section_id) 
+            return self._constrain_queryset(request, section_instances, self._DEFAULT_MAX_INSTANCES) 
+        
+        # display all package instances (within constrained limits)
         else:
-            return rc.FORBIDDEN      
+            all_instances = self.model.objects.all()
+            return self._constrain_queryset(request, all_instances, 
+                                            default_limit=self._DEFAULT_MAX_INSTANCES)
             
                             
     def delete(self, request, instance_id=None, section_id=None, 
@@ -214,11 +248,13 @@ class ActionHandler(BaseAptRepoHandler):
     allowed_methods=('GET')
     model = server.aptrepo.models.Action
     
+    _DEFAULT_NUM_ACTIONS = 25
+    
     def read(self, request, distribution_id=None, section_id=None):
         
         # add restriction parameters
         action_query = {}
-        for k in ('min_timestamp', 'max_timestamp', 'max_items'):
+        for k in ('min_ts', 'max_ts'):
             if k in request.GET:
                 action_query[k] = request.GET[k]
         
@@ -232,7 +268,9 @@ class ActionHandler(BaseAptRepoHandler):
             
         repository=Repository()
         try:
-            return repository.get_actions(**action_query)
+            action_results = repository.get_actions(**action_query)
+            return self._constrain_queryset(request, action_results, 
+                                            default_limit=self._DEFAULT_NUM_ACTIONS)
         except ObjectDoesNotExist:
             return rc.NOT_FOUND
         

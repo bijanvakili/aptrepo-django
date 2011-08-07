@@ -13,6 +13,7 @@ urlpatterns = patterns('',
     (r'^packages/deb822/(?P<package_name>[^/]+)/(?P<version>[^/]+)/(?P<architecture>[^/]+)/{0,1}$', 
      package_resource),    
     (r'^packages/(?P<id>\d+)/{0,1}$', package_resource),
+    (r'^packages/{0,1}$', package_resource),
     
     # Distributions
     (r'^distributions/{0,1}$', distribution_resource),
