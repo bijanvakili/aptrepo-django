@@ -1,5 +1,6 @@
 import gzip
 import hashlib
+import logging
 import os
 import shutil
 import struct
@@ -8,6 +9,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db.models import Q
 from debian_bundle import deb822, debfile
+from apt_pkg import version_compare
 import pyme.core
 import pyme.constants.sig
 import models, common
@@ -21,7 +23,7 @@ class Repository:
     _PACKAGES_FILENAME = 'Packages'
     _BINARYPACKAGES_PREFIX = 'binary'
     _ARCHITECTURE_ALL = 'all'
-    
+        
     def get_gpg_public_key(self):
         """
         Retrieves the GPG public key as ASCII text
@@ -245,6 +247,122 @@ class Repository:
         actions = models.Action.objects.filter(*query_args).order_by('timestamp')
         return actions
         
+    def prune_sections(self, section_id_list, dry_run=False):
+        """
+        Prunes packages from the selected sections
+        
+        Returns the number of packages pruned
+        """
+        
+        logger = logging.getLogger('aptrepo.prune')
+        total_instances_pruned = 0
+        total_actions_pruned = 0
+        for section_id in section_id_list:
+            
+            # skip the section if it doesn't require pruning
+            section = models.Section.objects.get(id=section_id)
+            if section.package_prune_limit > 0:
+
+                # run bulk query for all package instances in this section and ensure their package information 
+                # is available for a sequential analysis. Note that we cannot sort by version because a simple 
+                # lexical comparison will not meet Debian standards.  
+                instances = models.PackageInstance.objects.filter(section=section)
+                instances = instances.select_related('package__package_name',
+                                                     'package__architecture',
+                                                     'package__version')
+                instances = instances.order_by('package__package_name', 'package__architecture')
+                
+                instance_ids_to_remove = []
+                (curr_name, curr_architecture) = (None, None)
+                curr_instances = []
+                for instance in instances:
+                    
+                    # reset the count if this is a new (name,architecture) pair
+                    if instance.package.package_name != curr_name or \
+                        instance.package.architecture != curr_architecture:
+    
+                        # determine which packages to prune
+                        instance_ids_to_remove += Repository._find_pruneable_instances(curr_instances,
+                                                                                       section.package_prune_limit)
+    
+                        # reset for next group                
+                        curr_name = instance.package.package_name
+                        curr_architecture = instance.package.architecture
+                        curr_instances = []
+                    
+                    # add to current instance set
+                    curr_instances.append(instance)
+    
+                # final review of pruneable instances
+                instance_ids_to_remove += Repository._find_pruneable_instances(curr_instances,
+                                                                               section.package_prune_limit)
+                    
+                # remove the instances
+                num_instances_pruned = len(instance_ids_to_remove)
+                for instance_id in instance_ids_to_remove:
+                    instance = models.PackageInstance.objects.get(id=instance_id)
+                    
+                    # avoid logging to debug unless required since it requires a SQL join operation
+                    if logger.isEnabledFor(logging.DEBUG):
+                        logger.debug('Pruning instance (%s,%s,%s) from %s:%s',
+                                     instance.package.package_name,
+                                     instance.package.architecture,
+                                     instance.package.version,
+                                     section.distribution.name,
+                                     section.name)
+                    if not dry_run:
+                        instance.delete()
+                    
+                logger.info('%d instances pruned from section %s:%s', 
+                            num_instances_pruned,
+                            section.distribution.name, 
+                            section.name)
+                total_instances_pruned += num_instances_pruned
+                
+            # prune actions for the section            
+            if section.action_prune_limit > 0:
+                actions_to_prune = models.Action.objects.filter(section=section)
+                actions_to_prune = actions_to_prune.order_by('-timestamp')[section.action_prune_limit:]
+                
+                num_actions_pruned = 0
+                for action in actions_to_prune:
+                    if logger.isEnabledFor(logging.DEBUG):
+                        logger.debug('Pruning action (%s)', action)
+                    if not dry_run:
+                        action.delete()
+                    num_actions_pruned += 1
+
+                logger.info('%d actions pruned from section %s:%s', 
+                            num_actions_pruned,
+                            section.distribution.name, 
+                            section.name)
+                total_actions_pruned += num_actions_pruned
+            
+        
+        # prune any associated package files by locating all Package objects that have
+        # no associated PackageInstance (a LEFT OUTER JOIN).
+        #
+        # NOTE: django will still need to make select calls to ensure there are no associated PackageInstances
+        pruneable_package_ids = models.Package.objects.filter(
+            packageinstance__id__isnull=True).values_list('id', flat=True)
+        total_packages_pruned = 0
+        for id in pruneable_package_ids:
+            package = models.Package.objects.only('package_name', 'architecture', 'version').get(pk=id)
+            logger.debug('Pruning package (%s,%s,%s)',
+                         package.package_name,
+                         package.architecture,
+                         package.version)
+            if not dry_run:
+                package.delete()
+            total_packages_pruned += 1
+        
+        
+        # log and return pruning summary
+        logger.info('Total actions pruned: %d', total_actions_pruned)
+        logger.info('Total instances pruned: %d', total_instances_pruned)
+        logger.info('Total packages pruned: %d', total_packages_pruned)
+        return (total_instances_pruned, total_packages_pruned, total_actions_pruned)
+            
     
     def _write_package_list(self, fh, distribution, section, architecture):
         """
@@ -448,3 +566,25 @@ class Repository:
             return hashlib.sha1()
         elif name == 'sha256':
             return hashlib.sha256()
+
+    @staticmethod
+    def _find_pruneable_instances(instances, package_prune_limit):
+        """
+        Returns a list of instances IDs for pruning
+        """
+
+        # Comparison function used to sort instances by Debian package version
+        def _compare_instances_by_version(a, b):
+            return version_compare(a.package.version, b.package.version)
+
+        pruneable_instance_ids = []
+        sorted_by_version = sorted(instances, 
+                                   cmp=_compare_instances_by_version, 
+                                   reverse=True)
+        
+        # prune all instances IDs beyond the prune limit in the sorted list
+        # of instances
+        for prunable_instance in sorted_by_version[package_prune_limit:]:
+            pruneable_instance_ids.append(prunable_instance.id)
+            
+        return pruneable_instance_ids

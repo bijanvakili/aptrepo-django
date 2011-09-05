@@ -3,6 +3,7 @@ Unit tests for apt repo
 """
 import hashlib
 import json
+import logging
 import os
 import shutil
 import tempfile
@@ -13,6 +14,26 @@ from debian_bundle import deb822, debfile
 import pyme.core
 from common import hash_string, hash_file_by_fh
 import models
+import repository
+
+# TODO Move global set of skipped tests into a singleton class
+_ENV_SKIPTESTS = 'APTREPO_SKIPTESTS'
+_TEST_EXCLUSIONS = ()
+if _ENV_SKIPTESTS in os.environ:
+    _TEST_EXCLUSIONS = set(os.environ[_ENV_SKIPTESTS].split())
+
+def skipRepoTestIfExcluded(test_case):
+    """
+    Decorator to determine whether to skip a test case
+    """
+    def _run_test_case(self):
+        if self.__class__.__name__ in _TEST_EXCLUSIONS:
+            print 'Disabling test: {0}.{1}()...'.format(self.__class__.__name__, 
+                                                      test_case.__name__)
+        else:
+            return test_case(self)
+
+    return _run_test_case
 
 class BaseAptRepoTest(TestCase):
 
@@ -20,7 +41,16 @@ class BaseAptRepoTest(TestCase):
     _ROOT_APIDIR = '/aptrepo/api'
     _DEFAULT_ARCHITECTURE = 'i386'
 
+    fixtures = ['simple_repository.json']
+
     def setUp(self):
+        # distribution and section name
+        self.distribution_name = 'test_distribution'
+        self.section_name = 'test_section'
+        section = models.Section.objects.get(name=self.section_name, 
+                                             distribution__name=self.distribution_name)
+        self.section_id = section.id
+        
         # remove all metafiles and previously uploaded Debian files
         self._clean_public_folder(settings.APTREPO_FILESTORE['metadata_subdir'])
         self._clean_public_folder(settings.APTREPO_FILESTORE['packages_subdir'])
@@ -28,14 +58,13 @@ class BaseAptRepoTest(TestCase):
         if os.path.exists(cache_dir):
             shutil.rmtree(cache_dir)
         
-                            
         # GPG context for signature verification
         self.gpg_context = pyme.core.Context()
         self.gpg_context.set_armor(1)
         
         # HTTP and REST client for testing
         self.client = Client()
-        
+
     def _make_common_debcontrol(self):
         control_map = deb822.Deb822()
         control_map['Package'] = 'test-package'
@@ -84,19 +113,6 @@ class BaseAptRepoTest(TestCase):
                 else:
                     os.remove(fullpath_entry)
 
-class SimpleRepositoryTest(BaseAptRepoTest):
-
-    fixtures = ['simple_repository.json']
-
-    def setUp(self):
-
-        # initialize base class
-        super(SimpleRepositoryTest, self).setUp()
-        
-        # distribution and section name
-        self.distribution_name = 'test_distribution'
-        self.section_name = 'test_section'        
-
     def _create_package(self, control_map, pkg_filename):
         """
         Creates a Debian package
@@ -108,7 +124,7 @@ class SimpleRepositoryTest(BaseAptRepoTest):
             with open(os.path.join(debian_dir,'control'), 'wt') as fh_control:
                 control_map.dump(fh_control)
             
-            ret = os.system('dpkg --build {0} {1}'.format(pkgsrc_dir, pkg_filename))
+            ret = os.system('dpkg --build {0} {1} >/dev/null 2>&1'.format(pkgsrc_dir, pkg_filename))
             self.failUnlessEqual( ret >> 16, 0 )
             
         finally:
@@ -129,9 +145,12 @@ class SimpleRepositoryTest(BaseAptRepoTest):
             response = self.client.post(
                 self._ROOT_WEBDIR + '/packages/', {
                     'file' : f, 'distribution': self.distribution_name, 'section': self.section_name})
-            print response.content
+            #print response.content
             self.failUnlessEqual(response.status_code, 302)
-            
+
+
+class SmallRepositoryTest(BaseAptRepoTest):
+
     def _upload_package_via_api(self, section_id, pkg_filename):
         """
         Internal method to upload a package via the API.
@@ -272,7 +291,7 @@ class SimpleRepositoryTest(BaseAptRepoTest):
 
         return False
         
-    
+    @skipRepoTestIfExcluded
     def test_single_package_upload(self):
         """ 
         Test a simple package upload 
@@ -305,6 +324,7 @@ class SimpleRepositoryTest(BaseAptRepoTest):
                 os.remove(pkg_filename)
 
 
+    @skipRepoTestIfExcluded
     def test_multiple_package_upload(self):
         """ 
         Test multiple package uploads 
@@ -340,7 +360,7 @@ class SimpleRepositoryTest(BaseAptRepoTest):
         
         # retrieve package list
         response = self.client.get(self._ROOT_WEBDIR + '/packages/')
-        print response.content
+        #print response.content
         self.failUnlessEqual(response.status_code, 200)
 
         # verify the entire repo metadata        
@@ -354,6 +374,7 @@ class SimpleRepositoryTest(BaseAptRepoTest):
             self._verify_package_download(self.distribution_name, self.section_name, 
                                           package_name, test_architecture, version)
 
+    @skipRepoTestIfExcluded
     def test_rest_api(self):
         """
         Tests the REST API
@@ -422,8 +443,6 @@ class SimpleRepositoryTest(BaseAptRepoTest):
 
 class LargeRepositoryTest(BaseAptRepoTest):
 
-    fixtures = ['simple_repository.json']
-
     _TOTAL_PACKAGES = 200
 
     def setUp(self):
@@ -433,10 +452,6 @@ class LargeRepositoryTest(BaseAptRepoTest):
 
         # create pre-uploaded packages (with no Debian files though) along with associated
         # instances and upload actions
-        section = models.Section.objects.get(name='test_section', 
-                                             distribution__name='test_distribution')
-        self.section_id = section.id
-        
         for i in xrange(200):
             control_map = self._make_common_debcontrol()
             control_map['Package'] = 'test-package' + str(i)
@@ -455,6 +470,7 @@ class LargeRepositoryTest(BaseAptRepoTest):
             package.hash_sha256 = 'XXX'
             package.save()
             
+            section = models.Section.objects.get(id=self.section_id)
             instance = models.PackageInstance.objects.create(package=package, section=section,
                                                              creator='testuser')
             action = models.Action()
@@ -469,6 +485,7 @@ class LargeRepositoryTest(BaseAptRepoTest):
         return '{0},{1},{2}'.format(package['package_name'], package['version'],
                                     package['architecture']) 
 
+    @skipRepoTestIfExcluded
     def test_rest_api_constraints(self):
         
         lot_size = 10
@@ -478,9 +495,6 @@ class LargeRepositoryTest(BaseAptRepoTest):
             # retrieve package lists
             packages_url = self._ROOT_APIDIR + '/packages'
             package_list = self._download_json_object(packages_url, constraint_params)
-            
-            # for debugging purposes
-            #print i
             
             self.assertEqual(len(package_list), lot_size)
             
@@ -544,4 +558,187 @@ class LargeRepositoryTest(BaseAptRepoTest):
             self._delete(packages_url + str(0))
             self._verify_testdata_range(0, 10, [1,2,3,4,5,6,7,8,9,11] )
             self._verify_testdata_range(9, 5, [9,11,12,13,14] )
+
+
+class PruningTest(BaseAptRepoTest):
+    
+    def _ensure_db_logging(self):
+        # recheck debugging environment (since django reset DEBUG flags by default)
+        if 'APTREPO_DEBUG' in os.environ:
+            debug_params = os.environ['APTREPO_DEBUG'].lower().split()
+            if 'true' in debug_params:
+                settings.DEBUG = True
+            if 'db' in debug_params: 
+                logger = logging.getLogger('django.db.backends')
+                logger.setLevel(logging.DEBUG)
+                
+    def _disable_db_logging(self):
+        settings.DEBUG = False
+        logger = logging.getLogger('django.db.backends')
+        logger.setLevel(logging.INFO)
+    
+    def _upload_package_set(self, name, version_list, architecture='all'):
+        control_map = self._make_common_debcontrol()
+        control_map['Package'] = name
+        control_map['Architecture'] = architecture
+
+
+        for version in version_list:
+            control_map['Version'] = str(version)
+            pkg_filename = None        
+            try:
+                # create the package
+                pkg_fh, pkg_filename = tempfile.mkstemp(suffix='.deb', prefix=control_map['Package'])
+                os.close(pkg_fh)
+                self._create_package(control_map, pkg_filename)
+        
+                # upload the package
+                self._upload_package(pkg_filename)
+                
+            finally:
+                if pkg_filename is not None:
+                    os.remove(pkg_filename)
             
+    def _verify_pruned_repo(self, expected_results):
+        """
+        Verifies the model in the repository using an 'if and only if' matching comparison
+        
+        expected_results - dictionary mapping package names to list of (architecture, version) tuples
+        """
+        
+        # TODO convert the following two loops to simply construct two dictionaries to make the database queries
+        # a single O(n) call and use sorting in memory
+        
+        # forward check: check to ensure each instance is in the expected set
+        instances = models.PackageInstance.objects.filter(section__id=self.section_id)
+        for instance in instances:
+            package_name = instance.package.package_name
+            self.assertTrue(package_name in expected_results, 
+                            'Package {0} in expected results'.format(package_name))
+            self.assertTrue((instance.package.architecture, instance.package.version)
+                             in expected_results[package_name],
+                             "({0},{1},{2}) in expected results".format(package_name,
+                                                                        instance.package.architecture,
+                                                                        instance.package.version))
+                
+        # reverse check: check to see if each expected result is in the instances for the section
+        for package_name in expected_results.keys():
+            for (architecture, version) in expected_results[package_name]:
+                results = models.PackageInstance.objects.filter(section__id=self.section_id,
+                                                                 package__package_name=package_name,
+                                                                 package__architecture=architecture,
+                                                                 package__version=version)
+                self.assertEqual(len(results), 1, 
+                                 '({0},{1},{2}) in database'.format(package_name,architecture,version))
+                
+        # ensure no stale packages exist in the Packages table
+        for package in models.Package.objects.all():
+            self.assertTrue(package.package_name in expected_results, "Stale package name")
+            self.assertTrue((package.architecture, package.version) in expected_results[package.package_name], 
+                            "Stale package version")
+            
+        # ensure the number of actions for the section meets the limit
+        section = models.Section.objects.get(id=self.section_id)
+        if section.action_prune_limit > 0:
+            num_actions = models.Action.objects.filter(section=section).count()
+            self.assertTrue(num_actions <= section.action_prune_limit, "Too many actions")
+    
+    def _make_tuple_list(self, architecture, version_list):
+        l = []
+        for version in version_list:
+            l.append( (architecture, str(version)) )
+            
+        return l
+
+    @skipRepoTestIfExcluded
+    def test_basic_pruning(self):
+        
+        """
+        setup set of packages to be pruned as follows
+        (use only 'all' architecture)
+        
+        before:
+        a1-a6
+        b1
+        c1 - c5
+        d1-d4,d7,d9-d10
+        e1-e4
+        """
+        try:
+            self._upload_package_set('a', [1,2,3,4,5,6])
+            self._upload_package_set('b', [1])
+            self._upload_package_set('c', [1,2,3,4,5])
+            self._upload_package_set('d', [1,2,3,4,7,9,10])
+            self._upload_package_set('e', [1,2,3,4])
+            
+            # prune the packages
+            repo = repository.Repository()
+            self._ensure_db_logging()
+            repo.prune_sections([self.section_id])
+            self._disable_db_logging()
+            
+            """
+            verify that this is the state of the repo after pruning:
+            
+            a2-a6
+            b1
+            c1-c5
+            d3,d4,d7,d9,10
+            e1-e4
+            """
+            
+            pruned_state = {}
+            pruned_state['a'] = self._make_tuple_list('all', [2,3,4,5,6])
+            pruned_state['b'] = self._make_tuple_list('all', [1])
+            pruned_state['c'] = self._make_tuple_list('all', [1,2,3,4,5])
+            pruned_state['d'] = self._make_tuple_list('all', [3,4,7,9,10])
+            pruned_state['e'] = self._make_tuple_list('all', [1,2,3,4])
+            
+            self._verify_pruned_repo(pruned_state)
+        finally:
+            self._disable_db_logging()
+        
+    @skipRepoTestIfExcluded
+    def test_pruning_by_architecture(self):
+        """
+        setup a list of packages to be pruned as follows
+        
+        before:
+        a:
+            i386: a1-a5
+            amd64: a6-a10
+        b:
+            i386: a1-a10
+            amd64: a6-a10
+        """
+        
+        try:
+            self._upload_package_set('a', [1,2,3,4,5], 'i386')
+            self._upload_package_set('a', [6,7,8,9,10], 'amd64')
+            self._upload_package_set('b', [1,2,3,4,5,6,7,8,9,10], 'i386')
+            self._upload_package_set('b', [6,7,8,9,10], 'amd64')
+            
+            # prune the packages
+            repo = repository.Repository()
+            self._ensure_db_logging()
+            repo.prune_sections([self.section_id])
+            self._disable_db_logging()
+            
+            """
+            after:
+            a:
+                i386: a1-a5
+                amd64: a6-a10
+            b:
+                i386: a6-a10
+                amd64: a6-a10
+            """
+            pruned_state = {}
+            pruned_state['a'] = self._make_tuple_list('i386', [1,2,3,4,5]) + \
+                self._make_tuple_list('amd64', [6,7,8,9,10])
+            pruned_state['b'] = self._make_tuple_list('i386', [6,7,8,9,10]) + \
+                self._make_tuple_list('amd64', [6,7,8,9,10])
+            
+            self._verify_pruned_repo(pruned_state)
+        finally:
+            self._disable_db_logging()

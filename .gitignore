@@ -1,4 +1,6 @@
+.pydevproject
 var/db/*.db
+var/log/*.log*
 var/public/*
 !var/public/packages/README
 !var/public/dists/README

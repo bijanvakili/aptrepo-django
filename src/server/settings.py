@@ -2,8 +2,6 @@
 
 import os
 
-DEBUG = True
-TEMPLATE_DEBUG = DEBUG
 
 # load the project root
 APTREPO_ROOT = '/oanda/aptrepo'
@@ -12,8 +10,17 @@ if 'APTREPO_ROOT' in os.environ:
 APTREPO_CONFIG_ROOT = os.path.join(APTREPO_ROOT, 'etc')
 APTREPO_VAR_ROOT = os.path.join(APTREPO_ROOT, 'var')
 APTREPO_SHARE_ROOT =  os.path.join(APTREPO_ROOT, 'share')
-
 TEST_DATA_ROOT = os.path.join(APTREPO_ROOT, 'test/data')
+
+# set the appropriate Debug level
+DEBUG = False
+DB_DEBUG = False
+if 'APTREPO_DEBUG' in os.environ:
+    debug_params = os.environ['APTREPO_DEBUG'].lower().split() 
+    DEBUG = 'true' in debug_params
+    DB_DEBUG = 'db' in debug_params
+
+TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
     ('Build Administrator', 'buildadmins@oanda.com'),
@@ -129,5 +136,50 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
         'LOCATION': os.path.join(APTREPO_VAR_ROOT, 'cache'),
         'TIMEOUT': 3600
+    }
+}
+
+
+# logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'verbose': {
+            'format': '%(asctime)s %(process)d  %(levelname)s %(module)s %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    #'filters' : {},
+    'handlers' : {
+        # TODO create custom console handler to route level <=INFO to stdout while
+        # >=ERROR to stderr
+        'console' : {
+            'level':'DEBUG',
+            'class':'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'file' : {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'formatter': 'verbose',
+            'filename': os.path.join(APTREPO_VAR_ROOT, 'log', 'aptrepo.log'),
+            'when': 'D',
+            'backupCount': '7',       
+        },
+    },
+    'loggers': {
+        'aptrepo.prune': {
+            'handlers': ['console'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': True,
+        },
+        'django.db.backends' : {
+            'handlers': ['console'],
+            'level': 'DEBUG' if DB_DEBUG else 'INFO',
+            'propagate': True,
+        },               
     }
 }
