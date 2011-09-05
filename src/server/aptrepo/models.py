@@ -14,6 +14,9 @@ class UniqueFile(models.Model):
     
     NOTE: All hash fields use double the size to store hexadecimal values
     """
+    class Meta:
+        abstract = True    
+    
     path = models.FileField(upload_to=uniquefile_upload_path, max_length=255, db_index=True)
     size = models.IntegerField(default=0)
     hash_md5 = models.CharField(max_length=16*2, db_index=True)
@@ -101,6 +104,8 @@ class Section(models.Model):
     name = models.CharField(max_length=255, db_index=True)
     distribution = models.ForeignKey('Distribution', db_index=True)
     description = models.TextField()
+    package_prune_limit = models.IntegerField(default=0)
+    action_prune_limit = models.IntegerField(default=0)
 
     def __unicode__(self):
         return '{0}:{1}'.format(self.distribution.name, self.name)
@@ -114,7 +119,6 @@ class PackageInstance(models.Model):
     section = models.ForeignKey('Section')    
     creator = models.CharField(max_length=255)
     creation_date = models.DateTimeField(auto_now_add=True, db_index=True)
-    is_deleted = models.BooleanField()
     
     def __unicode__(self):
         return '{0} - {1}'.format(self.section, self.package)
@@ -141,4 +145,4 @@ class Action(models.Model):
     comment = models.TextField()
 
     def __unicode__(self):
-        return '({0}) {1} - {2}'.format(self.user, self.action, self.instance)
+        return '({0}) {1}:{2}'.format(self.timestamp, self.user, self.action)

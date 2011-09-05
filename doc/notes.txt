@@ -1,12 +1,15 @@
 TODO
 ====
 - pruning of packages and Actions (through manage.py)
-- RSS feeds
+	> try using COLLATE to do version comparisons
+- unit tests that install packages from the repo
+	> use the DPkg '--admindir' and '--root' options to safely test installations without root access
+- enforce exclusive access for all write operations
 - admin interface
+- permissions w/support for admin (SQLite) and LDAP users
+- RSS feeds
 - proper web UI templates and interface
 	- copy operation (web UI)
-- enforce exclusive access for all write operations
-- permissions w/support for admin (SQLite) and LDAP users
 - Apache and nginx deployment
 - packaging/distribution
 

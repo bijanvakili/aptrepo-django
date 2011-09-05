@@ -18,7 +18,9 @@
 		"fields" : {
 			"name" : "test_section",
 			"distribution" : ["test_distribution"],
-			"description" : "Test Section"
+			"description" : "Test Section",
+			"package_prune_limit" : 5,
+			"action_prune_limit" : 10
 		}
 	}
 ]
