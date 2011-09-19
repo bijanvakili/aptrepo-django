@@ -1,7 +1,5 @@
-TODO
-====
-- pruning of packages and Actions (through manage.py)
-	> try using COLLATE to do version comparisons
+Remaining goals
+===============
 - unit tests that install packages from the repo
 	> use the DPkg '--admindir' and '--root' options to safely test installations without root access
 - enforce exclusive access for all write operations

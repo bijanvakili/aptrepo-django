@@ -1,7 +1,8 @@
 # Django settings for aptrepo2 project.
 
+import logging
 import os
-
+import sys
 
 # load the project root
 APTREPO_ROOT = '/oanda/aptrepo'
@@ -139,6 +140,15 @@ CACHES = {
     }
 }
 
+class LevelLessThan(logging.Filter):
+    """
+    Logging filter class to include all INFO and DEBUG messages
+    """
+    def __init__(self, max_level):
+        self.max_level = max_level
+        
+    def filter(self, record):
+        return record.levelno <= self.max_level
 
 # logging configuration
 LOGGING = {
@@ -152,14 +162,25 @@ LOGGING = {
             'format': '%(levelname)s %(message)s'
         },
     },
-    #'filters' : {},
+    'filters' : {
+        'info_and_lower' : {
+            '()': 'settings.LevelLessThan',
+            'max_level' : logging.INFO,
+        }
+    },
     'handlers' : {
-        # TODO create custom console handler to route level <=INFO to stdout while
-        # >=ERROR to stderr
-        'console' : {
-            'level':'DEBUG',
-            'class':'logging.StreamHandler',
-            'formatter': 'simple'
+        'console_stdout' : {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'filters': ['info_and_lower'],
+            'formatter': 'simple',
+            'stream'  : sys.stdout,
+        },
+        'console_stderr' : {
+            'level': 'WARNING',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+            'stream'  : sys.stderr,
         },
         'file' : {
             'level': 'INFO',
@@ -172,12 +193,12 @@ LOGGING = {
     },
     'loggers': {
         'aptrepo.prune': {
-            'handlers': ['console'],
+            'handlers': ['console_stdout', 'console_stderr'],
             'level': 'DEBUG' if DEBUG else 'INFO',
             'propagate': True,
         },
         'django.db.backends' : {
-            'handlers': ['console'],
+            'handlers': ['console_stdout', 'console_stderr'],
             'level': 'DEBUG' if DB_DEBUG else 'INFO',
             'propagate': True,
         },               

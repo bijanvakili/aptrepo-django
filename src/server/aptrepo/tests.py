@@ -1,6 +1,7 @@
 """
 Unit tests for apt repo
 """
+import fnmatch
 import hashlib
 import json
 import logging
@@ -16,7 +17,7 @@ from common import hash_string, hash_file_by_fh
 import models
 import repository
 
-# TODO Move global set of skipped tests into a singleton class
+# global set of skipped tests
 _ENV_SKIPTESTS = 'APTREPO_SKIPTESTS'
 _TEST_EXCLUSIONS = ()
 if _ENV_SKIPTESTS in os.environ:
@@ -605,10 +606,6 @@ class PruningTest(BaseAptRepoTest):
         
         expected_results - dictionary mapping package names to list of (architecture, version) tuples
         """
-        
-        # TODO convert the following two loops to simply construct two dictionaries to make the database queries
-        # a single O(n) call and use sorting in memory
-        
         # forward check: check to ensure each instance is in the expected set
         instances = models.PackageInstance.objects.filter(section__id=self.section_id)
         for instance in instances:
@@ -632,10 +629,22 @@ class PruningTest(BaseAptRepoTest):
                                  '({0},{1},{2}) in database'.format(package_name,architecture,version))
                 
         # ensure no stale packages exist in the Packages table
+        n_packages = 0
         for package in models.Package.objects.all():
             self.assertTrue(package.package_name in expected_results, "Stale package name")
             self.assertTrue((package.architecture, package.version) in expected_results[package.package_name], 
                             "Stale package version")
+            self.assertTrue(os.path.exists(package.path.path), "Package file exists")
+            n_packages += 1
+            
+        # ensure no extra package files exist
+        package_root = os.path.join(settings.MEDIA_ROOT,
+                                    settings.APTREPO_FILESTORE['packages_subdir'])
+        for root,_,files in os.walk(package_root):
+            for filename in fnmatch.filter(files, '*.deb'):
+                package_rel_path = root.replace(settings.MEDIA_ROOT, '')
+                packages = models.Package.objects.filter(path=os.path.join(package_rel_path, filename))
+                self.assertTrue(packages.count() == 1, "Package file is actually referenced in database")
             
         # ensure the number of actions for the section meets the limit
         section = models.Section.objects.get(id=self.section_id)
@@ -653,18 +662,18 @@ class PruningTest(BaseAptRepoTest):
     @skipRepoTestIfExcluded
     def test_basic_pruning(self):
         
-        """
-        setup set of packages to be pruned as follows
-        (use only 'all' architecture)
-        
-        before:
-        a1-a6
-        b1
-        c1 - c5
-        d1-d4,d7,d9-d10
-        e1-e4
-        """
         try:
+            """
+            setup set of packages to be pruned as follows
+            (use only 'all' architecture)
+            
+            before:
+            a1-a6
+            b1
+            c1 - c5
+            d1-d4,d7,d9-d10
+            e1-e4
+            """
             self._upload_package_set('a', [1,2,3,4,5,6])
             self._upload_package_set('b', [1])
             self._upload_package_set('c', [1,2,3,4,5])
@@ -700,19 +709,19 @@ class PruningTest(BaseAptRepoTest):
         
     @skipRepoTestIfExcluded
     def test_pruning_by_architecture(self):
-        """
-        setup a list of packages to be pruned as follows
-        
-        before:
-        a:
-            i386: a1-a5
-            amd64: a6-a10
-        b:
-            i386: a1-a10
-            amd64: a6-a10
-        """
         
         try:
+            """
+            setup a list of packages to be pruned as follows
+            
+            before:
+            a:
+                i386: a1-a5
+                amd64: a6-a10
+            b:
+                i386: a1-a10
+                amd64: a6-a10
+            """
             self._upload_package_set('a', [1,2,3,4,5], 'i386')
             self._upload_package_set('a', [6,7,8,9,10], 'amd64')
             self._upload_package_set('b', [1,2,3,4,5,6,7,8,9,10], 'i386')
