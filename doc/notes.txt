@@ -7,7 +7,6 @@ Remaining goals
 - permissions w/support for admin (SQLite) and LDAP users
 - RSS feeds
 - proper web UI templates and interface
-	- copy operation (web UI)
 - Apache and nginx deployment
 - packaging/distribution
 
