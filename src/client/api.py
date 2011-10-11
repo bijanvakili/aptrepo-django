@@ -91,11 +91,9 @@ class AptRepoClient:
         """
         Retrieves a list of sections
         
-        distribution_id -- (Optional) only list section in the selected distribution
+        distribution_id -- List section in the selected distribution
         """
-        url = self._DISTS_PREFIX + str(distribution_id) + '/'
-        if distribution_id:
-            url = url + self._SECTIONS_PREFIX
+        url = self._DISTS_PREFIX + str(distribution_id) + '/' + self._SECTIONS_PREFIX
         return self._get_request(url)
     
     
