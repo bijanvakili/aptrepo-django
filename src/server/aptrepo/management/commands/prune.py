@@ -1,6 +1,6 @@
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
-from server.aptrepo.repository import Repository
+from server.aptrepo.views import get_repository_controller
 from server.aptrepo.models import Section
 from server.aptrepo.management.util import parse_section_identifier, init_cli_logger
 
@@ -34,7 +34,7 @@ class Command(BaseCommand):
                     section_id_list.append(section_id)
 
             # prune the section list            
-            repository = Repository(logger)
+            repository = get_repository_controller(logger)
             repository.prune_sections(section_id_list, dry_run=options['readonly'])
             
         except Exception as e:

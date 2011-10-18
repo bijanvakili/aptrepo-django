@@ -4,8 +4,8 @@ from piston.handler import BaseHandler
 
 import server.settings
 import server.aptrepo.models
-from server.aptrepo.repository import Repository
-from server.aptrepo.common import AptRepoException
+from server.aptrepo.views import get_repository_controller
+from server.aptrepo.util import AptRepoException
 
 class BaseAptRepoHandler(BaseHandler):
     """
@@ -72,7 +72,7 @@ class PackageHandler(BaseAptRepoHandler):
     def delete(self, request, id=None, name=None, version=None, architecture=None):
         try:
             package = self._find_package(id, name, version, architecture)
-            repository = Repository()
+            repository = get_repository_controller()
             repository.remove_all_package_instances(package.id)
             return rc.DELETED
         
@@ -183,7 +183,7 @@ class PackageInstanceHandler(BaseAptRepoHandler):
             try:
                 package_instance=self._find_package_instance(instance_id, section_id, 
                                                              package_name, version, architecture)
-                repository = Repository()
+                repository = get_repository_controller()
                 repository.remove_package(package_instance.id)
                 return rc.DELETED
             
@@ -201,7 +201,7 @@ class PackageInstanceHandler(BaseAptRepoHandler):
                 raise AptRepoException('No repository section specified')
             
             # if a file was uploaded, let the repository handle the file
-            repository = Repository()
+            repository = get_repository_controller()
             section = server.aptrepo.models.Section.objects.get(id=section_id)
             new_instance_id = None
             if 'file' in request.FILES:
@@ -210,8 +210,7 @@ class PackageInstanceHandler(BaseAptRepoHandler):
                                                          uploaded_package_file=uploaded_file)
             # otherwise, clone based of the source package or instance ID
             else:
-                clone_args = {'dest_distribution_name' : section.distribution.name,
-                              'dest_section_name' : section.name }
+                clone_args = {'section' : section }
                 if 'source_id' in request.POST:
                     clone_args['instance_id'] = request.POST['instance_id']
                 elif 'package_id' in request.POST:
@@ -265,7 +264,7 @@ class ActionHandler(BaseAptRepoHandler):
         elif distribution_id:
             action_query['distribution_id'] = distribution_id
             
-        repository=Repository()
+        repository=get_repository_controller()
         try:
             action_results = repository.get_actions(**action_query)
             return self._constrain_queryset(request, action_results, 

@@ -5,9 +5,9 @@ from django.views.decorators.csrf import csrf_protect
 from django.template import RequestContext
 from django import forms
 from django.conf import settings
-import models
-from common import AptRepoException, GZIP_EXTENSION, GPG_EXTENSION
-from repository import Repository
+from server.aptrepo import models
+from server.aptrepo.util import AptRepoException, constants
+from server.aptrepo.views import get_repository_controller
 
 
 class UploadPackageForm(forms.Form):
@@ -26,7 +26,7 @@ def gpg_public_key(request):
         if request.method != 'GET':
             raise AptRepoException('Invalid HTTP method')
         
-        repository = Repository()
+        repository = get_repository_controller()
         return HttpResponse(repository.get_gpg_public_key())
 
     except Exception as e:
@@ -139,7 +139,7 @@ def package_list(request, distribution, section, architecture, extension=None):
         # NOTE: caching is not employed for package list
                   
         is_compressed = False
-        if extension == GZIP_EXTENSION:
+        if extension == constants.GZIP_EXTENSION:
             is_compressed = True
         elif extension != '':
             return HttpResponse(status_code=404)
@@ -147,7 +147,7 @@ def package_list(request, distribution, section, architecture, extension=None):
         mimetype = 'text/plain'
         if is_compressed:
             mimetype = 'application/gzip'
-        repository = Repository()
+        repository = get_repository_controller()
         response = HttpResponse(mimetype=mimetype)
         response.content = repository.get_packages(distribution, section, architecture,
                                                    is_compressed)
@@ -169,10 +169,10 @@ def release_list(request, distribution, extension):
         if request.method != 'GET':
             raise AptRepoException('Invalid HTTP method')
 
-        repository = Repository()
+        repository = get_repository_controller()
         (releases_data, signature_data) = repository.get_release_data(distribution)
         data = None
-        if extension == GPG_EXTENSION:
+        if extension == constants.GPG_EXTENSION:
             data = signature_data
         else:
             data = releases_data
@@ -188,18 +188,18 @@ def _handle_uploaded_file(distribution_name, section_name, uploaded_file):
     Handles a successfully uploaded files 
     """
     # add the package
-    repository = Repository()
+    repository = get_repository_controller()
     repository.add_package(distribution_name=distribution_name, section_name=section_name, 
                            uploaded_package_file=uploaded_file)
-    return HttpResponseRedirect(reverse('aptrepo.views.upload_success'))
+    return HttpResponseRedirect(reverse(upload_success))
     
 def _handle_remove_package(package_instance_id):
     """
     Handles removing packages
     """
-    repository = Repository()
+    repository = get_repository_controller()
     repository.remove_package(package_instance_id)
-    return HttpResponseRedirect(reverse('aptrepo.views.remove_success'))
+    return HttpResponseRedirect(reverse(remove_success))
 
 def _error_response(exception):
     """ 

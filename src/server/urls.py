@@ -11,6 +11,6 @@ urlpatterns = patterns('',
     # (r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
     (r'^admin/', include(admin.site.urls)),
-    (r'^aptrepo/api/', include('api.urls')),
-    (r'^aptrepo/', include('aptrepo.urls')),
+    (r'^aptrepo/api/', include('aptrepo.views.api.urls')),
+    (r'^aptrepo/', include('aptrepo.views.webpages.urls')),
 )

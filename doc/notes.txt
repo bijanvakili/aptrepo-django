@@ -1,9 +1,5 @@
 Remaining goals
 ===============
-- refactor
-	> common.py into 'utils' package
-	> repository into a 'controller' package
-	> REST API into 'views' package
 - enforce exclusive access for all write operations
 - admin interface
 - logging

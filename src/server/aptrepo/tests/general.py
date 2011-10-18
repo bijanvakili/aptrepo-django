@@ -9,7 +9,7 @@ import tempfile
 import zlib
 from debian_bundle import deb822, debfile
 from server.aptrepo import models
-from server.aptrepo.common import hash_file_by_fh
+from server.aptrepo.util.hash import hash_file_by_fh
 from base import BaseAptRepoTest, skipRepoTestIfExcluded
 
 
