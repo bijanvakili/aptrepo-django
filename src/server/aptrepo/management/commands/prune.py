@@ -1,11 +1,14 @@
-import logging
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 from server.aptrepo.repository import Repository
-from server.aptrepo.models import PackageInstance, Section
+from server.aptrepo.models import Section
+from server.aptrepo.management.util import parse_section_identifier, init_cli_logger
 
 class Command(BaseCommand):
-    args = '<distribution:section distribution:section ...>'
+    """
+    'prune' admin command
+    """
+    args = '[distribution:section ...]'
     help = 'Removes old package versions from the specific sections in the repository'
     option_list = (
         make_option('--dry-run',
@@ -17,13 +20,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         
-        logger = logging.getLogger('aptrepo.prune')
-        
-        # if marked silent, filter any logging output except errors
-        if options['verbosity'] == '0':
-            logger.setLevel(logging.ERROR)
-        elif options['verbosity'] == '2':
-            logger.setLevel(logging.DEBUG)
+        logger = init_cli_logger(options)
         
         try:
             # parse section list
@@ -33,21 +30,11 @@ class Command(BaseCommand):
                     'id', flat=True).order_by('distribution__name', 'name')
             else:
                 for arg in args:
-                    try:
-                        (distribution_name, section_name) = arg.split(':')
-                    except Exception:
-                        raise CommandError('Invalid section identifier: {0}'.format(arg))
-                    
-                    try:
-                        section = Section.objects.get(name=section_name,
-                                                      distribution__name=distribution_name)
-                        section_id_list.append(section.id)
-                    except Exception:
-                        raise CommandError('Section does not exist: {0}'.format(arg))
-                        
+                    section_id = parse_section_identifier(arg)
+                    section_id_list.append(section_id)
 
             # prune the section list            
-            repository = Repository()
+            repository = Repository(logger)
             repository.prune_sections(section_id_list, dry_run=options['readonly'])
             
         except Exception as e:

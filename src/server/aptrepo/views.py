@@ -189,7 +189,8 @@ def _handle_uploaded_file(distribution_name, section_name, uploaded_file):
     """
     # add the package
     repository = Repository()
-    repository.add_package(distribution_name, section_name, uploaded_file)
+    repository.add_package(distribution_name=distribution_name, section_name=section_name, 
+                           uploaded_package_file=uploaded_file)
     return HttpResponseRedirect(reverse('aptrepo.views.upload_success'))
     
 def _handle_remove_package(package_instance_id):

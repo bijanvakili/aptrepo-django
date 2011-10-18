@@ -1,14 +1,21 @@
 Remaining goals
 ===============
-- unit tests that install packages from the repo
-	> use the DPkg '--admindir' and '--root' options to safely test installations without root access
+- refactor
+	> common.py into 'utils' package
+	> repository into a 'controller' package
+	> REST API into 'views' package
 - enforce exclusive access for all write operations
 - admin interface
 - permissions w/support for admin (SQLite) and LDAP users
 - RSS feeds
 - proper web UI templates and interface
+	> copy package
+	> download from URL
 - Apache and nginx deployment
 - packaging/distribution
+- load settings from etc directory
+- regression tests that install packages from the repo
+
 
 REST API DESIGN
 ===============
