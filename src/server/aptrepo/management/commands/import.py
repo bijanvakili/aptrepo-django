@@ -1,7 +1,7 @@
 import os
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
-from server.aptrepo.repository import Repository
+from server.aptrepo.views import get_repository_controller
 from server.aptrepo.management.util import parse_section_identifier, init_cli_logger
 
 class Command(BaseCommand):
@@ -44,7 +44,7 @@ class Command(BaseCommand):
                     raise CommandError('Directory does not exist: ' + dir)
 
             # import packages from the specified directories
-            repository = Repository(logger)
+            repository = get_repository_controller(logger)
             for dir in dirs:
                 repository.import_dir(section_id=section_id, dir_path=dir,
                                       dry_run=options['readonly'], 

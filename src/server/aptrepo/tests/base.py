@@ -10,7 +10,7 @@ from debian_bundle import deb822
 import pyme.core
 from django.test import TestCase, Client
 from django.conf import settings
-from server.aptrepo.common import hash_string
+from server.aptrepo.util.hash import hash_string
 from server.aptrepo import models
 
 # global set of skipped tests

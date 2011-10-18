@@ -213,3 +213,5 @@ LOGGING = {
         },               
     }
 }
+
+DEFAULT_LOGGER = 'aptrepo.null'

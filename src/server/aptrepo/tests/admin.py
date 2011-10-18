@@ -8,7 +8,7 @@ import shutil
 import tempfile
 from django.conf import settings
 from server.aptrepo import models
-from server.aptrepo.repository import Repository
+from server.aptrepo.views import get_repository_controller
 from base import BaseAptRepoTest, skipRepoTestIfExcluded
 
 class PruningTest(BaseAptRepoTest):
@@ -131,7 +131,7 @@ class PruningTest(BaseAptRepoTest):
             self._upload_package_set('e', [1,2,3,4])
             
             # prune the packages
-            repo = Repository()
+            repo = get_repository_controller()
             self._ensure_db_logging()
             repo.prune_sections([self.section_id])
             self._disable_db_logging()
@@ -178,7 +178,7 @@ class PruningTest(BaseAptRepoTest):
             self._upload_package_set('b', [6,7,8,9,10], 'amd64')
             
             # prune the packages
-            repo = Repository()
+            repo = get_repository_controller()
             self._ensure_db_logging()
             repo.prune_sections([self.section_id])
             self._disable_db_logging()
@@ -239,7 +239,7 @@ class ImportTest(BaseAptRepoTest):
                                               self._make_valid_deb_filename(control)))
 
             # import the flat directory only
-            repository = Repository()
+            repository = get_repository_controller()
             repository.import_dir(section_id=self.section_id, 
                                   dir_path=temp_import_dir, recursive=False)
 
@@ -286,7 +286,7 @@ class ImportTest(BaseAptRepoTest):
                                      self._make_valid_deb_filename(control)))
 
             # import the flat directory        
-            repository = Repository()
+            repository = get_repository_controller()
             repository.import_dir(section_id=self.section_id, 
                                   dir_path=temp_import_dir, recursive=True)
 

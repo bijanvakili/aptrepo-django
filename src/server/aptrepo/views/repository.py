@@ -11,42 +11,41 @@ from django.core.files import File
 from django.db.models import Q
 from debian_bundle import deb822, debfile
 from apt_pkg import version_compare
-import pyme.core
-import pyme.constants.sig
-import models, common
+from server.aptrepo import models
+from server.aptrepo.util import AptRepoException, constants
+from server.aptrepo.util.hash import hash_file_by_fh, GPGSigner
+from server.aptrepo.util.system import get_python_version
 
-class Repository:
+class Repository():
     """
     Manages the apt repository including all packages and associated metadata
     """
 
-    _RELEASE_FILENAME = 'Release'
-    _PACKAGES_FILENAME = 'Packages'
     _BINARYPACKAGES_PREFIX = 'binary'
     _ARCHITECTURE_ALL = 'all'
+    _RELEASE_FILENAME = 'Release'
+    _PACKAGES_FILENAME = 'Packages'
     _DEBIAN_EXTENSION = '.deb'
         
     def __init__(self, logger=None):
         if logger:
             self.logger = logger
         else:
-            self.logger = logging.getLogger('aptrepo.null')
+            self.logger = logging.getLogger(settings.DEFAULT_LOGGER)
         
     def get_gpg_public_key(self):
         """
         Retrieves the GPG public key as ASCII text
         """
+        # attempt to retrieve the public key from the cache
         cache_key = settings.APTREPO_FILESTORE['gpg_publickey']
         gpg_public_key = cache.get(cache_key)
         if gpg_public_key:
             return gpg_public_key
         
         # return the GPG public key as ASCII text
-        gpg_context = self._load_gpg_context()
-        public_key_data = pyme.core.Data()
-        gpg_context.op_export(None, 0, public_key_data)
-        public_key_data.seek(0, 0)
-        gpg_public_key = public_key_data.read()
+        gpg_signer = GPGSigner()
+        gpg_public_key = gpg_signer.get_public_key()
         
         cache.set(cache_key, gpg_public_key)
         return gpg_public_key
@@ -54,11 +53,16 @@ class Repository:
     
     def get_packages(self, distribution, section, architecture, compressed=False):
         """
-        Retrieve the packages data
+        Retrieve the Debian 'Packages' data
+        
+        distribution - name of distribution
+        section - name of section
+        architecture - specifies the architecture subset of packages
+        compressed - (optional) if true, will compress with gzip
         """
         packages_path = self._get_packages_path(distribution, section, architecture)
         if compressed:
-            packages_path = packages_path + common.GZIP_EXTENSION
+            packages_path = packages_path + constants.GZIP_EXTENSION
         packages_data = cache.get(packages_path)
         if not packages_data:
             self._refresh_releases_data(distribution)
@@ -69,7 +73,9 @@ class Repository:
     
     def get_release_data(self, distribution):
         """
-        Retrieve the release data
+        Retrieve the Debian 'Release' data
+        
+        distribution - name of distribution
         """
         releases_path = self._get_releases_path(distribution)
         releases_data = None
@@ -100,10 +106,8 @@ class Repository:
         package_path - pathname to package
         package_size - size of package file
         
-        
         Returns the new instance id
         """
-        
         # parse the arguments
         distribution = None
         if 'section' in kwargs:
@@ -115,7 +119,7 @@ class Repository:
             section = models.Section.objects.get(name=kwargs['section_name'], 
                                                  distribution=distribution)
         else:
-            raise common.AptRepoException('No section argument specified')
+            raise AptRepoException('No section argument specified')
         
         if not distribution:
             distribution = section.distribution
@@ -134,7 +138,7 @@ class Repository:
         # check preconditions
         (_, ext) = os.path.splitext(package_name)
         if ext != self._DEBIAN_EXTENSION:
-            raise common.AptRepoException('Invalid extension: {0}'.format(ext))        
+            raise AptRepoException('Invalid extension: {0}'.format(ext))        
 
         # extract control file information for denormalized searches
         deb = debfile.DebFile(filename=package_path)
@@ -142,15 +146,15 @@ class Repository:
         if control['Architecture'] != self._ARCHITECTURE_ALL and \
             control['Architecture'] not in distribution.get_architecture_list():
             
-            raise common.AptRepoException(
+            raise AptRepoException(
                 'Invalid architecture for distribution ({0}) : {1}'.format(
                     distribution.name, control['Architecture']))
 
         # compute hashes
         hashes = {}
-        hashes['md5'] = common.hash_file_by_fh(hashlib.md5(), package_fh)
-        hashes['sha1'] = common.hash_file_by_fh(hashlib.sha1(), package_fh)
-        hashes['sha256'] = common.hash_file_by_fh(hashlib.sha256(), package_fh)
+        hashes['md5'] = hash_file_by_fh(hashlib.md5(), package_fh)
+        hashes['sha1'] = hash_file_by_fh(hashlib.sha1(), package_fh)
+        hashes['sha256'] = hash_file_by_fh(hashlib.sha256(), package_fh)
 
         # create a new package entry or verify its hashes if it already exists
         package_search = models.Package.objects.filter(package_name=control['Package'],
@@ -161,7 +165,7 @@ class Repository:
             if package.hash_md5 != hashes['md5'] or \
                package.hash_sha1 != hashes['sha1'] or \
                package.hash_sha256 != hashes['sha256']:
-                raise common.AptRepoException(
+                raise AptRepoException(
                     '({0}, {1}, {2}) already exist with different file contents'.format(
                         package.package_name, package.version, package.architecture))
         else:
@@ -208,7 +212,14 @@ class Repository:
                    dry_run=False, recursive=False, ignore_errors=False):
         """
         Imports a directory of Debian packages
+        
+        section_id - integer primary key (id) specifying the section ti import packages
+        dir_path - root directory containing Debian packages to import
+        dry_run - (optional) if true, will only output import actions to logger but not apply changes
+        recursive - (optional) if true, inspect packages in subdirectories
+        ignore_errors - (optional) if true, continues importing packages even if any fail
         """
+
         for root, dirs, files in os.walk(dir_path):
             for filename in files:
                 if filename.endswith(self._DEBIAN_EXTENSION):
@@ -230,43 +241,48 @@ class Repository:
             if not recursive:
                 del dirs[:]
         
-    def clone_package(self, dest_distribution_name, dest_section_name, package_id=None, instance_id=None):
+    def clone_package(self, dest_section, package_id=None, instance_id=None):
         """
         Clones a package to create another instance
-        """
         
+        dest_section - destination section (model)
+        
+        package_id - primary key (id) of package from which to create a new instance
+        OR
+        instance_id - primary key (id) of an existing instance to copy
+        
+        Returns the new instance id
+        """
         # locate the target section and the source package
-        target_section = models.Section.objects.get(distribution__name=dest_distribution_name, 
-                                                    name=dest_section_name)
         src_package = None
         if package_id:
             src_package=models.Package.objects.get(package_id)
         elif instance_id:
             src_instance=models.PackageInstance.objects.get(instance_id)
-            if src_instance.section.id == target_section.id:
-                raise common.AptRepoException('Cannot clone into the same section')
+            if src_instance.section.id == dest_section.id:
+                raise AptRepoException('Cannot clone into the same section')
             src_package=src_instance.package
         
         # create the new instance
         # TODO set the creator
         package_instance = models.PackageInstance.objects.create(package=src_package,
-                                                                 section=target_section)
+                                                                 section=dest_section)
         
         # insert action
-        models.Action.objects.create(section=target_section, action=models.Action.COPY,
+        models.Action.objects.create(section=dest_section, action=models.Action.COPY,
                                      user=package_instance.creator)
         
-        self._clear_cache(dest_distribution_name)
+        self._clear_cache(dest_section.distribution.name)
         return package_instance.id
 
         
     def remove_package(self, package_instance_id):
         """
         Removes a package instance
-
         If there are no instances referencing the actual package, it will be removed as well
-        """
         
+        package_instance_id - primary key (id) of package to remove
+        """
         # remove the instance
         package_instance = models.PackageInstance.objects.get(id=package_instance_id)
         package_id = package_instance.package.id 
@@ -291,6 +307,8 @@ class Repository:
     def remove_all_package_instances(self, package_id):
         """
         Removes all instances of a package
+        
+        package_instance_id - primary key (id) of package to remove        
         """
         instances = models.PackageInstance.objects.filter(package__id=package_id)
         for instance in instances:
@@ -301,6 +319,15 @@ class Repository:
                     min_ts=None, max_ts=None):
         """
         Retrieves repository actions
+        
+        distribution_id - distribution from which to retrieve actions
+        OR
+        section_id - section from which to retrieve actions
+        
+        min_ts - (optional) minimum timestamp for oldest action
+        max_ts - (opitonal) maximum timetsamp for newest action
+        
+        Returns a list of actions
         """
         # construct query based on restrictions
         query_args = []
@@ -317,13 +344,19 @@ class Repository:
         actions = models.Action.objects.filter(*query_args).order_by('timestamp')
         return actions
         
+    
     def prune_sections(self, section_id_list, dry_run=False):
         """
         Prunes packages from the selected sections
         
-        Returns the number of packages pruned
-        """
+        section_id_list - list of section ids in which to prune packages
+        dry_run - (optional) if true, will only log changes but will not apply them 
         
+        Returns a tuple containing:
+        - total instances pruned 
+        - total packages pruned
+        - total actions pruned 
+        """
         total_instances_pruned = 0
         total_actions_pruned = 0
         for section_id in section_id_list:
@@ -487,7 +520,7 @@ class Repository:
         compressed_fh = None
         try:
             tmp_fd, tmp_filename = tempfile.mkstemp(prefix=self._PACKAGES_FILENAME)
-            compressed_filename = tmp_filename + common.GZIP_EXTENSION
+            compressed_filename = tmp_filename + constants.GZIP_EXTENSION
             tmp_fh = os.fdopen(tmp_fd, 'wb+')
             compressed_fh = open(compressed_filename, 'wb+')
             
@@ -511,7 +544,7 @@ class Repository:
                     gzip_params = {
                                    'filename':self._PACKAGES_FILENAME, 'mode':'wb', 'compresslevel':9, 
                                    'fileobj':compressed_fh}
-                    if common.get_python_version() >= 2.7:
+                    if get_python_version() >= 2.7:
                         gzip_params['mtime'] = 0 
                     
                     gzip_fh = gzip.GzipFile(**gzip_params)
@@ -522,7 +555,7 @@ class Repository:
 
                     # for python v2.6 and earlier, we need to manually set the mtime field to
                     # zero.  This starts at position 4 of the file (see RFC 1952)                    
-                    if common.get_python_version() < 2.7:
+                    if get_python_version() < 2.7:
                         compressed_fh.seek(4)
                         compressed_fh.write(struct.pack('<i',0))
 
@@ -531,18 +564,19 @@ class Repository:
                     tmp_fh.seek(0)
                     cache.set( packages_path, tmp_fh.read() )
                     compressed_fh.seek(0)
-                    cache.set( packages_path + common.GZIP_EXTENSION, compressed_fh.read(compressed_file_size) )
+                    cache.set( packages_path + constants.GZIP_EXTENSION, 
+                               compressed_fh.read(compressed_file_size) )
                     
                     # hash the package list for each hash function
                     for type in hash_types:
                         release_hashes[type].append(
-                            ' {0} {1} {2}'.format(common.hash_file_by_fh(self._get_hashfunc(type), tmp_fh), 
+                            ' {0} {1} {2}'.format(hash_file_by_fh(self._get_hashfunc(type), tmp_fh), 
                                                   tmp_file_size, 
                                                   rel_packages_path))
                         release_hashes[type].append(
-                            ' {0} {1} {2}'.format(common.hash_file_by_fh(self._get_hashfunc(type), compressed_fh), 
+                            ' {0} {1} {2}'.format(hash_file_by_fh(self._get_hashfunc(type), compressed_fh), 
                                                   compressed_file_size, 
-                                                  rel_packages_path + common.GZIP_EXTENSION))
+                                                  rel_packages_path + constants.GZIP_EXTENSION))
 
         finally:                        
             if tmp_fh:
@@ -559,16 +593,8 @@ class Repository:
                 
         # create GPG signature for release data
         release_contents = '\n'.join(release_data)
-        release_plain_data = pyme.core.Data(release_contents)
-        release_signature_data = pyme.core.Data()
-        modes = pyme.constants.sig.mode
-        gpg_context = self._load_gpg_context()
-        sign_result = gpg_context.op_sign(release_plain_data, 
-                                          release_signature_data,
-                                          modes.DETACH)
-        pyme.errors.errorcheck(sign_result)
-        release_signature_data.seek(0, 0)
-        release_signature = release_signature_data.read()
+        gpg_signer = GPGSigner()
+        release_signature = gpg_signer.sign_data(release_contents)
         
         releases_path = self._get_releases_path(distribution)
         cache.set(releases_path, (release_contents, release_signature) )
@@ -576,21 +602,6 @@ class Repository:
         return (release_contents, release_signature)
 
 
-    def _load_gpg_context(self):
-        """
-        Load a gpgme context with the repo GPG private key
-        """
-        gpg_context = pyme.core.Context()
-        gpg_context.set_armor(1)
-        gpg_context.signers_clear()
-        private_key_data = pyme.core.Data(file=settings.GPG_SECRET_KEY)
-        gpg_context.op_import(private_key_data)
-        gpgme_result = gpg_context.op_import_result()
-        pyme.errors.errorcheck(gpgme_result.imports[0].result)
-        
-        return gpg_context
-
-    
     def _clear_cache(self, distribution_name):
         distribution = models.Distribution.objects.get(name=distribution_name)
         sections = models.Section.objects.filter(distribution=distribution).values_list('name', flat=True)
@@ -599,10 +610,10 @@ class Repository:
         for section in sections:
             for architecture in architectures:
                 packages_path = self._get_packages_path(distribution_name, section, architecture)
-                cache.delete_many([ packages_path, packages_path + common.GZIP_EXTENSION ])
+                cache.delete_many([ packages_path, packages_path + constants.GZIP_EXTENSION ])
         
         releases_path = self._get_releases_path(distribution_name)
-        cache.delete_many([releases_path, releases_path + common.GPG_EXTENSION])
+        cache.delete_many([releases_path, releases_path + constants.GPG_EXTENSION])
 
 
     def _get_packages_path(self, distribution, section, architecture):
