@@ -20,7 +20,7 @@ urlpatterns = patterns('',
         'aptrepo.views.release_list'),
     
     # Static package files
-    url(r'^packages/(?P<path>.*)$', 'django.views.static.serve', 
+    url(r'^(public/){0,1}packages/(?P<path>.*)$', 'django.views.static.serve', 
         {
             'document_root': settings.MEDIA_ROOT + '/' + settings.APTREPO_FILESTORE['packages_subdir'],
         }

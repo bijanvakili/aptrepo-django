@@ -6,6 +6,7 @@ Remaining goals
 	> REST API into 'views' package
 - enforce exclusive access for all write operations
 - admin interface
+- logging
 - permissions w/support for admin (SQLite) and LDAP users
 - RSS feeds
 - proper web UI templates and interface
