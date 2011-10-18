@@ -169,6 +169,10 @@ LOGGING = {
         }
     },
     'handlers' : {
+        'null': {
+            'level':'DEBUG',
+            'class':'django.utils.log.NullHandler',
+        },                  
         'console_stdout' : {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
@@ -192,7 +196,12 @@ LOGGING = {
         },
     },
     'loggers': {
-        'aptrepo.prune': {
+        'aptrepo.null': {
+            'handlers' : ['null'],
+            'propagate': True,
+            'level':'INFO',            
+        },
+        'aptrepo.admin.cli': {
             'handlers': ['console_stdout', 'console_stderr'],
             'level': 'DEBUG' if DEBUG else 'INFO',
             'propagate': True,

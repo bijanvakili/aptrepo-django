@@ -7,11 +7,9 @@ import json
 import os
 import tempfile
 import zlib
-from django.conf import settings
 from debian_bundle import deb822, debfile
-import pyme.core
 from server.aptrepo import models
-from server.aptrepo.common import hash_string, hash_file_by_fh
+from server.aptrepo.common import hash_file_by_fh
 from base import BaseAptRepoTest, skipRepoTestIfExcluded
 
 
@@ -32,24 +30,6 @@ class SmallRepositoryTest(BaseAptRepoTest):
             self.failUnlessEqual(response.status_code, 200)
             return json.loads(response.content)
             
-    def _verify_repo_metadata(self):
-        """
-        Verifies all the metafiles of the repository
-        """
-        # retrieve and verify the Release file and signature
-        root_distribution_url = self._ROOT_WEBDIR + '/dists/' + self.distribution_name
-        release_content = self._download_content(root_distribution_url + '/Release')
-        release_signature = self._download_content(root_distribution_url + '/Release.gpg')
-        self._verify_gpg_signature(release_content, release_signature)
-        
-        # parse each of the Release file entries
-        distribution = deb822.Release(sequence=release_content,
-                                      fields=['Architectures', 'Components', 'MD5Sum'])
-        for md5_entry in distribution['MD5Sum']:
-            file_content = self._download_content(root_distribution_url + '/' + md5_entry['name'])
-            self.failUnlessEqual(len(file_content), int(md5_entry['size']))
-            self.failUnlessEqual(hash_string(hashlib.md5(), file_content), md5_entry['md5sum'])
-    
     
     def _verify_package_download(self, distribution, section, package_name, architecture, version):
         """
@@ -111,26 +91,6 @@ class SmallRepositoryTest(BaseAptRepoTest):
             os.remove(pkg_filename)
 
                 
-    def _verify_gpg_signature(self, content, gpg_signature):
-        """
-        Verifies a GPG signature using the public key
-        """
-        
-        # download the public key
-        public_key_content = self._download_content(
-            '{0}/dists/{1}'.format(self._ROOT_WEBDIR, settings.APTREPO_FILESTORE['gpg_publickey']))
-        self.gpg_context.op_import(pyme.core.Data(string=public_key_content))
-        
-        # verify the signature
-        release_data = pyme.core.Data(string=content)
-        signature_data = pyme.core.Data(string=gpg_signature)
-        self.gpg_context.op_verify(signature_data, release_data, None)
-        
-        result = self.gpg_context.op_verify_result()
-        self.failUnlessEqual(len(result.signatures), 1)
-        self.failUnlessEqual(result.signatures[0].status, 0)
-        self.failUnlessEqual(result.signatures[0].summary, 0)
-    
     def _remove_package(self, package_name, version, architecture):
         """
         Removes a specified package instance
@@ -140,22 +100,6 @@ class SmallRepositoryTest(BaseAptRepoTest):
                 'distribution' : self.distribution_name, 'section' : self.section_name,
                 'name' : package_name, 'version': version, 'architecture': architecture})
         self.failUnlessEqual(response.status_code, 302)
-        
-    def _exists_package(self, package_name, version, architecture):
-        """
-        Inspects a section to determine whether a package exists
-        """
-        packages_url = '/aptrepo/dists/{0}/{1}/binary-{2}/Packages'.format(self.distribution_name, 
-                                                                           self.section_name, 
-                                                                           architecture)
-        packages_content = self._download_content(packages_url)
-
-        # do a linear search for the target package        
-        for package in deb822.Packages.iter_paragraphs(sequence=packages_content.splitlines()):
-            if (package['Package'], package['Architecture'], package['Version']) == (package_name, architecture, version):
-                return True
-
-        return False
         
     @skipRepoTestIfExcluded
     def test_single_package_upload(self):

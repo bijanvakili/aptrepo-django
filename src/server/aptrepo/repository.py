@@ -7,6 +7,7 @@ import struct
 import tempfile
 from django.conf import settings
 from django.core.cache import cache
+from django.core.files import File
 from django.db.models import Q
 from debian_bundle import deb822, debfile
 from apt_pkg import version_compare
@@ -23,6 +24,13 @@ class Repository:
     _PACKAGES_FILENAME = 'Packages'
     _BINARYPACKAGES_PREFIX = 'binary'
     _ARCHITECTURE_ALL = 'all'
+    _DEBIAN_EXTENSION = '.deb'
+        
+    def __init__(self, logger=None):
+        if logger:
+            self.logger = logger
+        else:
+            self.logger = logging.getLogger('aptrepo.null')
         
     def get_gpg_public_key(self):
         """
@@ -75,41 +83,74 @@ class Repository:
         return (releases_data, releases_signature)            
         
 
-    def add_package(self, distribution_name, section_name, package_file):
+    def add_package(self, **kwargs):
         """
         Add a package to the repository
+
+        section    - section model object 
+        OR        
+        section_id - unique ID of the section (optional)
+        OR
+        distribution_name - distribution to add package (if section_id is not specified)
+        section_name - section within distribution to add package (if section_id is not specified)
         
-        distribution_name - distribution to add package
-        section_name - section within distribution to add package
-        package_file - instance of TemporaryUploadedFile
+        uploaded_package_file - instance of Django TemporaryUploadedFile
+        OR
+        package_fh   - instance of file
+        package_path - pathname to package
+        package_size - size of package file
+        
         
         Returns the new instance id
         """
-        # check preconditions
-        (_, ext) = os.path.splitext(package_file.name)
-        if ext != '.deb':
-            raise common.AptRepoException('Invalid extension: {0}'.format(ext))        
-        distribution = models.Distribution.objects.get(name=distribution_name)
-        section = models.Section.objects.get(name=section_name, 
-                                             distribution__name=distribution_name)
         
+        # parse the arguments
+        distribution = None
+        if 'section' in kwargs:
+            section = kwargs['section']
+        elif 'section_id' in kwargs:
+            section = models.Section.objects.get(pk=kwargs['section_id'])
+        elif 'distribution_name' in kwargs and 'section_name' in kwargs:
+            distribution = models.Distribution.objects.get(name=kwargs['distribution_name'])            
+            section = models.Section.objects.get(name=kwargs['section_name'], 
+                                                 distribution=distribution)
+        else:
+            raise common.AptRepoException('No section argument specified')
+        
+        if not distribution:
+            distribution = section.distribution
+
+        if 'uploaded_package_file' in kwargs:
+            package_fh = kwargs['uploaded_package_file']
+            package_path = kwargs['uploaded_package_file'].temporary_file_path()
+            package_name = kwargs['uploaded_package_file'].name            
+            package_size = kwargs['uploaded_package_file'].size
+        else:
+            package_fh = File(kwargs['package_fh'])
+            package_path = kwargs['package_path']
+            (_, package_name) = os.path.split(package_path)
+            package_size = kwargs['package_size']
+        
+        # check preconditions
+        (_, ext) = os.path.splitext(package_name)
+        if ext != self._DEBIAN_EXTENSION:
+            raise common.AptRepoException('Invalid extension: {0}'.format(ext))        
+
         # extract control file information for denormalized searches
-        # NOTE: package_file must be of type TemporaryUploadedFile because the DebFile()
-        #       class cannot django file types and must use direct filenames.
-        deb = debfile.DebFile(filename=package_file.temporary_file_path())
+        deb = debfile.DebFile(filename=package_path)
         control = deb.debcontrol()
         if control['Architecture'] != self._ARCHITECTURE_ALL and \
             control['Architecture'] not in distribution.get_architecture_list():
             
             raise common.AptRepoException(
                 'Invalid architecture for distribution ({0}) : {1}'.format(
-                    distribution_name, control['Architecture']))
+                    distribution.name, control['Architecture']))
 
         # compute hashes
         hashes = {}
-        hashes['md5'] = common.hash_file_by_fh(hashlib.md5(), package_file)
-        hashes['sha1'] = common.hash_file_by_fh(hashlib.sha1(), package_file)
-        hashes['sha256'] = common.hash_file_by_fh(hashlib.sha256(), package_file)
+        hashes['md5'] = common.hash_file_by_fh(hashlib.md5(), package_fh)
+        hashes['sha1'] = common.hash_file_by_fh(hashlib.sha1(), package_fh)
+        hashes['sha256'] = common.hash_file_by_fh(hashlib.sha256(), package_fh)
 
         # create a new package entry or verify its hashes if it already exists
         package_search = models.Package.objects.filter(package_name=control['Package'],
@@ -126,7 +167,7 @@ class Repository:
         else:
             package = models.Package()
             try:
-                package.size = package_file.size
+                package.size = package_size
                 package.hash_md5 = hashes['md5']
                 package.hash_sha1 = hashes['sha1']
                 package.hash_sha256 = hashes['sha256']
@@ -137,9 +178,12 @@ class Repository:
                 package.control = control.dump()
                 
                 hash_prefix = hashes['md5'][0:settings.APTREPO_FILESTORE['hash_depth']]
-                stored_file_path = os.path.join(settings.APTREPO_FILESTORE['packages_subdir'], 
-                                               hash_prefix, package_file.name)
-                package.path.save(stored_file_path, package_file) 
+                stored_file_path = os.path.join(settings.APTREPO_FILESTORE['packages_subdir'],
+                    hash_prefix, '{0}_{1}_{2}{3}'.format(control['Package'], 
+                                                          control['Version'], 
+                                                          control['Architecture'],
+                                                          self._DEBIAN_EXTENSION))
+                package.path.save(stored_file_path, package_fh) 
                 
                 package.save()
                 
@@ -157,8 +201,34 @@ class Repository:
         models.Action.objects.create(section=section, action=models.Action.UPLOAD,
                                      user=package_instance.creator)
         
-        self._clear_cache(distribution_name)
+        self._clear_cache(distribution.name)
         return package_instance.id
+        
+    def import_dir(self, section_id, dir_path, 
+                   dry_run=False, recursive=False, ignore_errors=False):
+        """
+        Imports a directory of Debian packages
+        """
+        for root, dirs, files in os.walk(dir_path):
+            for filename in files:
+                if filename.endswith(self._DEBIAN_EXTENSION):
+                    try:
+                        package_path = os.path.join(dir_path, root, filename) 
+                        if not dry_run:
+                            with open(package_path, 'r') as package_file:
+                                self.add_package(section_id=section_id, package_fh=package_file,
+                                                 package_path=package_path, 
+                                                 package_size=os.path.getsize(package_path))
+                        self.logger.info('Imported ' + package_path)
+                        
+                    except Exception as e:
+                        if not ignore_errors:
+                            raise e
+                        else:
+                            self.logger.warning(e)
+
+            if not recursive:
+                del dirs[:]
         
     def clone_package(self, dest_distribution_name, dest_section_name, package_id=None, instance_id=None):
         """
@@ -254,7 +324,6 @@ class Repository:
         Returns the number of packages pruned
         """
         
-        logger = logging.getLogger('aptrepo.prune')
         total_instances_pruned = 0
         total_actions_pruned = 0
         for section_id in section_id_list:
@@ -303,8 +372,8 @@ class Repository:
                     instance = models.PackageInstance.objects.get(id=instance_id)
                     
                     # avoid logging to debug unless required since it requires a SQL join operation
-                    if logger.isEnabledFor(logging.DEBUG):
-                        logger.debug('Pruning instance (%s,%s,%s) from %s:%s',
+                    if self.logger.isEnabledFor(logging.DEBUG):
+                        self.logger.debug('Pruning instance (%s,%s,%s) from %s:%s',
                                      instance.package.package_name,
                                      instance.package.architecture,
                                      instance.package.version,
@@ -313,7 +382,7 @@ class Repository:
                     if not dry_run:
                         instance.delete()
                     
-                logger.info('%d instances pruned from section %s:%s', 
+                self.logger.info('%d instances pruned from section %s:%s', 
                             num_instances_pruned,
                             section.distribution.name, 
                             section.name)
@@ -326,13 +395,13 @@ class Repository:
                 
                 num_actions_pruned = 0
                 for action in actions_to_prune:
-                    if logger.isEnabledFor(logging.DEBUG):
-                        logger.debug('Pruning action (%s)', action)
+                    if self.logger.isEnabledFor(logging.DEBUG):
+                        self.logger.debug('Pruning action (%s)', action)
                     if not dry_run:
                         action.delete()
                     num_actions_pruned += 1
 
-                logger.info('%d actions pruned from section %s:%s', 
+                self.logger.info('%d actions pruned from section %s:%s', 
                             num_actions_pruned,
                             section.distribution.name, 
                             section.name)
@@ -348,7 +417,7 @@ class Repository:
         total_packages_pruned = 0
         for id in pruneable_package_ids:
             package = models.Package.objects.only('package_name', 'architecture', 'version').get(pk=id)
-            logger.debug('Pruning package (%s,%s,%s)',
+            self.logger.debug('Pruning package (%s,%s,%s)',
                          package.package_name,
                          package.architecture,
                          package.version)
@@ -358,9 +427,9 @@ class Repository:
         
         
         # log and return pruning summary
-        logger.info('Total actions pruned: %d', total_actions_pruned)
-        logger.info('Total instances pruned: %d', total_instances_pruned)
-        logger.info('Total packages pruned: %d', total_packages_pruned)
+        self.logger.info('Total actions pruned: %d', total_actions_pruned)
+        self.logger.info('Total instances pruned: %d', total_instances_pruned)
+        self.logger.info('Total packages pruned: %d', total_packages_pruned)
         return (total_instances_pruned, total_packages_pruned, total_actions_pruned)
             
     
@@ -549,7 +618,6 @@ class Repository:
             section, self._BINARYPACKAGES_PREFIX, architecture, 
             self._PACKAGES_FILENAME)
         return packages_path
-
 
     def _get_releases_path(self, distribution):
         releases_path = '{0}/{1}/{2}'.format(

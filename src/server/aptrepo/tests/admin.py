@@ -4,9 +4,11 @@ Pruning unit tests for the apt repo
 import fnmatch
 import logging
 import os
+import shutil
 import tempfile
 from django.conf import settings
-from server.aptrepo import models, repository
+from server.aptrepo import models
+from server.aptrepo.repository import Repository
 from base import BaseAptRepoTest, skipRepoTestIfExcluded
 
 class PruningTest(BaseAptRepoTest):
@@ -129,7 +131,7 @@ class PruningTest(BaseAptRepoTest):
             self._upload_package_set('e', [1,2,3,4])
             
             # prune the packages
-            repo = repository.Repository()
+            repo = Repository()
             self._ensure_db_logging()
             repo.prune_sections([self.section_id])
             self._disable_db_logging()
@@ -176,7 +178,7 @@ class PruningTest(BaseAptRepoTest):
             self._upload_package_set('b', [6,7,8,9,10], 'amd64')
             
             # prune the packages
-            repo = repository.Repository()
+            repo = Repository()
             self._ensure_db_logging()
             repo.prune_sections([self.section_id])
             self._disable_db_logging()
@@ -199,3 +201,117 @@ class PruningTest(BaseAptRepoTest):
             self._verify_pruned_repo(pruned_state)
         finally:
             self._disable_db_logging()
+
+
+class ImportTest(BaseAptRepoTest):
+    
+    @skipRepoTestIfExcluded
+    def test_flat_directory(self):
+        """
+        - create temporary folder
+        - create 3 Debian packages within the temporary folder
+        - import all packages
+        
+        - verify repo metadata
+        - use the REST API to ensure all packages were loaded  
+        """
+        
+        temp_import_dir = None
+        try:
+            temp_import_dir = tempfile.mkdtemp()
+            
+            # create 3 Debian packages for import
+            control = self._make_common_debcontrol()
+            package_names = set()
+            for i in xrange(3):
+                control['Package'] = 'imp-' + chr(ord('a') + i)
+                package_names.add(control['Package'])
+                self._create_package(control, 
+                                     os.path.join(temp_import_dir, self._make_valid_deb_filename(control)))
+
+            # create a subdirectory with a single package which should be ignored
+            subdir_name = 'subdir'
+            os.mkdir(os.path.join(temp_import_dir, subdir_name))
+            control['Package'] = 'imp-toignore'
+            self._create_package(control, 
+                                 os.path.join(temp_import_dir,
+                                              subdir_name, 
+                                              self._make_valid_deb_filename(control)))
+
+            # import the flat directory only
+            repository = Repository()
+            repository.import_dir(section_id=self.section_id, 
+                                  dir_path=temp_import_dir, recursive=False)
+
+            # verify the repository            
+            self._verify_repo_metadata()
+            for package_name in package_names:
+                self.assertTrue(
+                    self._exists_package(package_name, control['Version'], 
+                                         control['Architecture']))
+
+            # check the results
+            self._check_import_results(package_names, control['Version'], 
+                                       control['Architecture'])
+        finally:
+            if temp_import_dir is not None:
+                shutil.rmtree(temp_import_dir)
+
+    
+    @skipRepoTestIfExcluded
+    def test_recursive_directories(self):
+        """
+        - create temporary folder
+        - create 3 directories with 3 Debian packages each within the temporary folder
+        - import all packages
+        
+        - verify repo metadata
+        - use the REST API to ensure all packages were loaded  
+        """
+        temp_import_dir = None
+        try:
+            temp_import_dir = tempfile.mkdtemp()
+            
+            # create 3 Debian packages for import
+            control = self._make_common_debcontrol()
+            package_names = set()
+            for i in xrange(3):
+                subdir_name = 'subdir' + str(i + 1)
+                os.mkdir(os.path.join(temp_import_dir, subdir_name))
+                for j in xrange(3):
+                    control['Package'] = 'imp-' + chr(ord('a') + i*3 + j)
+                    package_names.add(control['Package'])
+                    self._create_package(control, 
+                        os.path.join(temp_import_dir, subdir_name, 
+                                     self._make_valid_deb_filename(control)))
+
+            # import the flat directory        
+            repository = Repository()
+            repository.import_dir(section_id=self.section_id, 
+                                  dir_path=temp_import_dir, recursive=True)
+
+            # check the results
+            self._check_import_results(package_names, control['Version'], 
+                                       control['Architecture'])
+        finally:
+            if temp_import_dir is not None:
+                shutil.rmtree(temp_import_dir)
+    
+    def _make_valid_deb_filename(self, control):
+        return '{0}_{1}_{2}.deb'.format(control['Package'], control['Version'], control['Architecture'])
+
+    def _check_import_results(self, package_names, version, architecture):
+        """
+        Verifies that a set of package names are in the repo
+        """
+        self._verify_repo_metadata()
+        
+        # ensure the packages were actually imported
+        for package_name in package_names:
+            self.assertTrue(self._exists_package(package_name, version, architecture))
+
+        # ensure there are no packages in the repo that were not meant to be imported
+        instance_list = self._download_json_object(self._ROOT_APIDIR + '/sections/' + 
+                                                  str(self.section_id) + '/package-instances/')
+        for instance in instance_list:
+            self.assertTrue(instance['package']['package_name'] in package_names)

@@ -206,9 +206,8 @@ class PackageInstanceHandler(BaseAptRepoHandler):
             new_instance_id = None
             if 'file' in request.FILES:
                 uploaded_file = request.FILES['file']
-                new_instance_id = repository.add_package(section.distribution.name, 
-                                                         section.name, 
-                                                         uploaded_file)
+                new_instance_id = repository.add_package(section=section, 
+                                                         uploaded_package_file=uploaded_file)
             # otherwise, clone based of the source package or instance ID
             else:
                 clone_args = {'dest_distribution_name' : section.distribution.name,
