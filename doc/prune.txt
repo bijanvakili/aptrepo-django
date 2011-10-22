@@ -1,0 +1,23 @@
+input:
+
+	max_versions(section) - maximum number of package versions per package
+	
+// prune instances that have too many versions
+for each section do
+	sorted_instances = sort by name,architecture,version
+	for each name,architecture in sorted_instances
+		count_version = # of versions for name,architecture
+		num_to_delete = count_version - max_versions(section)
+		if num_to_delete > 0
+			delete first 'num_to_delete' instances in name,architecture
+		end if
+	end for
+end for
+
+// prune packages that no longer have associated instances
+for each package do
+	if package has no associated instances
+		remove package
+	end if
+end for
+
