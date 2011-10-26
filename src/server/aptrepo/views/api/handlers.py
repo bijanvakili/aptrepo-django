@@ -1,7 +1,7 @@
+import logging
 from django.core.exceptions import ObjectDoesNotExist
 from piston.utils import rc, HttpStatusCode
 from piston.handler import BaseHandler
-
 import server.settings
 import server.aptrepo.models
 from server.aptrepo.views import get_repository_controller
@@ -13,7 +13,7 @@ class BaseAptRepoHandler(BaseHandler):
     """
     exclude = ()
 
-    def _error_response(self, exception=None, return_code=None):
+    def _error_response(self, exception, return_code=None):
         """ 
         Return an error response 
         """
@@ -21,6 +21,10 @@ class BaseAptRepoHandler(BaseHandler):
         response.content = str(exception)
         if return_code:
             rc.status_code = return_code
+        
+
+        logger = logging.getLogger(server.settings.DEFAULT_LOGGER)
+        logger.exception(exception)
         
         if server.settings.DEBUG:
             raise HttpStatusCode(response)
@@ -189,7 +193,7 @@ class PackageInstanceHandler(BaseAptRepoHandler):
             
             except ObjectDoesNotExist:
                 return rc.NOT_FOUND
-            except AptRepoException, e:
+            except Exception, e:
                 return self._error_response(e)
         else:
             return rc.FORBIDDEN      
@@ -221,7 +225,7 @@ class PackageInstanceHandler(BaseAptRepoHandler):
     
             return self.model.objects.get(id=new_instance_id)
         
-        except AptRepoException, e:
+        except Exception, e:
             return self._error_response(e)
 
     def _find_package_instance(self, instance_id=None, 
@@ -271,4 +275,6 @@ class ActionHandler(BaseAptRepoHandler):
                                             default_limit=self._DEFAULT_NUM_ACTIONS)
         except ObjectDoesNotExist:
             return rc.NOT_FOUND
+        except Exception, e:
+            return self._error_response(e)
         

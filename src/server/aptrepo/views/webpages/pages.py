@@ -1,3 +1,4 @@
+import logging
 from django.shortcuts import render_to_response
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
@@ -208,4 +209,6 @@ def _error_response(exception):
     if settings.DEBUG:
         raise exception
     else:
+        logger = logging.getLogger(settings.DEFAULT_LOGGER)
+        logger.exception(exception)
         return HttpResponse(content=exception.__str__(), status=406)

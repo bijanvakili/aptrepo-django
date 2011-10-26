@@ -41,9 +41,11 @@ class Repository():
         cache_key = settings.APTREPO_FILESTORE['gpg_publickey']
         gpg_public_key = cache.get(cache_key)
         if gpg_public_key:
+            self.logger.debug('Retrieving GPG public key from cache')
             return gpg_public_key
         
         # return the GPG public key as ASCII text
+        self.logger.debug('Loading public key from the secret key and caching')
         gpg_signer = GPGSigner()
         gpg_public_key = gpg_signer.get_public_key()
         
@@ -63,6 +65,9 @@ class Repository():
         packages_path = self._get_packages_path(distribution, section, architecture)
         if compressed:
             packages_path = packages_path + constants.GZIP_EXTENSION
+            
+        self.logger.debug('Retrieving Debian Packages list at: ' + packages_path)
+            
         packages_data = cache.get(packages_path)
         if not packages_data:
             self._refresh_releases_data(distribution)
@@ -78,6 +83,9 @@ class Repository():
         distribution - name of distribution
         """
         releases_path = self._get_releases_path(distribution)
+        
+        self.logger.debug('Retrieving Debian Releases list at: ' + releases_path)
+        
         releases_data = None
         releases_signature = None
         cached_data = cache.get(releases_path)
@@ -135,6 +143,12 @@ class Repository():
             (_, package_name) = os.path.split(package_path)
             package_size = kwargs['package_size']
         
+        self.logger.info(
+            'Adding package file {0} to {1}:{2} (file size={3})'.format(
+                package_path, distribution.name, section.name, package_size
+            )
+        )
+        
         # check preconditions
         (_, ext) = os.path.splitext(package_name)
         if ext != self._DEBIAN_EXTENSION:
@@ -143,6 +157,10 @@ class Repository():
         # extract control file information for denormalized searches
         deb = debfile.DebFile(filename=package_path)
         control = deb.debcontrol()
+        if self.logger.getEffectiveLevel() == logging.DEBUG:
+            self.logger.debug('Package file ' + package_name + ' has control info:\n' + 
+                              control.dump())
+        
         if control['Architecture'] != self._ARCHITECTURE_ALL and \
             control['Architecture'] not in distribution.get_architecture_list():
             
@@ -190,14 +208,15 @@ class Repository():
                 package.path.save(stored_file_path, package_fh) 
                 
                 package.save()
-                
-            except Exception as e:
+
+            except Exception:
                 if package.path.name:
                     package.path.delete(package.path.name)
-                raise e
+                raise
 
         # create a package instance
         # TODO set the creator
+        self.logger.debug('Recording upload action for package file ' + package_name)
         package_instance, _ = models.PackageInstance.objects.get_or_create(
             package=package, section=section)
         
@@ -207,6 +226,7 @@ class Repository():
         
         self._clear_cache(distribution.name)
         return package_instance.id
+
         
     def import_dir(self, section_id, dir_path, 
                    dry_run=False, recursive=False, ignore_errors=False):
@@ -224,23 +244,26 @@ class Repository():
             for filename in files:
                 if filename.endswith(self._DEBIAN_EXTENSION):
                     try:
-                        package_path = os.path.join(dir_path, root, filename) 
+                        package_path = os.path.join(dir_path, root, filename)
+                        self.logger.debug('Importing ' + package_path + '...')
+                         
                         if not dry_run:
                             with open(package_path, 'r') as package_file:
                                 self.add_package(section_id=section_id, package_fh=package_file,
                                                  package_path=package_path, 
                                                  package_size=os.path.getsize(package_path))
-                        self.logger.info('Imported ' + package_path)
+                        
                         
                     except Exception as e:
                         if not ignore_errors:
-                            raise e
+                            raise
                         else:
                             self.logger.warning(e)
 
             if not recursive:
                 del dirs[:]
-        
+
+
     def clone_package(self, dest_section, package_id=None, instance_id=None):
         """
         Clones a package to create another instance
@@ -265,10 +288,13 @@ class Repository():
         
         # create the new instance
         # TODO set the creator
+        self.logger.info('Cloning package id={0} into section={1}'.format(
+            src_package.id, dest_section.id))
         package_instance = models.PackageInstance.objects.create(package=src_package,
                                                                  section=dest_section)
         
         # insert action
+        self.logger.debug('Recording clone action for instance id=' + package_instance.id)
         models.Action.objects.create(section=dest_section, action=models.Action.COPY,
                                      user=package_instance.creator)
         
@@ -285,21 +311,26 @@ class Repository():
         """
         # remove the instance
         package_instance = models.PackageInstance.objects.get(id=package_instance_id)
-        package_id = package_instance.package.id 
+        section = package_instance.section
+
+        package_id = package_instance.package.id
+        self.logger.info('Removing instance id={0} from section id={1}'.format(
+            package_instance_id, section.id))
         package_instance.delete()
 
         # remove the referenced package if it no longer exists
         package_reference_count = models.PackageInstance.objects.filter(package__id=package_id).count()
         package = models.Package.objects.get(id=package_id)
         if package_reference_count == 0:
+            self.logger.info('Removing package id={0}'.format(package.id))
             package.delete()
         
         # update for the package list for the specific section and architecture
-        section = models.Section.objects.get(name=package_instance.section.name)
         self._clear_cache(section.distribution.name)
         
         # insert action
         # TODO change to include request user
+        self.logger.debug('Recording delete action for instance id=' + str(package_instance_id))
         models.Action.objects.create(section=section, action=models.Action.DELETE,
                                      user="who?")
         
@@ -315,8 +346,7 @@ class Repository():
             self.remove_package(package_instance_id=instance.id)
 
     
-    def get_actions(self, distribution_id=None, section_id=None, 
-                    min_ts=None, max_ts=None):
+    def get_actions(self, **args):
         """
         Retrieves repository actions
         
@@ -329,16 +359,23 @@ class Repository():
         
         Returns a list of actions
         """
+        
+        self.logger.debug('Retrieving actions for query:\n' + str(args) + '\n')
+        
         # construct query based on restrictions
         query_args = []
-        if distribution_id:
-            query_args.append(Q(section__distribution__id=distribution_id))
-        if section_id:
-            query_args.append(Q(section__id=section_id))
-        if min_ts:
-            query_args.append(Q(timestamp__gte=min_ts))
-        if max_ts:
-            query_args.append(Q(timetsamp__lte=max_ts))
+        if 'section_id' in args:
+            query_args.append(Q(section__id=args['section_id']))
+        elif 'distribution_id' in args:
+            query_args.append(Q(section__distribution__id=args['distribution_id']))
+        else:
+            raise AptRepoException('No section or distribution specified for action query')
+            
+            
+        if 'min_ts' in args:
+            query_args.append(Q(timestamp__gte=args['min_ts']))
+        if 'max_ts' in args:
+            query_args.append(Q(timetsamp__lte=args['max_ts']))
             
         # execute the query and return the result
         actions = models.Action.objects.filter(*query_args).order_by('timestamp')
@@ -470,11 +507,18 @@ class Repository():
         """
         Writes a package list for a repository section
         """
+        
+        self.logger.debug(
+            'Rebuilding Debian Packages list for {0}:{1}:{2}'.format(
+                distribution, section, architecture
+            )
+        )
+        
         package_instances = models.PackageInstance.objects.filter(
-                                                                  Q(section__distribution__name=distribution),
-                                                                  Q(section__name=section),
-                                                                  Q(package__architecture=architecture) | 
-                                                                  Q(package__architecture=self._ARCHITECTURE_ALL))
+            Q(section__distribution__name=distribution),
+            Q(section__name=section),
+            Q(package__architecture=architecture) | 
+            Q(package__architecture=self._ARCHITECTURE_ALL))
         for instance in package_instances:
             control_data = deb822.Deb822(sequence=instance.package.control)
             control_data['Filename'] = instance.package.path.name
@@ -491,6 +535,8 @@ class Repository():
         """
         Computes and caches the metadata files for a distribution 
         """
+        
+        self.logger.debug('Rebuilding Debian Releases for distribution=' + distribution_name)
         
         distribution = models.Distribution.objects.get(name=distribution_name)
         sections = models.Section.objects.filter(distribution=distribution).values_list('name', flat=True)
@@ -603,6 +649,10 @@ class Repository():
 
 
     def _clear_cache(self, distribution_name):
+        
+        self.logger.debug('Clearing cached metadata for distribution: ' + 
+                          distribution_name)
+        
         distribution = models.Distribution.objects.get(name=distribution_name)
         sections = models.Section.objects.filter(distribution=distribution).values_list('name', flat=True)
         architectures = distribution.get_architecture_list()
