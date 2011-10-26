@@ -151,16 +151,24 @@ class LevelLessThan(logging.Filter):
         return record.levelno <= self.max_level
 
 # logging configuration
+
+APTREPO_LOGHANDLERS = ['console_stdout', 'console_stderr']
+if 'APTREPO_LOGHANDLERS' in os.environ:
+    APTREPO_LOGHANDLERS = os.environ['APTREPO_LOGHANDLERS'].lower().split()
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
     'formatters': {
         'verbose': {
-            'format': '%(asctime)s %(process)d  %(levelname)s %(module)s %(thread)d %(message)s'
+            'format': '%(asctime)s pid=%(process)d tid=%(thread)d module=%(module)s %(levelname)s:  %(message)s'
         },
-        'simple': {
+        'message_only': {
+            'format': '%(message)s'
+        },
+        'level_and_message' : {
             'format': '%(levelname)s %(message)s'
-        },
+        }
     },
     'filters' : {
         'info_and_lower' : {
@@ -177,15 +185,18 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'filters': ['info_and_lower'],
-            'formatter': 'simple',
+            'formatter': 'level_and_message' if DEBUG else 'message_only',
             'stream'  : sys.stdout,
         },
         'console_stderr' : {
             'level': 'WARNING',
             'class': 'logging.StreamHandler',
-            'formatter': 'simple',
+            'formatter': 'level_and_message',
             'stream'  : sys.stderr,
         },
+        # NOTE: TimedRotatingFileHandler in python v2.6 doesn't rotate the log at startup.  
+        #       Rotation only occurs while django is running.
+        #       See python issue #8117.  This is fixed in python v2.7
         'file' : {
             'level': 'INFO',
             'class': 'logging.handlers.TimedRotatingFileHandler',
@@ -196,22 +207,24 @@ LOGGING = {
         },
     },
     'loggers': {
+        'aptrepo' : {
+            'handlers' : APTREPO_LOGHANDLERS,
+            'propagate': True,
+            'level': 'DEBUG' if DEBUG else 'INFO',
+        },
         'aptrepo.null': {
             'handlers' : ['null'],
-            'propagate': True,
+            'propagate': False,
             'level':'INFO',            
         },
-        'aptrepo.admin.cli': {
-            'handlers': ['console_stdout', 'console_stderr'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
-            'propagate': True,
-        },
+                
+        # Optional database-level logging for debugging and profiling purposes
         'django.db.backends' : {
-            'handlers': ['console_stdout', 'console_stderr'],
+            'handlers': APTREPO_LOGHANDLERS,
             'level': 'DEBUG' if DB_DEBUG else 'INFO',
-            'propagate': True,
+            'propagate': False,
         },               
     }
 }
 
-DEFAULT_LOGGER = 'aptrepo.null'
+DEFAULT_LOGGER = 'aptrepo'

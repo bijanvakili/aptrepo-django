@@ -2,7 +2,6 @@ Remaining goals
 ===============
 - enforce exclusive access for all write operations
 - admin interface
-- logging
 - permissions w/support for admin (SQLite) and LDAP users
 - RSS feeds
 - proper web UI templates and interface
@@ -11,6 +10,7 @@ Remaining goals
 - Apache and nginx deployment
 - packaging/distribution
 - load settings from etc directory
+- documentation (user+developer)
 - regression tests that install packages from the repo
 
 
