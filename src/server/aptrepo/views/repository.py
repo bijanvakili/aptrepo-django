@@ -5,12 +5,13 @@ import os
 import shutil
 import struct
 import tempfile
+from apt_pkg import version_compare
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files import File
 from django.db.models import Q
 from debian_bundle import deb822, debfile
-from apt_pkg import version_compare
+from lockfile import FileLock
 from server.aptrepo import models
 from server.aptrepo.util import AptRepoException, constants
 from server.aptrepo.util.hash import hash_file_by_fh, GPGSigner
@@ -549,115 +550,121 @@ class Repository():
         """
         
         self.logger.debug('Rebuilding Debian Releases for distribution=' + distribution_name)
+
+        # Use an interprocess file lock for reconstructing all Release data to ensure that
+        # its hashes are valid since the Packages files much be computed separately.  The lock file
+        # is specific to each distribution
+        lock_filename = os.path.join(settings.APTREPO_VAR_ROOT, '.releases-' + distribution_name)
+        with FileLock(lock_filename):
         
-        distribution = models.Distribution.objects.get(name=distribution_name)
-        sections = models.Section.objects.filter(distribution=distribution).values_list('name', flat=True)
-        architectures = distribution.get_architecture_list()
-
-        # create new release with header        
-        release = {}
-        release['Origin'] = distribution.origin
-        release['Label'] = distribution.label
-        release['Codename'] = distribution.name
-        release['Date'] = distribution.creation_date.strftime('%a, %d %b %Y %H:%M:%S %z UTC')
-        release['Description'] = distribution.description
-        release['Architectures'] = ' '.join(architectures)
-        release['Components'] = ' '.join(sections)
-
-        hash_types = ['MD5Sum', 'SHA1', 'SHA256']
-        release_hashes = {}
-        for h in hash_types:
-            release_hashes[h] = []
-
-        release_data = []
-        for k,v in release.items():
-            release_data.append('{0}: {1}'.format(k, v))
-            
-        # compute hashes for all package lists
-        tmp_fh = None
-        compressed_fh = None
-        try:
-            tmp_fd, tmp_filename = tempfile.mkstemp(prefix=self._PACKAGES_FILENAME)
-            compressed_filename = tmp_filename + constants.GZIP_EXTENSION
-            tmp_fh = os.fdopen(tmp_fd, 'wb+')
-            compressed_fh = open(compressed_filename, 'wb+')
-            
-            for section in sections:
-                for architecture in architectures:
-
-                    # create the Packages file            
-                    tmp_fh.seek(0)
-                    tmp_fh.truncate(0)
-                    self._write_package_list(tmp_fh, distribution_name, section, 
-                                             architecture)
-                    tmp_fh.flush()
-                    tmp_file_size = tmp_fh.tell()
-                    
-                    # create the compressed version using a timestamp (mtime) of 0
-                    # 
-                    # TODO Remove conditions around mtime once python v2.7 becomes the minimum 
-                    # supported version
-                    compressed_fh.seek(0)
-                    compressed_fh.truncate(0)
-                    gzip_params = {
-                                   'filename':self._PACKAGES_FILENAME, 'mode':'wb', 'compresslevel':9, 
-                                   'fileobj':compressed_fh}
-                    if get_python_version() >= 2.7:
-                        gzip_params['mtime'] = 0 
-                    
-                    gzip_fh = gzip.GzipFile(**gzip_params)
-                    tmp_fh.seek(0)
-                    shutil.copyfileobj(fsrc=tmp_fh, fdst=gzip_fh)
-                    gzip_fh.close()
-                    compressed_file_size = compressed_fh.tell()
-
-                    # for python v2.6 and earlier, we need to manually set the mtime field to
-                    # zero.  This starts at position 4 of the file (see RFC 1952)                    
-                    if get_python_version() < 2.7:
-                        compressed_fh.seek(4)
-                        compressed_fh.write(struct.pack('<i',0))
-
-                    packages_path = self._get_packages_path(distribution_name, section, architecture)
-                    rel_packages_path = self._get_packages_relative_path(section, architecture)
-                    tmp_fh.seek(0)
-                    cache.set( packages_path, tmp_fh.read() )
-                    compressed_fh.seek(0)
-                    cache.set( packages_path + constants.GZIP_EXTENSION, 
-                               compressed_fh.read(compressed_file_size) )
-                    
-                    # hash the package list for each hash function
-                    for type in hash_types:
-                        release_hashes[type].append(
-                            ' {0} {1} {2}'.format(hash_file_by_fh(self._get_hashfunc(type), tmp_fh), 
-                                                  tmp_file_size, 
-                                                  rel_packages_path))
-                        release_hashes[type].append(
-                            ' {0} {1} {2}'.format(hash_file_by_fh(self._get_hashfunc(type), compressed_fh), 
-                                                  compressed_file_size, 
-                                                  rel_packages_path + constants.GZIP_EXTENSION))
-
-        finally:                        
-            if tmp_fh:
-                tmp_fh.close()
-            if compressed_fh:
-                compressed_fh.close()
-            os.remove(tmp_filename)
-            if os.path.exists(compressed_filename):
-                os.remove(compressed_filename)
-                    
-        for hash_type, hash_list in release_hashes.items():
-            release_data.append(hash_type + ':')
-            release_data.extend( hash_list )
+            distribution = models.Distribution.objects.get(name=distribution_name)
+            sections = models.Section.objects.filter(distribution=distribution).values_list('name', flat=True)
+            architectures = distribution.get_architecture_list()
+    
+            # create new release with header        
+            release = {}
+            release['Origin'] = distribution.origin
+            release['Label'] = distribution.label
+            release['Codename'] = distribution.name
+            release['Date'] = distribution.creation_date.strftime('%a, %d %b %Y %H:%M:%S %z UTC')
+            release['Description'] = distribution.description
+            release['Architectures'] = ' '.join(architectures)
+            release['Components'] = ' '.join(sections)
+    
+            hash_types = ['MD5Sum', 'SHA1', 'SHA256']
+            release_hashes = {}
+            for h in hash_types:
+                release_hashes[h] = []
+    
+            release_data = []
+            for k,v in release.items():
+                release_data.append('{0}: {1}'.format(k, v))
                 
-        # create GPG signature for release data
-        release_contents = '\n'.join(release_data)
-        gpg_signer = GPGSigner()
-        release_signature = gpg_signer.sign_data(release_contents)
-        
-        releases_path = self._get_releases_path(distribution)
-        cache.set(releases_path, (release_contents, release_signature) )
-        
-        return (release_contents, release_signature)
+            # compute hashes for all package lists
+            tmp_fh = None
+            compressed_fh = None
+            try:
+                tmp_fd, tmp_filename = tempfile.mkstemp(prefix=self._PACKAGES_FILENAME)
+                compressed_filename = tmp_filename + constants.GZIP_EXTENSION
+                tmp_fh = os.fdopen(tmp_fd, 'wb+')
+                compressed_fh = open(compressed_filename, 'wb+')
+                
+                for section in sections:
+                    for architecture in architectures:
+    
+                        # create the Packages file            
+                        tmp_fh.seek(0)
+                        tmp_fh.truncate(0)
+                        self._write_package_list(tmp_fh, distribution_name, section, 
+                                                 architecture)
+                        tmp_fh.flush()
+                        tmp_file_size = tmp_fh.tell()
+                        
+                        # create the compressed version using a timestamp (mtime) of 0
+                        # 
+                        # TODO Remove conditions around mtime once python v2.7 becomes the minimum 
+                        # supported version
+                        compressed_fh.seek(0)
+                        compressed_fh.truncate(0)
+                        gzip_params = {
+                                       'filename':self._PACKAGES_FILENAME, 'mode':'wb', 'compresslevel':9, 
+                                       'fileobj':compressed_fh}
+                        if get_python_version() >= 2.7:
+                            gzip_params['mtime'] = 0 
+                        
+                        gzip_fh = gzip.GzipFile(**gzip_params)
+                        tmp_fh.seek(0)
+                        shutil.copyfileobj(fsrc=tmp_fh, fdst=gzip_fh)
+                        gzip_fh.close()
+                        compressed_file_size = compressed_fh.tell()
+    
+                        # for python v2.6 and earlier, we need to manually set the mtime field to
+                        # zero.  This starts at position 4 of the file (see RFC 1952)                    
+                        if get_python_version() < 2.7:
+                            compressed_fh.seek(4)
+                            compressed_fh.write(struct.pack('<i',0))
+    
+                        packages_path = self._get_packages_path(distribution_name, section, architecture)
+                        rel_packages_path = self._get_packages_relative_path(section, architecture)
+                        tmp_fh.seek(0)
+                        cache.set( packages_path, tmp_fh.read() )
+                        compressed_fh.seek(0)
+                        cache.set( packages_path + constants.GZIP_EXTENSION, 
+                                   compressed_fh.read(compressed_file_size) )
+                        
+                        # hash the package list for each hash function
+                        for type in hash_types:
+                            release_hashes[type].append(
+                                ' {0} {1} {2}'.format(hash_file_by_fh(self._get_hashfunc(type), tmp_fh), 
+                                                      tmp_file_size, 
+                                                      rel_packages_path))
+                            release_hashes[type].append(
+                                ' {0} {1} {2}'.format(hash_file_by_fh(self._get_hashfunc(type), compressed_fh), 
+                                                      compressed_file_size, 
+                                                      rel_packages_path + constants.GZIP_EXTENSION))
+    
+            finally:                        
+                if tmp_fh:
+                    tmp_fh.close()
+                if compressed_fh:
+                    compressed_fh.close()
+                os.remove(tmp_filename)
+                if os.path.exists(compressed_filename):
+                    os.remove(compressed_filename)
+                        
+            for hash_type, hash_list in release_hashes.items():
+                release_data.append(hash_type + ':')
+                release_data.extend( hash_list )
+                    
+            # create GPG signature for release data
+            release_contents = '\n'.join(release_data)
+            gpg_signer = GPGSigner()
+            release_signature = gpg_signer.sign_data(release_contents)
+            
+            releases_path = self._get_releases_path(distribution)
+            cache.set(releases_path, (release_contents, release_signature) )
+            
+            return (release_contents, release_signature)
 
 
     def _clear_cache(self, distribution_name):
