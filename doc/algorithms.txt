@@ -1,0 +1,120 @@
+
+create_Debian_Package(distribution, section, architecture)
+	Package = ''
+	for each instance in section with matching architecture (or architecture 'all')
+		control_data = instance.package.control
+		control[md5] = instance.package.md5
+		control[sha1] = instance.package.sha1
+		control[sha256] = instance.package.sha256
+		control[size] = instance.package.size
+		Package += control
+	end for
+	
+	add Package to cache for /distribution/section/architecture
+	return Package
+		
+
+create_Debian_Release(distribution)
+
+	release = distribution header
+	for each section in a distribution
+		for each architecture in section
+			package_list = create_Debian_release(section, architecture)
+			h[md5] = md5 hash of package_list
+			h[sha1] = sha1 hash of package_list
+			h[sha256] = sha256 hash of package_list
+			
+			release += h[] and package_list
+		end for
+	end for
+	
+	signature = gpg_sign(release)
+	add release,signature to cache for /distribution
+	return release, signature
+	
+
+clear_cache(distribution)
+	clear cache for /distribution (Release data and signature)
+	for each section in distribution
+		for each architecture in section
+			clear cache for /distirbution/section/architecture (Package data)
+		end for
+	end for
+
+
+add_package(deb, section)
+		
+	if deb does not already exist in packages table
+		package = create new Package entry based on deb file
+	else
+		package = existing Package
+	end if
+		
+	add new instance int section (if it doesn't already exist)
+	add 'insert' action for section 
+	
+	clear cache for section.distribution
+
+
+import_dir(dir)
+
+	for each deb in dir
+		add_package(deb)
+	end for
+
+clone_package(package, dest_section)
+
+	instance = create new Instance in dest_section referring to package
+	add 'clone' action for section with instance
+	clear cache for section.distribution
+	
+
+remove_package(instance)
+
+	remove instance from instance.section
+	clear cache for section.distribution
+	add 'remove' action for section with instance
+	
+
+remove_all_package_instances(package)
+	instances = all instances referring to package
+	for each instance
+		remove_package(instance)
+	end for
+
+
+prune_sections(sections, 
+			   package_prune_limit(section), - maximum number of versions per package for each section 
+			   action_prune_limit(section)   - maximum number of actions for each section
+)
+
+	for each section in sections
+		// prune instances that have too many versions
+		sorted_instances = sort all instances in section by name,architecture,version (ascending)
+		for each name,architecture in sorted_instances
+			count_version = count of versions for current name,architecture
+			num_to_delete = count_version - package_prune_limit(section)
+			if num_to_delete > 0
+				delete first 'num_to_delete' instances in name,architecture
+			end if
+		end for
+		
+		// prune actions
+		reverse_sorted_actions = sort all actions in section by timestamp (descending)
+		num_to_delete = count of sorted_actions - action_prune_limit(section)
+		if num_to_delete > 0
+			delete first 'num_to_delete' actions in reverse_sorted_actions
+		end if
+	end for
+	
+	// prune packages that no longer have associated instances
+	for each package do
+		if package has no associated instances
+			remove package
+		end if
+	end for
+
+	// clear cache for distributions
+	for section in sections
+		clear_cache(section.distribution)
+	end for

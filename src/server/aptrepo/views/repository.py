@@ -73,6 +73,12 @@ class Repository():
             self._refresh_releases_data(distribution)
             packages_data = cache.get(packages_path)
             
+        # in the rare case where the cache has been cleared between refreshing
+        # the data and retrieving from the cache, then just return an empty
+        # string
+        if not packages_data:
+            packages_data = ''
+            
         return packages_data
 
     
@@ -396,6 +402,7 @@ class Repository():
         """
         total_instances_pruned = 0
         total_actions_pruned = 0
+        pruned_distribution_names = set()
         for section_id in section_id_list:
             
             # skip the section if it doesn't require pruning
@@ -438,6 +445,8 @@ class Repository():
                     
                 # remove the instances
                 num_instances_pruned = len(instance_ids_to_remove)
+                if num_instances_pruned > 0:
+                    pruned_distribution_names.add(section.distribution.name)
                 for instance_id in instance_ids_to_remove:
                     instance = models.PackageInstance.objects.get(id=instance_id)
                     
@@ -495,6 +504,9 @@ class Repository():
                 package.delete()
             total_packages_pruned += 1
         
+        # clear caches
+        for distribution_name in pruned_distribution_names:
+            self._clear_cache(distribution_name)
         
         # log and return pruning summary
         self.logger.info('Total actions pruned: %d', total_actions_pruned)
