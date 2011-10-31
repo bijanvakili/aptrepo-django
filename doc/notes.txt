@@ -1,12 +1,11 @@
 Remaining goals
 ===============
-- enforce exclusive access for all write operations
 - admin interface
 - permissions w/support for admin (SQLite) and LDAP users
 - RSS feeds
 - proper web UI templates and interface
 	> copy package
-	> download from URL
+	> upload from URL
 - Apache and nginx deployment
 - packaging/distribution
 - load settings from etc directory
