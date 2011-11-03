@@ -54,6 +54,16 @@ class Package(UniqueFile):
                                         self.version)
 
 
+class Architecture(models.Model):
+    """
+    Supported architecture
+    """
+    name = models.CharField(max_length=255, unique=True)
+    
+    def __unicode__(self):
+        return self.name
+
+
 class DistributionManager(models.Manager):
     def get_by_natural_key(self, name):
         return self.get(name=name)
@@ -66,21 +76,13 @@ class Distribution(models.Model):
 
     objects = DistributionManager()
     
-    _ARCHITECTURE_CHOICES = (
-        (0, 'i386'),
-        (1, 'amd64'),
-        (2, 'solaris-i386'),
-        (3, 'solaris-sparc'),
-    )
-    
     name = models.CharField(max_length=255, unique=True) # a.k.a. 'codename'
     description = models.TextField()
     label = models.CharField(max_length=80)
     suite = models.CharField(max_length=80)
     origin = models.CharField(max_length=80)
     creation_date = models.DateTimeField(auto_now_add=True)
-    suppported_architectures = models.CommaSeparatedIntegerField(max_length=80, 
-                                                                 choices=_ARCHITECTURE_CHOICES)
+    suppported_architectures = models.ManyToManyField(Architecture)
     
     def __unicode__(self):
         return self.name
@@ -89,11 +91,9 @@ class Distribution(models.Model):
         return (self.name,)
 
     def get_architecture_list(self):
-        architecture_indices = self.suppported_architectures.split(',')
         architectures = []
-        for index in architecture_indices:
-            _ , curr_architecture = self._ARCHITECTURE_CHOICES[int(index)] 
-            architectures.append(curr_architecture)
+        for arch in self.suppported_architectures.all():
+            architectures.append(arch.name)
         return architectures
 
 
