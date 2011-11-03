@@ -1,6 +1,20 @@
 [
 	{
 		"pk": 1,
+		"model": "aptrepo.architecture",
+		"fields": {
+			"name": "i386"
+		}
+	},
+	{
+		"pk": 2,
+		"model": "aptrepo.architecture",
+		"fields": {
+			"name": "amd64"
+		}
+	},
+	{
+		"pk": 1,
 		"model": "aptrepo.distribution",
 		"fields" : {
 			"name" : "test_distribution",
@@ -9,7 +23,7 @@
 			"suite" : "testing",
 			"origin" : "OANDA",
 			"creation_date" : "2011-01-01 00:05:00",
-			"suppported_architectures": "0,1"
+			"suppported_architectures": [1,2]
 		}
 	},
 	{
