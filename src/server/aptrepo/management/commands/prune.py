@@ -13,9 +13,14 @@ class Command(BaseCommand):
     option_list = (
         make_option('--dry-run',
             action='store_true',
-            dest='readonly',
+            dest='dry_run',
             default=False,
             help='Do not persist any pruning actions'),
+        make_option('--ignore-arch',
+            action='store_false',
+            dest='check_architecture',
+            default=True,
+            help='Ignore packages whose architecture is invalid for the distribution'),
         ) + BaseCommand.option_list 
 
     def handle(self, *args, **options):
@@ -35,7 +40,9 @@ class Command(BaseCommand):
 
             # prune the section list            
             repository = get_repository_controller(logger)
-            repository.prune_sections(section_id_list, dry_run=options['readonly'])
+            repository.prune_sections(section_id_list, 
+                                      dry_run=options['dry_run'],
+                                      check_architecture=['check_architecture'])
             
         except Exception as e:
             raise CommandError(e)

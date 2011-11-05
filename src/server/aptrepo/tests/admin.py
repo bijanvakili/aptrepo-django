@@ -33,7 +33,6 @@ class PruningTest(BaseAptRepoTest):
         control_map['Package'] = name
         control_map['Architecture'] = architecture
 
-
         for version in version_list:
             control_map['Version'] = str(version)
             pkg_filename = None        
@@ -114,8 +113,15 @@ class PruningTest(BaseAptRepoTest):
         
         try:
             """
+            temporarily add an architecture type to be removed later
+            """
+            temparch = models.Architecture.objects.create(name='temparch')
+            models.Distribution.objects.get(
+                name=self.distribution_name).suppported_architectures.add(temparch)
+            
+            """
             setup set of packages to be pruned as follows
-            (use only 'all' architecture)
+            (default to 'all' architecture unless specified)
             
             before:
             a1-a6
@@ -123,12 +129,17 @@ class PruningTest(BaseAptRepoTest):
             c1 - c5
             d1-d4,d7,d9-d10
             e1-e4
+            f1 (architecture is 'temparch')
             """
             self._upload_package_set('a', [1,2,3,4,5,6])
             self._upload_package_set('b', [1])
             self._upload_package_set('c', [1,2,3,4,5])
             self._upload_package_set('d', [1,2,3,4,7,9,10])
             self._upload_package_set('e', [1,2,3,4])
+            self._upload_package_set('f', [1], architecture=temparch.name)
+            
+            # remove the temporary architecture
+            temparch.delete()
             
             # prune the packages
             repo = get_repository_controller()
@@ -158,7 +169,7 @@ class PruningTest(BaseAptRepoTest):
             self._disable_db_logging()
         
     @skipRepoTestIfExcluded
-    def test_pruning_by_architecture(self):
+    def test_versionpruning_by_architecture(self):
         
         try:
             """

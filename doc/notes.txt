@@ -8,6 +8,7 @@ Remaining goals
 	> upload from URL
 - Apache and nginx deployment
 - packaging/distribution
+- consider renaming 'prune' admin command to 'cleanup' (subclass the django.core command)
 - load settings from etc directory
 - documentation (user+developer)
 - regression tests that install packages from the repo
