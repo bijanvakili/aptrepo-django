@@ -1,6 +1,15 @@
 import os
+import re
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
+
+def nowhitespace(value):
+    """
+    Validation function to ensure no whitespace
+    """
+    if re.search('\s+', value):
+        raise ValidationError("'{0}' contains whitespace".format(value))
 
 def uniquefile_upload_path(instance, filename):
     """
@@ -58,7 +67,7 @@ class Architecture(models.Model):
     """
     Supported architecture
     """
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255, unique=True, validators=[nowhitespace])
     
     def __unicode__(self):
         return self.name
@@ -76,11 +85,11 @@ class Distribution(models.Model):
 
     objects = DistributionManager()
     
-    name = models.CharField(max_length=255, unique=True) # a.k.a. 'codename'
+    name = models.CharField(max_length=255, unique=True, validators=[nowhitespace]) # a.k.a. 'codename'
     description = models.TextField()
-    label = models.CharField(max_length=80)
-    suite = models.CharField(max_length=80)
-    origin = models.CharField(max_length=80)
+    label = models.CharField(max_length=80, validators=[nowhitespace])
+    suite = models.CharField(max_length=80, validators=[nowhitespace])
+    origin = models.CharField(max_length=80, validators=[nowhitespace])
     creation_date = models.DateTimeField(auto_now_add=True)
     suppported_architectures = models.ManyToManyField(Architecture)
     
@@ -101,11 +110,11 @@ class Section(models.Model):
     """
     Grouping of packages
     """
-    name = models.CharField(max_length=255, db_index=True)
+    name = models.CharField(max_length=255, db_index=True, validators=[nowhitespace])
     distribution = models.ForeignKey('Distribution', db_index=True)
     description = models.TextField()
-    package_prune_limit = models.IntegerField(default=0)
-    action_prune_limit = models.IntegerField(default=0)
+    package_prune_limit = models.PositiveIntegerField(default=0)
+    action_prune_limit = models.PositiveIntegerField(default=0)
 
     def __unicode__(self):
         return '{0}:{1}'.format(self.distribution.name, self.name)

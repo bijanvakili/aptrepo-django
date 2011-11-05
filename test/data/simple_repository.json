@@ -1,6 +1,20 @@
 [
 	{
 		"pk": 1,
+		"model": "auth.user",
+		"fields": {
+		    "username": "admin",
+		    "first_name": "Test",
+		    "last_name": "Administrator",
+		    "email": "admin@testrepo.org",
+		    "password": "sha1$b1aa1$84c31ca2433abc2fa4f64bf00182702343a99aca",
+		    "is_staff": 1,
+		    "is_active": 1,
+		    "is_superuser": 1
+		}
+	},	
+	{
+		"pk": 1,
 		"model": "aptrepo.architecture",
 		"fields": {
 			"name": "i386"

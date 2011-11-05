@@ -1,10 +1,8 @@
 Remaining goals
 ===============
-- admin interface
-	add prune command
-	verify delete cascade (i.e. all instances, packages should be removed if one removes a section/distribution)
 - permissions w/support for admin (SQLite) and LDAP users
 - RSS feeds
+- NLS with gettext
 - proper web UI templates and interface
 	> copy package
 	> upload from URL
