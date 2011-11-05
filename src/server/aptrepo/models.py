@@ -67,6 +67,9 @@ class Architecture(models.Model):
     """
     Supported architecture
     """
+    
+    ARCHITECTURE_ALL = 'all'
+    
     name = models.CharField(max_length=255, unique=True, validators=[nowhitespace])
     
     def __unicode__(self):
@@ -105,6 +108,13 @@ class Distribution(models.Model):
             architectures.append(arch.name)
         return architectures
 
+    def allowed_architecture(self, architecture):
+        if architecture == Architecture.ARCHITECTURE_ALL:
+            return True
+        
+        return architecture in self.suppported_architectures.all().values_list('name', 
+                                                                               flat=True)
+        
 
 class Section(models.Model):
     """

@@ -23,7 +23,6 @@ class Repository():
     """
 
     _BINARYPACKAGES_PREFIX = 'binary'
-    _ARCHITECTURE_ALL = 'all'
     _RELEASE_FILENAME = 'Release'
     _PACKAGES_FILENAME = 'Packages'
     _DEBIAN_EXTENSION = '.deb'
@@ -168,9 +167,7 @@ class Repository():
             self.logger.debug('Package file ' + package_name + ' has control info:\n' + 
                               control.dump())
         
-        if control['Architecture'] != self._ARCHITECTURE_ALL and \
-            control['Architecture'] not in distribution.get_architecture_list():
-            
+        if not distribution.allowed_architecture(control['Architecture']):
             raise AptRepoException(
                 'Invalid architecture for distribution ({0}) : {1}'.format(
                     distribution.name, control['Architecture']))
@@ -378,7 +375,6 @@ class Repository():
         else:
             raise AptRepoException('No section or distribution specified for action query')
             
-            
         if 'min_ts' in args:
             query_args.append(Q(timestamp__gte=args['min_ts']))
         if 'max_ts' in args:
@@ -389,7 +385,7 @@ class Repository():
         return actions
         
     
-    def prune_sections(self, section_id_list, dry_run=False):
+    def prune_sections(self, section_id_list, dry_run=False, check_architecture=True):
         """
         Prunes packages from the selected sections
         
@@ -408,8 +404,31 @@ class Repository():
             
             # skip the section if it doesn't require pruning
             section = models.Section.objects.get(id=section_id)
+            num_instances_pruned = 0
+            
+            if check_architecture:
+                # remove any invalid architectures
+                valid_architectures = section.distribution.get_architecture_list()
+                valid_architectures.append(models.Architecture.ARCHITECTURE_ALL)
+                badarch_instances = models.PackageInstance.objects.filter(section=section)
+                badarch_instances = badarch_instances.exclude(
+                    package__architecture__in=valid_architectures)
+                
+                num_instances_pruned += len(badarch_instances)
+                for instance in badarch_instances:
+                    
+                    # avoid logging to debug unless required since it requires a SQL join operation
+                    if self.logger.isEnabledFor(logging.DEBUG):
+                        self.logger.debug('Pruning instance [%s,%s,%s] from %s:%s (invalid architecture)',
+                                          instance.package.package_name,
+                                          instance.package.architecture,
+                                          instance.package.version,
+                                          section.distribution.name,
+                                          section.name)
+                    if not dry_run:
+                        instance.delete()
+            
             if section.package_prune_limit > 0:
-
                 # run bulk query for all package instances in this section and ensure their package information 
                 # is available for a sequential analysis. Note that we cannot sort by version because a simple 
                 # lexical comparison will not meet Debian standards.  
@@ -419,7 +438,7 @@ class Repository():
                                                      'package__version')
                 instances = instances.order_by('package__package_name', 'package__architecture')
                 
-                instance_ids_to_remove = []
+                oldversions_to_remove = []
                 (curr_name, curr_architecture) = (None, None)
                 curr_instances = []
                 for instance in instances:
@@ -429,7 +448,7 @@ class Repository():
                         instance.package.architecture != curr_architecture:
     
                         # determine which packages to prune
-                        instance_ids_to_remove += Repository._find_pruneable_instances(curr_instances,
+                        oldversions_to_remove += Repository._find_oldversion_instances(curr_instances,
                                                                                        section.package_prune_limit)
     
                         # reset for next group                
@@ -440,20 +459,18 @@ class Repository():
                     # add to current instance set
                     curr_instances.append(instance)
     
-                # final review of pruneable instances
-                instance_ids_to_remove += Repository._find_pruneable_instances(curr_instances,
+                # final review of pruneable old versions
+                oldversions_to_remove += Repository._find_oldversion_instances(curr_instances,
                                                                                section.package_prune_limit)
-                    
-                # remove the instances
-                num_instances_pruned = len(instance_ids_to_remove)
-                if num_instances_pruned > 0:
-                    pruned_distribution_names.add(section.distribution.name)
-                for instance_id in instance_ids_to_remove:
+                
+                # remove the old versions
+                num_instances_pruned += len(oldversions_to_remove)
+                for instance_id in oldversions_to_remove:
                     instance = models.PackageInstance.objects.get(id=instance_id)
                     
                     # avoid logging to debug unless required since it requires a SQL join operation
                     if self.logger.isEnabledFor(logging.DEBUG):
-                        self.logger.debug('Pruning instance (%s,%s,%s) from %s:%s',
+                        self.logger.debug('Pruning instance [%s,%s,%s] from %s:%s (old version)',
                                      instance.package.package_name,
                                      instance.package.architecture,
                                      instance.package.version,
@@ -461,12 +478,18 @@ class Repository():
                                      section.name)
                     if not dry_run:
                         instance.delete()
-                    
-                self.logger.info('%d instances pruned from section %s:%s', 
+                        
+            
+            # if pruning occurred, marked distributions caches to be refresh and update
+            # any aggregate measures
+            if num_instances_pruned > 0:
+                pruned_distribution_names.add(section.distribution.name)
+                total_instances_pruned += num_instances_pruned
+
+            self.logger.info('%d instances pruned from section %s:%s', 
                             num_instances_pruned,
                             section.distribution.name, 
                             section.name)
-                total_instances_pruned += num_instances_pruned
                 
             # prune actions for the section            
             if section.action_prune_limit > 0:
@@ -531,7 +554,7 @@ class Repository():
             Q(section__distribution__name=distribution),
             Q(section__name=section),
             Q(package__architecture=architecture) | 
-            Q(package__architecture=self._ARCHITECTURE_ALL))
+            Q(package__architecture=models.Architecture.ARCHITECTURE_ALL))
         for instance in package_instances:
             control_data = deb822.Deb822(sequence=instance.package.control)
             control_data['Filename'] = instance.package.path.name
@@ -716,9 +739,9 @@ class Repository():
             return hashlib.sha256()
 
     @staticmethod
-    def _find_pruneable_instances(instances, package_prune_limit):
+    def _find_oldversion_instances(instances, package_prune_limit):
         """
-        Returns a list of instances IDs for pruning
+        Returns a list of instances IDs where their versions old enough to be pruned
         """
 
         # Comparison function used to sort instances by Debian package version
