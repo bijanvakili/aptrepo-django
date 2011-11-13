@@ -35,14 +35,16 @@ class AptRepoClient:
     _ACTIONS_PREFIX = 'actions/'
     _INSTANCES_SUFFIX = 'package-instances/'
     _PACKAGES_PREFIX = '/packages/'
+    _LOGIN_PREFIX = 'sessions/'
     
-    def __init__(self, url=None, username=None, password=None, timeout=None):
+    def __init__(self, url=None, username=None, password=None, timeout=None, httpclient_type=None):
         """
         Constructor to set up an API connection
         
         url -- URL to Apt repo server (defaults to _DEFAULT_API_URL)
         username -- Optional username for authentication
         password -- Optional password for authentication
+        timeout -- Optional timeout (in seconds)
         """
         
         # set the url
@@ -52,8 +54,38 @@ class AptRepoClient:
 
         # setup the client        
         client_factory = httpclient.HttpClientFactory()
-        self.client = client_factory.create_client(baseurl=urlprefix, timeout=timeout)
+        self.client = client_factory.create_client(baseurl=urlprefix, 
+                                                   timeout=timeout,
+                                                   name_implementation=httpclient_type)
+        
+        # attempt to authenticate if credentials were supplied
+        self.sessiontoken = None
+        if username and password:
+            self.login(username, password)
     
+    
+    def login(self, username, password):
+        """
+        Authenticates the client
+        
+        username -- Optional username for authentication
+        password -- Optional password for authentication
+        """
+        credentials = {'username': username, 'password': password}
+        self.sessiontoken = self._post_request(self._LOGIN_PREFIX, credentials)
+        
+    def logout(self):
+        """
+        Logs the client out
+        """
+        self._delete_request(self._LOGIN_PREFIX + self.sessiontoken)
+        
+    def is_authenticated(self):
+        """
+        Returns True if this client's session has been authenticated, False otherwise
+        """
+        return self.sessiontoken is not None
+        
 
     def get_package_metadata(self, id=None, name=None, version=None, architecture=None):
         """
@@ -188,7 +220,7 @@ class AptRepoClient:
         """
         url = ''
         if 'distribution_id' in kwargs:
-            if kwargs['section_id']:
+            if 'section_id' in kwargs:
                 url = '{0}{1}/{2}{3}/{4}'.format(self._DISTS_PREFIX, kwargs['distribution_id'],
                                                        self._SECTIONS_PREFIX, kwargs['section_id'],
                                                        self._ACTIONS_PREFIX)

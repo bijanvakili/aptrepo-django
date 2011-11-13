@@ -1,6 +1,8 @@
 Remaining goals
 ===============
 - permissions w/support for admin (SQLite) and LDAP users
+	> authorization (per section)
+	> quick LDAP test
 - RSS feeds
 - NLS with gettext
 - proper web UI templates and interface
@@ -70,6 +72,9 @@ URL DESIGN:
 
 	(REST API)
 	/api/
+		/sessions		(POST) <-- used for logins
+			/<token>	(DELETE)
+			
 		/actions	(GET)
 			?min_timestamp=XX&max_timestamp=XX	(GET)		*query
 			/<id>								(GET)

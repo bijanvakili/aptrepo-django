@@ -123,6 +123,7 @@ class HttpClientFactory:
         
         try:
             __import__('urllib2')
+            __import__('cookielib')
             __import__('poster')
             self._HTTP_IMPLEMENTATION_INFO[E_URLLIB].available = True
         except ImportError:
@@ -186,6 +187,7 @@ class PyCurlClient(HttpClientBase):
         super(PyCurlClient, self).__init__(baseurl, timeout)
         self.pycurl = __import__('pycurl')
         self.StringIO = __import__('StringIO') 
+        self.cookies = None
                 
     def get(self, url):
         (client, response_buffer) = self._make_client(url)
@@ -221,6 +223,9 @@ class PyCurlClient(HttpClientBase):
         if rc != 200:
             self._raise_error(rc, response_buffer)
         
+        # store the cookie
+        self.cookies = client.getinfo(self.pycurl.INFO_COOKIELIST)
+        
         return response_buffer.getvalue()
     
     def delete(self, url):
@@ -243,6 +248,9 @@ class PyCurlClient(HttpClientBase):
         client.setopt(self.pycurl.URL, self._compute_url(url))
         if self.timeout:
             client.setopt(self.pycurl.TIMEOUT, self.timeout)
+        client.setopt(self.pycurl.COOKIEFILE, '')
+        if self.cookies:
+            client.setopt(self.pycurl.COOKIELIST, '\n'.join(self.cookies))
         response_buffer = self.StringIO.StringIO()
         client.setopt(self.pycurl.WRITEFUNCTION, response_buffer.write)
         return (client, response_buffer)
@@ -256,15 +264,13 @@ class UrlLibClient(HttpClientBase):
     def __init__(self, baseurl, timeout):
         super(UrlLibClient, self).__init__(baseurl, timeout)
         self.urllib2 = __import__('urllib2')
+        self.cookielib = __import__('cookielib')
         self.poster = __import__('poster') 
 
         # setup password authentication for REST connections
         handlers = self.poster.streaminghttp.get_handlers()
-        """
-        password_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        password_manager.add_password(None, self.url, username, password)
-        handlers.append(urllib2.HTTPBasicAuthHandler(password_manager))
-        """
+        cj = self.cookielib.CookieJar()
+        handlers.append(self.urllib2.HTTPCookieProcessor(cj))
         self.urlclient = self.urllib2.build_opener(*handlers)
 
     def get(self, url):
@@ -290,6 +296,8 @@ class UrlLibClient(HttpClientBase):
                         fh = open(data[k].filename, 'rb')
                         open_files.append(fh)
                         post_data[k] = fh
+                else:
+                    post_data[k] = data[k]
                 
             datagen, headers = self.poster.encode.multipart_encode(post_data)
             request = self.urllib2.Request(self._compute_url(url), datagen, headers)

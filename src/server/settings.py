@@ -127,6 +127,9 @@ INSTALLED_APPS = (
     'aptrepo'
 )
 
+LOGIN_URL = '/aptrepo/login/'
+LOGIN_REDIRECT_URL = '/aptrepo/packages/'
+
 # use only temporary files for upload handlers
 FILE_UPLOAD_HANDLERS = (
     "django.core.files.uploadhandler.TemporaryFileUploadHandler", 

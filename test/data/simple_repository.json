@@ -1,5 +1,12 @@
 [
 	{
+		"pk": 1, 
+		"model": "auth.group", 
+		"fields": {
+			"name": "testgroup" 
+		}
+	}, 
+	{
 		"pk": 1,
 		"model": "auth.user",
 		"fields": {
@@ -8,11 +15,28 @@
 		    "last_name": "Administrator",
 		    "email": "admin@testrepo.org",
 		    "password": "sha1$b1aa1$84c31ca2433abc2fa4f64bf00182702343a99aca",
-		    "is_staff": 1,
-		    "is_active": 1,
-		    "is_superuser": 1
+		    "is_staff": true,
+		    "is_active": true,
+		    "is_superuser": true
 		}
-	},	
+	},
+	{
+		"pk": 2,
+		"model": "auth.user",
+		"fields": {
+			"username": "testuser0",
+			"first_name": "Testuser",
+			"last_name": "0",
+			"email": "testuser0@aptrepo.org",
+			"password": "sha1$04faf$1c953d636b4b183282c43f0febf9aca11decdcff",
+		    "is_staff": false,
+		    "is_active": true,
+		    "is_superuser": false,
+			"groups": [
+				1
+			] 
+		}
+	},
 	{
 		"pk": 1,
 		"model": "aptrepo.architecture",
