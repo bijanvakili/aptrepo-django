@@ -2,10 +2,10 @@
 """
 Sample REST API program
 """
+import getpass
 import json
 import optparse
 import sys
-
 import api
 
 class TestAppException(Exception):
@@ -26,8 +26,12 @@ class TestApp():
     """
     Simple test application
     """
-    def __init__(self, baseurl, timeout):
-        self.apiclient = api.AptRepoClient(url=baseurl, timeout=timeout)
+    def __init__(self, baseurl, timeout, username=None, password=None, httpclient_type=None):
+        self.apiclient = api.AptRepoClient(url=baseurl, 
+                                           timeout=timeout, 
+                                           httpclient_type=httpclient_type)
+        self.username = username
+        self.password = password
         
     def showrepo(self):
         """
@@ -43,10 +47,10 @@ class TestApp():
             sections = self.apiclient.list_sections(distribution['id'])
             print '\t' + json.dumps(sections)
             
-        # output the default number of actions
-        actions = self.apiclient.list_actions()
-        print 'Actions:\n'
-        print json.dumps(actions, sort_keys=True, indent=4)
+            # output the default number of actions
+            actions = self.apiclient.list_actions(distribution_id=distribution['id'])
+            print 'Actions:\n'
+            print json.dumps(actions, sort_keys=True, indent=4)
         
         
     def upload(self, distribution_name, section_name, package_filename):
@@ -57,6 +61,8 @@ class TestApp():
         section_name -- name or id of section
         package_filename -- filename of Debian .deb file to upload
         """
+        self._authenticate()
+        
         # determine the section IDs
         section_id = self._get_section_id(distribution_name, section_name)
         
@@ -87,6 +93,8 @@ class TestApp():
         version -- package version
         architecture -- architecture to remove
         """
+        self._authenticate()
+        
         # determine the section IDs
         section_id = self._get_section_id(distribution_name, section_name)
 
@@ -117,6 +125,29 @@ class TestApp():
             raise TestAppException('Section not found: ' + section_name)
         return sections[0]['id'] 
 
+    def _authenticate(self):
+        """
+        Ensures the client is authenticated
+        """
+        if self.apiclient.is_authenticated():
+            return
+        
+        # default to the system username
+        if not self.username:
+            self.username = getpass.getuser()
+            
+        # prompt for a password if none was provided
+        if not self.password:
+            try:
+                self.password = getpass.getpass()
+            except getpass.GetPassWarning:
+                pass
+            
+        if not self.username or not self.password:
+            raise TestAppException('Username and password must be provided')
+        
+        self.apiclient.login(self.username, self.password)
+
 def main(argv=None):
     """
     Main program
@@ -127,6 +158,7 @@ def main(argv=None):
     parser = optparse.OptionParser()
     usage_commands = [
         'showrepo',
+        'list <distribution> <section>',
         'upload <distribution> <section> <package.deb>',
         'remove <distribution> <section> <package> <version> <architecture>']
     usage_commands = map( lambda x: '%prog [options] ' + x, usage_commands)
@@ -139,6 +171,15 @@ def main(argv=None):
                       type='int', dest='timeout', 
                       help='Network timeout',
                       default=60)
+    parser.add_option('--username', action='store',
+                      type='string', dest='username',
+                      help='Username')
+    parser.add_option('--password', action='store',
+                      type='string', dest='password',
+                      help='Password')
+    parser.add_option('--use-httpclient', action='store',
+                      type='string', dest='httpclient_type',
+                      help=optparse.SUPPRESS_HELP)
     (options, args) = parser.parse_args(args=argv)
     
     if len(args) < 1:

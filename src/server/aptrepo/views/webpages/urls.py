@@ -21,6 +21,11 @@ aptrepo_metadata_urls = patterns('aptrepo.views.webpages.pages',
 )
 
 urlpatterns = patterns('',
+    url(r'^login/$', 'django.contrib.auth.views.login',
+        {
+            'template_name': 'aptrepo/login.html'         
+        }
+    ),
     url(r'^packages/', include(package_urls)),
     url(r'^dists/', include(aptrepo_metadata_urls)),
                        

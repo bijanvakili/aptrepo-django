@@ -61,6 +61,9 @@ class BaseAptRepoTest(TestCase):
         
         # HTTP and REST client for testing
         self.client = Client()
+        self.username = 'testuser0'
+        self.password = 'testing'
+        self.client.login(username='testuser0', password='testing')
 
     def _make_common_debcontrol(self):
         control_map = deb822.Deb822()

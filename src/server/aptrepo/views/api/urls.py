@@ -1,14 +1,23 @@
 from django.conf.urls.defaults import *
 from piston.resource import Resource
+import auth
 import handlers
 
-package_resource=Resource(handler=handlers.PackageHandler)
-distribution_resource=Resource(handler=handlers.DistributionHandler)
-section_resource=Resource(handler=handlers.SectionHandler)
-package_instance_resource=Resource(handler=handlers.PackageInstanceHandler)
-action_resource=Resource(handler=handlers.ActionHandler)
+resource_auth = {'authentication' : auth.DjangoSessionAuthentication() }
+
+session_resource=Resource(handler=handlers.SessionHandler)
+package_resource=Resource(handler=handlers.PackageHandler, **resource_auth)
+distribution_resource=Resource(handler=handlers.DistributionHandler, **resource_auth)
+section_resource=Resource(handler=handlers.SectionHandler, **resource_auth)
+package_instance_resource=Resource(handler=handlers.PackageInstanceHandler, **resource_auth)
+action_resource=Resource(handler=handlers.ActionHandler, **resource_auth)
 
 urlpatterns = patterns('',
+                       
+    # Sessions
+    (r'^sessions/{0,1}$', session_resource),
+    (r'^sessions/(?P<session_key>[^/]+)/{0,1}$', session_resource),
+                       
     # Packages
     (r'^packages/deb822/(?P<package_name>[^/]+)/(?P<version>[^/]+)/(?P<architecture>[^/]+)/{0,1}$', 
      package_resource),    

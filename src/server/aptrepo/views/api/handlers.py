@@ -1,8 +1,9 @@
 import logging
+from django.contrib.auth import authenticate, login, logout
 from django.core.exceptions import ObjectDoesNotExist
 from piston.utils import rc, HttpStatusCode
 from piston.handler import BaseHandler
-import server.settings
+from django.conf import settings
 import server.aptrepo.models
 from server.aptrepo.views import get_repository_controller
 from server.aptrepo.util import AptRepoException
@@ -21,7 +22,6 @@ class BaseAptRepoHandler(BaseHandler):
         response.content = str(exception)
         if return_code:
             rc.status_code = return_code
-        
 
         logger = logging.getLogger(server.settings.DEFAULT_LOGGER)
         logger.exception(exception)
@@ -53,6 +53,54 @@ class BaseAptRepoHandler(BaseHandler):
             
         return resultset
 
+class SessionHandler(BaseAptRepoHandler):
+    """
+    REST API call handler for creating authenticated sessions
+    """
+    allowed_methods = ('POST', 'DELETE')
+    
+    def create(self, request):
+        """
+        Creates a session (logs in a client)
+        """
+        try:
+            # check preconditions
+            if 'username' not in request.POST or 'password' not in request.POST:
+                raise AptRepoException("'username' and 'password' must be specified")
+        
+            # authenticate the user and retrieve the session token
+            user = authenticate(username=request.POST['username'],
+                                password=request.POST['password'])
+            if not user or not user.is_active:
+                response = rc.BAD_REQUEST
+                response.content = 'Invalid username or password'
+                return response
+            
+            login(request, user)
+            return request.session.session_key
+            
+        except Exception, e:
+            return self._error_response(e)
+        
+    def delete(self, request, session_key):
+        """
+        Deletes a session (logs a user out)
+        """
+        try:
+            if request.session.session_key == session_key:
+                logout(request)
+                return rc.DELETED
+            else:
+                session_backend = __import__(settings.SESSION_ENGINE)
+                session_db =  session_backend.SessionStore()
+                session_db.delete(session_key)
+                return rc.DELETED
+            return rc.NOT_FOUND
+        except ObjectDoesNotExist:
+            return rc.NOT_FOUND
+        except Exception, e:
+            return self._error_response(e)
+
 class PackageHandler(BaseAptRepoHandler):
     """
     REST API call handler for packages
@@ -72,22 +120,26 @@ class PackageHandler(BaseAptRepoHandler):
             return self._find_package(**kwargs)
         except ObjectDoesNotExist:
             return rc.NOT_FOUND
+        except Exception, e:
+            return self._error_response(e)
 
-    def delete(self, request, id=None, name=None, version=None, architecture=None):
+    def delete(self, request, **kwargs):
         try:
-            package = self._find_package(id, name, version, architecture)
+            package = self._find_package(**kwargs)
             repository = get_repository_controller()
             repository.remove_all_package_instances(package.id)
             return rc.DELETED
         
         except ObjectDoesNotExist:
             return rc.NOT_FOUND
+        except Exception, e:
+            return self._error_response(e)
         
-    def _find_package(self, id=None, name=None, version=None, architecture=None):
+    def _find_package(self, id=None, package_name=None, version=None, architecture=None):
         if id:
-            return self.models.objects.get(id=id)
-        elif name and version and architecture:
-            return self.models.objects.get(package_name=name, version=version, 
+            return self.model.objects.get(id=id)
+        elif package_name and version and architecture:
+            return self.model.objects.get(package_name=package_name, version=version, 
                                            architecture=architecture)
         
 class DistributionHandler(BaseAptRepoHandler):
@@ -98,14 +150,15 @@ class DistributionHandler(BaseAptRepoHandler):
     model = server.aptrepo.models.Distribution
     
     def read(self, request, distribution_id=None):
-        if distribution_id:
-            try:
+        try:
+            if distribution_id:
                 return self.model.objects.get(id=distribution_id)
-            except ObjectDoesNotExist:
-                return rc.NOT_FOUND
-        else:
-            return self.model.objects.all()
-
+            else:
+                return self.model.objects.all()
+        except ObjectDoesNotExist:
+            return rc.NOT_FOUND
+        except Exception, e:
+            return self._error_response(e)
 
 class SectionHandler(BaseAptRepoHandler):
     """
@@ -113,29 +166,33 @@ class SectionHandler(BaseAptRepoHandler):
     """
     allowed_methods=('GET')
     model = server.aptrepo.models.Section
+    exclude = ('distribution',)
 
     def read(self, request, distribution_id=None, section_id=None):
         # return a specific section
-        if section_id:
-            try:
-                return self.model.objects.get(id=section_id)
-            except ObjectDoesNotExist:
-                resp = rc.NOT_FOUND
-                resp.write('Section not found: {0}'.format(section_id))
-                return resp
+        try:
+            if section_id:
+                try:
+                    return self.model.objects.get(id=section_id)
+                except ObjectDoesNotExist:
+                    resp = rc.NOT_FOUND
+                    resp.write('Section not found: {0}'.format(section_id))
+                    return resp
+                
+            # return all sections within a distribution
+            elif distribution_id:
+                try:
+                    return self.model.objects.filter(distribution__id=distribution_id)
+                except ObjectDoesNotExist:
+                    resp = rc.NOT_FOUND
+                    resp.write('Distribution not found: ' + distribution_id)
+                    return resp
             
-        # return all sections within a distribution
-        elif distribution_id:
-            try:
-                return self.model.objects.filter(distribution__id=distribution_id)
-            except ObjectDoesNotExist:
-                resp = rc.NOT_FOUND
-                resp.write('Distribution not found: ' + distribution_id)
-                return resp
-        
-        # return all available sections
-        else:
-            return self.model.objects.all()
+            # return all available sections
+            else:
+                return self.model.objects.all()
+        except Exception, e:
+            return self._error_response(e)
 
 
 class PackageInstanceHandler(BaseAptRepoHandler):

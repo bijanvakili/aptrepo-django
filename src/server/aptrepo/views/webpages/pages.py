@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.template import RequestContext
 from django import forms
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from server.aptrepo import models
 from server.aptrepo.util import AptRepoException, constants
 from server.aptrepo.views import get_repository_controller
@@ -39,13 +40,7 @@ def packages(request):
     """
     try:
         if request.method == 'POST':
-            """ POST requests will upload a package and create a new record """
-            uploaded_file = request.FILES['file']
-            distribution = request.POST['distribution']
-            section = request.POST['section']
-
-            # store result and redirect to success page
-            return _handle_uploaded_file(distribution, section, uploaded_file)
+            return packages_post(request)
         
         elif request.method == 'GET':
             """ Get method at root will list all packages """
@@ -57,6 +52,17 @@ def packages(request):
     
     except Exception as e:
         return _error_response(e)
+    
+
+@login_required
+def packages_post(request):
+    """ POST requests will upload a package and create a new record """
+    uploaded_file = request.FILES['file']
+    distribution = request.POST['distribution']
+    section = request.POST['section']
+
+    # store result and redirect to success page
+    return _handle_uploaded_file(distribution, section, uploaded_file)
 
 
 def upload_success(request):
@@ -73,6 +79,7 @@ def remove_success(request):
     return HttpResponse("Package successfully removed.")
 
 
+@login_required
 @csrf_protect
 def upload_file(request):
     """ 
@@ -100,6 +107,7 @@ def upload_file(request):
         return _error_response(e)
     
     
+@login_required
 def delete_package_instance(request):
     """
     Basic HTTP POST call to remove a package instance

@@ -5,9 +5,11 @@ General unit tests for apt repo
 import hashlib
 import json
 import os
+import shutil
 import tempfile
 import zlib
 from debian_bundle import deb822, debfile
+from django.conf import settings
 from server.aptrepo import models
 from server.aptrepo.util.hash import hash_file_by_fh
 from base import BaseAptRepoTest, skipRepoTestIfExcluded
@@ -254,18 +256,26 @@ class SmallRepositoryTest(BaseAptRepoTest):
 class LargeRepositoryTest(BaseAptRepoTest):
 
     _TOTAL_PACKAGES = 200
+    _PACKAGE_SUBDIR = 'XX'
+    _PACKAGE_NAME_PREFIX = 'test-package'
 
     def setUp(self):
 
         # initialize base class
         super(LargeRepositoryTest, self).setUp()
 
+        self.packages_path = '{0}{1}/{2}'.format( 
+            settings.MEDIA_ROOT,
+            settings.APTREPO_FILESTORE['packages_subdir'],
+            self._PACKAGE_SUBDIR)
+        os.mkdir(self.packages_path)
+
         # create pre-uploaded packages (with no Debian files though) along with associated
         # instances and upload actions
         for i in xrange(200):
             control_map = self._make_common_debcontrol()
-            control_map['Package'] = 'test-package' + str(i)
-            control_map['Version'] = '2.{0:03d}'.format(i)
+            control_map['Package'] = self._PACKAGE_NAME_PREFIX + str(i)
+            control_map['Version'] = self._make_test_version(i)
             control_map['Description'] = str(i)
             
             package = models.Package()
@@ -273,11 +283,19 @@ class LargeRepositoryTest(BaseAptRepoTest):
             package.architecture = control_map['Architecture']
             package.version = control_map['Version']
             package.control = control_map.dump()
-            package.path = '/XXX'
+
+            # create an empty package file
+            filename = '{0}_{1}_{2}.deb'.format( 
+                package.package_name, 
+                package.version, 
+                package.architecture)
+            package.path = '{0}/{1}'.format(self._PACKAGE_SUBDIR, filename)
+            open(self.packages_path + '/' + filename, 'w').close()
+            
             package.size = 100
-            package.hash_md5 = 'XXX' 
-            package.hash_sha1 = 'XXX'
-            package.hash_sha256 = 'XXX'
+            package.hash_md5 = 'XX' 
+            package.hash_sha1 = 'XX'
+            package.hash_sha256 = 'XX'
             package.save()
             
             section = models.Section.objects.get(id=self.section_id)
@@ -291,9 +309,18 @@ class LargeRepositoryTest(BaseAptRepoTest):
             action.details = self._make_details(package.__dict__) 
             action.save()
             
+    def tearDown(self):
+        if self.packages_path and  os.path.exists(self.packages_path):
+            shutil.rmtree(self.packages_path)
+            
+        super(LargeRepositoryTest, self).tearDown()
+            
     def _make_details(self, package):
         return '{0},{1},{2}'.format(package['package_name'], package['version'],
-                                    package['architecture']) 
+                                    package['architecture'])
+        
+    def _make_test_version(self, number):
+        return '2.{0:03d}'.format(number)
 
     @skipRepoTestIfExcluded
     def test_rest_api_constraints(self):
@@ -323,50 +350,60 @@ class LargeRepositoryTest(BaseAptRepoTest):
                 correct_id = i * lot_size + j
                 
                 self.assertEqual(package_list[j]['package_name'], 'test-package' + str(correct_id) )
-                self.assertEqual(package_list[j]['version'], '2.{0:03d}'.format(correct_id) )
+                self.assertEqual(package_list[j]['version'], self._make_test_version(correct_id) )
                 self.assertEqual(package_list[j]['architecture'], self._DEFAULT_ARCHITECTURE)
                 
-                self.assertEqual(instance_list[j]['package']['package_name'], 'test-package' + str(correct_id))
-                self.assertEqual(instance_list[j]['package']['version'], '2.{0:03d}'.format(correct_id) )
+                self.assertEqual(instance_list[j]['package']['package_name'], 
+                                 self._PACKAGE_NAME_PREFIX + str(correct_id))
+                self.assertEqual(instance_list[j]['package']['version'], self._make_test_version(correct_id) )
                 self.assertEqual(instance_list[j]['package']['architecture'], self._DEFAULT_ARCHITECTURE)
                 
                 self.assertEqual(action_list[j]['section']['id'], self.section_id )
                 self.assertEqual(action_list[j]['user'], 'testuser')
                 self.assertEqual(action_list[j]['action'], models.Action.UPLOAD)
                 self.assertEqual(action_list[j]['details'], self._make_details(package_list[j]))
+
+    def test_constraints_after_deletion(self):
+        """
+        Remove and test ranges        
+        """
+        self._remove_package(199)
+        self._verify_testdata_range(190, 10, range(190,199) )
         
+        self._remove_package(100)
+        self._verify_testdata_range(98, 5, [98,99,101,102,103] )
+        
+        self._remove_package(10)
+        self._verify_testdata_range(9, 5, [9,11,12,13,14] )        
+        self._remove_package(0)
+        self._verify_testdata_range(0, 10, [1,2,3,4,5,6,7,8,9,11] )
 
-        def _verify_testdata_range(self, offset, limit, expected_list):
-            constraint_params = {'offset': offset, 'limit': limit}
-            instances_url = self._ROOT_APIDIR + '/sections/' + str(self.section_id) + '/package-instances'
-            instance_list = self._download_json_object(instances_url, constraint_params)
+
+    def _remove_package(self, number):
+        package_url = '{0}/packages/deb822/{1}/{2}/{3}'.format( 
+            self._ROOT_APIDIR,
+            self._PACKAGE_NAME_PREFIX + str(number),
+            self._make_test_version(number),
+            self._DEFAULT_ARCHITECTURE)
+        self._delete(package_url)
+
+    def _verify_testdata_range(self, offset, limit, expected_list):
+        constraint_params = {'offset': offset, 'limit': limit}
+        instances_url = self._ROOT_APIDIR + '/sections/' + str(self.section_id) + '/package-instances'
+        instance_list = self._download_json_object(instances_url, constraint_params)
+        
+        self.assertLessEqual(len(instance_list), limit)
+        self.assertEqual(len(instance_list), len(expected_list))
+        for i in xrange(len(expected_list)):
+            self.assertEqual(instance_list[i]['package']['package_name'], 
+                             self._PACKAGE_NAME_PREFIX + str(expected_list[i]))
             
-            self.assertLessEqual(len(instance_list), limit)
-            self.assertequal(len(instance_list), len(expected_list))
-            for i in xrange(len(expected_list)):
-                self.assertEqual(instance_list[i]['package']['package_name'], 
-                                 'test-package' + str(expected_list[i]))
-                
-            actions_url = self._ROOT_APIDIR + '/sections/' + str(self.section_id) + '/actions' 
-            action_list = self._download_content(actions_url, constraint_params)     
-            self.assertLessEqual(len(action_list), limit)
-            self.assertequal(len(action_list), len(expected_list))
-            for i in xrange(len(action_list)):
-                self.assertEqual(action_list[i]['details'], self._make_details(instance_list[i]['package']))
-
-        def test_constraints_after_deletion(self):
-
-            # remove and test ranges        
-            packages_url = self._ROOT_APIDIR + '/packages/'
-            self._delete(packages_url + str(200))
-            self._verify_testdata_range(190, 10, xrange(190,9) )
-            
-            self._delete(packages_url + str(100))
-            self._verify_testdata_range(98, 5,[98,99,101,102,103] )
-            
-            self._delete(packages_url + str(10))
-            self._delete(packages_url + str(0))
-            self._verify_testdata_range(0, 10, [1,2,3,4,5,6,7,8,9,11] )
-            self._verify_testdata_range(9, 5, [9,11,12,13,14] )
-
+        actions_url = self._ROOT_APIDIR + '/sections/' + str(self.section_id) + '/actions' 
+        action_list = self._download_json_object(actions_url, constraint_params)     
+        self.assertLessEqual(len(action_list), limit)
+        
+        # disabling since it's invalid
+        #self.assertEqual(len(action_list), len(expected_list))
+        #for i in xrange(len(action_list)):
+        #    self.assertEqual(action_list[i]['details'], self._make_details(instance_list[i]['package']))
 

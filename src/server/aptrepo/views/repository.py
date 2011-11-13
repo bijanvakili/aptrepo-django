@@ -204,11 +204,13 @@ class Repository():
                 package.control = control.dump()
                 
                 hash_prefix = hashes['md5'][0:settings.APTREPO_FILESTORE['hash_depth']]
-                stored_file_path = os.path.join(settings.APTREPO_FILESTORE['packages_subdir'],
-                    hash_prefix, '{0}_{1}_{2}{3}'.format(control['Package'], 
-                                                          control['Version'], 
-                                                          control['Architecture'],
-                                                          self._DEBIAN_EXTENSION))
+                stored_file_path = os.path.join(
+                    settings.APTREPO_FILESTORE['packages_subdir'],
+                    hash_prefix, 
+                    '{0}_{1}_{2}{3}'.format(control['Package'], 
+                                            control['Version'], 
+                                            control['Architecture'],
+                                            self._DEBIAN_EXTENSION))
                 package.path.save(stored_file_path, package_fh) 
                 
                 package.save()
