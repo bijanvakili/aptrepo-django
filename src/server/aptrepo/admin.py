@@ -19,6 +19,15 @@ class SectionAdmin(admin.ModelAdmin):
         repository = get_repository_controller()
         repository.prune_sections(queryset.values_list('id', flat=True))
     prune.short_description = 'Prune'
+    
+    def get_readonly_fields(self, request, obj=None):
+        """
+        Override to make authorization fields read-only if authorization 
+        is not enforced
+        """
+        if not obj or not obj.enforce_authorization:
+            return self.readonly_fields + ('authorized_users', 'authorized_groups', )
+        return self.readonly_fields
 
 
 class DistributionAdmin(admin.ModelAdmin):
