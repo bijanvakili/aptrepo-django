@@ -125,12 +125,17 @@ class Section(models.Model):
     name = models.CharField(max_length=255, db_index=True, validators=[nowhitespace])
     distribution = models.ForeignKey('Distribution', db_index=True)
     description = models.TextField()
-    package_prune_limit = models.PositiveIntegerField(default=0)
-    action_prune_limit = models.PositiveIntegerField(default=0)
+    package_prune_limit = models.PositiveIntegerField(default=0,
+                                                      help_text='Maximum latest versions to keep for a package')
+    action_prune_limit = models.PositiveIntegerField(default=0,
+                                                     help_text='Maximum latest actions to store (e.g. for the RSS feed)')
     
-    enforce_authorization = models.BooleanField(default=False)
-    authorized_users = models.ManyToManyField(User, db_table='aptrepo_authorized_users') 
-    authorized_groups = models.ManyToManyField(Group, db_table='aptrepo_authorized_groups')
+    enforce_authorization = models.BooleanField(default=False,
+        help_text='Check this box and click Save to restrict write access to selected users and groups below<br/>Uncheck this box and click Save to allow anyone to change this section')
+    authorized_users = models.ManyToManyField(User, blank=True,
+                                              db_table='aptrepo_authorized_users') 
+    authorized_groups = models.ManyToManyField(Group, blank=True,
+                                               db_table='aptrepo_authorized_groups')
 
     def __unicode__(self):
         return '{0}:{1}'.format(self.distribution.name, self.name)
