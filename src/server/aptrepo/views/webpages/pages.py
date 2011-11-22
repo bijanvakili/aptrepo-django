@@ -28,7 +28,7 @@ def gpg_public_key(request):
         if request.method != 'GET':
             raise AptRepoException('Invalid HTTP method')
         
-        repository = get_repository_controller()
+        repository = get_repository_controller(request=request)
         return HttpResponse(repository.get_gpg_public_key())
 
     except Exception as e:
@@ -62,7 +62,7 @@ def packages_post(request):
     section = request.POST['section']
 
     # store result and redirect to success page
-    return _handle_uploaded_file(distribution, section, uploaded_file)
+    return _handle_uploaded_file(request, distribution, section, uploaded_file)
 
 
 def upload_success(request):
@@ -90,7 +90,8 @@ def upload_file(request):
             form = UploadPackageForm(request.POST, request.FILES)
             if form.is_valid():
                 section = form.cleaned_data['section']
-                return _handle_uploaded_file(section.distribution.name,
+                return _handle_uploaded_file(request,
+                                             section.distribution.name,
                                              section.name, 
                                              request.FILES['file'])
 
@@ -131,7 +132,7 @@ def delete_package_instance(request):
                 raise AptRepoException("Package instance not found for removal")
             package_instance_id = package_instance.id
             
-        return _handle_remove_package(package_instance_id)
+        return _handle_remove_package(request, package_instance_id)
         
     except Exception as e:
         return _error_response(e)
@@ -156,7 +157,7 @@ def package_list(request, distribution, section, architecture, extension=None):
         mimetype = 'text/plain'
         if is_compressed:
             mimetype = 'application/gzip'
-        repository = get_repository_controller()
+        repository = get_repository_controller(request=request)
         response = HttpResponse(mimetype=mimetype)
         response.content = repository.get_packages(distribution, section, architecture,
                                                    is_compressed)
@@ -178,7 +179,7 @@ def release_list(request, distribution, extension):
         if request.method != 'GET':
             raise AptRepoException('Invalid HTTP method')
 
-        repository = get_repository_controller()
+        repository = get_repository_controller(request=request)
         (releases_data, signature_data) = repository.get_release_data(distribution)
         data = None
         if extension == constants.GPG_EXTENSION:
@@ -192,21 +193,21 @@ def release_list(request, distribution, extension):
     except Exception as e:
         return _error_response(e)
 
-def _handle_uploaded_file(distribution_name, section_name, uploaded_file):
+def _handle_uploaded_file(request, distribution_name, section_name, uploaded_file):
     """ 
     Handles a successfully uploaded files 
     """
     # add the package
-    repository = get_repository_controller()
+    repository = get_repository_controller(request=request)
     repository.add_package(distribution_name=distribution_name, section_name=section_name, 
                            uploaded_package_file=uploaded_file)
     return HttpResponseRedirect(reverse(upload_success))
     
-def _handle_remove_package(package_instance_id):
+def _handle_remove_package(request, package_instance_id):
     """
     Handles removing packages
     """
-    repository = get_repository_controller()
+    repository = get_repository_controller(request=request)
     repository.remove_package(package_instance_id)
     return HttpResponseRedirect(reverse(remove_success))
 

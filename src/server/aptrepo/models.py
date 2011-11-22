@@ -1,5 +1,6 @@
 import os
 import re
+from django.contrib.auth.models import User, Group
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
@@ -94,7 +95,8 @@ class Distribution(models.Model):
     suite = models.CharField(max_length=80, validators=[nowhitespace])
     origin = models.CharField(max_length=80, validators=[nowhitespace])
     creation_date = models.DateTimeField(auto_now_add=True)
-    suppported_architectures = models.ManyToManyField(Architecture)
+    suppported_architectures = models.ManyToManyField(Architecture, 
+                                                      db_table='aptrepo_dist_architectures')
     
     def __unicode__(self):
         return self.name
@@ -125,6 +127,10 @@ class Section(models.Model):
     description = models.TextField()
     package_prune_limit = models.PositiveIntegerField(default=0)
     action_prune_limit = models.PositiveIntegerField(default=0)
+    
+    enforce_authorization = models.BooleanField(default=False)
+    authorized_users = models.ManyToManyField(User, db_table='aptrepo_authorized_users') 
+    authorized_groups = models.ManyToManyField(Group, db_table='aptrepo_authorized_groups')
 
     def __unicode__(self):
         return '{0}:{1}'.format(self.distribution.name, self.name)

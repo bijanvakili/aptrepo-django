@@ -1,7 +1,6 @@
 Remaining goals
 ===============
 - permissions w/support for admin (SQLite) and LDAP users
-	> authorization (per section)
 	> quick LDAP test
 - RSS feeds
 - NLS with gettext

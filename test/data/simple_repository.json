@@ -72,7 +72,8 @@
 			"distribution" : ["test_distribution"],
 			"description" : "Test Section",
 			"package_prune_limit" : 5,
-			"action_prune_limit" : 10
+			"action_prune_limit" : 10,
+			"enforce_authorization" : false
 		}
 	}
 ]
