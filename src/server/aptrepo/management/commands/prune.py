@@ -39,7 +39,7 @@ class Command(BaseCommand):
                     section_id_list.append(section_id)
 
             # prune the section list            
-            repository = get_repository_controller(logger)
+            repository = get_repository_controller(logger, sys_user=True)
             repository.prune_sections(section_id_list, 
                                       dry_run=options['dry_run'],
                                       check_architecture=['check_architecture'])

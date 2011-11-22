@@ -1,9 +1,14 @@
 import json
 import os
+import shutil
 import tempfile
 from django.conf import settings
+from django.contrib.auth.models import User
 from base import BaseAptRepoTest, skipRepoTestIfExcluded
 from server.aptrepo import models
+from server.aptrepo.views.repository import Repository
+from server.aptrepo.util import AptRepoException, AuthorizationException
+
 
 class AuthenticationTest(BaseAptRepoTest):
     """
@@ -200,3 +205,190 @@ class AuthenticationTest(BaseAptRepoTest):
             self.assertTrue(session.get_expiry_age() > 0, 'Verify session has not expired')
         else:
             self.assertFalse(session.exists(session_key), 'Verify session does not exist')
+
+
+class AuthorizationTest(BaseAptRepoTest):
+
+    """
+    Verifies authorization enforcement features based on authenticated user and their
+    membership groups
+    """
+    
+    fixtures = ['simple_repository', 'secured_repository']
+
+    def setUp(self):    
+        # initialize base class
+        super(AuthorizationTest, self).setUp()
+        
+        # force a logout
+        self.client.logout()
+    
+    @skipRepoTestIfExcluded
+    def test_user_access(self):
+        # login as testuser1 and upload a package to 'test_section'
+        self.client.login(username='testuser1', password='testing')
+        package_id_a = self._create_and_upload_package('a', self.section_id)
+        
+        # verify testuser1 can write to test_section_2
+        test_section_2 = models.Section.objects.get(name='test_section_2')
+        package_id_b = self._create_and_upload_package('b', test_section_2.id)
+        instance_id = self._clone_package_with_auth(package_id_a, test_section_2.id)
+        self._delete_package_with_auth(package_id=package_id_b)
+        self._delete_package_with_auth(instance_id=instance_id)
+
+    @skipRepoTestIfExcluded
+    def test_group_access(self):
+        # login as testuser2 and upload a package to 'test_section'
+        self.client.login(username='testuser2', password='testing')
+        package_id_a = self._create_and_upload_package('a', self.section_id)
+
+        # verify testuser2 can write to test_section_3
+        test_section_3 = models.Section.objects.get(name='test_section_3')
+        package_id_b = self._create_and_upload_package('b', test_section_3.id)
+        instance_id = self._clone_package_with_auth(package_id_a, test_section_3.id)
+        self._delete_package_with_auth(package_id=package_id_b)
+        self._delete_package_with_auth(instance_id=instance_id)
+    
+    @skipRepoTestIfExcluded
+    def test_no_access(self):
+        
+        # login as testuser0 and upload a package to 'test_section'
+        self.client.login(username='testuser0', password='testing')
+        package_id_a = self._create_and_upload_package('a', self.section_id)
+
+        # modify 'test_section' to enforce authorization
+        # (at this point, nobody should have access)
+        test_section = models.Section.objects.get(name='test_section')
+        test_section.enforce_authorization=True
+        test_section.save()
+        
+        # all of the following write commands should fail
+        self._delete_package_with_auth(package_id=package_id_a, expect_auth_failure=True)
+        self._create_and_upload_package('b', self.section_id, expect_auth_failure=True)
+        
+        # relogin as testuser2
+        self.client.logout()
+        self.client.login(username='testuser1', password='testing')
+        
+        # all of the following write commands to test_section_3 should fail
+        test_section_3 = models.Section.objects.get(name='test_section_3')
+        self._clone_package_with_auth(package_id_a, test_section_3.id, expect_auth_failure=True)
+        self._create_and_upload_package('b', test_section_3.id, expect_auth_failure=True)
+        
+        # relogin as testuser3
+        self.client.logout()
+        self.client.login(username='testuser2', password='testing')        
+
+        # all of the following write commands to test_section_2 should fail
+        test_section_2 = models.Section.objects.get(name='test_section_2')
+        self._clone_package_with_auth(package_id_a, test_section_2.id, expect_auth_failure=True)
+        self._create_and_upload_package('b', test_section_2.id, expect_auth_failure=True)
+
+    
+    @skipRepoTestIfExcluded
+    def test_management_commands(self):
+
+        try:
+            temp_import_dir = tempfile.mkdtemp()        
+            test_section_2 = models.Section.objects.get(name='test_section_2')        
+
+            # attempt to prune or import without authorization            
+            repository = Repository()
+            self.assertRaises(AuthorizationException, 
+                              repository.prune_sections, 
+                              section_id_list=[test_section_2.id])
+            self.assertRaises(AuthorizationException, repository.import_dir, 
+                              section_id=test_section_2.id, dir_path=temp_import_dir)
+
+            # attempt to prune with an authorized user
+            user = User.objects.get(username='testuser1')
+            repository = Repository(user=user)
+            repository.prune_sections(section_id_list=[test_section_2.id])
+            repository.import_dir(section_id=test_section_2.id, dir_path=temp_import_dir)
+
+            
+            # attempt to prune with system user authorization
+            repository = Repository(sys_user=True)
+            repository.prune_sections(section_id_list=[test_section_2.id])
+            repository.import_dir(section_id=test_section_2.id, dir_path=temp_import_dir)
+            
+        except AuthorizationException as e:
+            self.fail(e)
+
+        finally:
+            if temp_import_dir:
+                shutil.rmtree(temp_import_dir)
+
+    def _create_and_upload_package(self, package_name, section_id, expect_auth_failure=False):
+        """
+        Creates an uploads a package and returns the package ID
+        
+        package_name - name of package to upload
+        section_id - ID of section to upload package
+        expect_auth_failure - Flag indicating whether to expect an authorization failure (defaults to False)
+        """
+        
+        control_map = self._make_common_debcontrol()
+        control_map['Package'] = package_name
+
+        try:        
+            pkg_fh, pkg_filename = tempfile.mkstemp(suffix='.deb', prefix=package_name)
+            os.close(pkg_fh)
+            self._create_package(control_map, pkg_filename)
+
+            with open(pkg_filename) as f:
+                response = self.client.post(
+                    self._ROOT_APIDIR + '/sections/' + str(section_id) + '/package-instances/', 
+                    { 'file' : f, }
+                )
+                if expect_auth_failure:
+                    self.assertNotEqual(response.status_code, 200, 'Upload should fail')
+                else:
+                    self.assertEqual(response.status_code, 200, 'Upload should succeed')
+                    instance_info = json.loads(response.content)
+                    return instance_info['package']['id']
+            
+        finally:
+            if pkg_filename is not None:
+                os.remove(pkg_filename)
+
+
+    def _clone_package_with_auth(self, source_package_id, target_section_id, expect_auth_failure=False):
+        """
+        Clones an existing package and returns the new instance ID
+        
+        source_package_id - name of package to clone
+        target_section_id - name of target section
+        expect_auth_failure - Flag indicating whether to expect an authorization failure (defaults to False)
+        """
+        response = self.client.post(
+            self._ROOT_APIDIR + '/sections/' + str(target_section_id) + '/package-instances/',
+            {'package_id' : source_package_id} 
+        )
+        if expect_auth_failure:
+            self.assertNotEqual(response.status_code, 200, 'Clone should fail')
+        else:
+            self.assertEqual(response.status_code, 200, 'Clone should succeed')
+            instance_info = json.loads(response.content)
+            return instance_info['id']
+
+
+    def _delete_package_with_auth(self, package_id=None, instance_id=None, expect_auth_failure=False):
+        """
+        Deletes a package or package instance
+        
+        package_id - (Optional) id of package to delete
+        instance_id - (Optional) id of instance to delete
+        expect_auth_failure - Flag indicating whether to expect an authorization failure (defaults to False)
+        """
+        if package_id:
+            response = self.client.delete(self._ROOT_APIDIR + '/packages/' + str(package_id))
+        elif instance_id:
+            response = self.client.delete(self._ROOT_APIDIR + '/package-instances/' + str(instance_id))
+        else:
+            raise AptRepoException('No arguments given to _delete_package_with_auth()')
+
+        if expect_auth_failure:
+            self.assertNotEqual(response.status_code, 204, 'Delete should fail')
+        else:
+            self.assertEqual(response.status_code, 204, 'Delete should succeed')

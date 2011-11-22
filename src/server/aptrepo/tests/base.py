@@ -145,7 +145,6 @@ class BaseAptRepoTest(TestCase):
             response = self.client.post(
                 self._ROOT_WEBDIR + '/packages/', {
                     'file' : f, 'distribution': self.distribution_name, 'section': self.section_name})
-            #print response.content
             self.failUnlessEqual(response.status_code, 302)
 
     def _exists_package(self, package_name, version, architecture):

@@ -126,7 +126,7 @@ class PackageHandler(BaseAptRepoHandler):
     def delete(self, request, **kwargs):
         try:
             package = self._find_package(**kwargs)
-            repository = get_repository_controller()
+            repository = get_repository_controller(request=request)
             repository.remove_all_package_instances(package.id)
             return rc.DELETED
         
@@ -244,7 +244,7 @@ class PackageInstanceHandler(BaseAptRepoHandler):
             try:
                 package_instance=self._find_package_instance(instance_id, section_id, 
                                                              package_name, version, architecture)
-                repository = get_repository_controller()
+                repository = get_repository_controller(request=request)
                 repository.remove_package(package_instance.id)
                 return rc.DELETED
             
@@ -262,7 +262,7 @@ class PackageInstanceHandler(BaseAptRepoHandler):
                 raise AptRepoException('No repository section specified')
             
             # if a file was uploaded, let the repository handle the file
-            repository = get_repository_controller()
+            repository = get_repository_controller(request=request)
             section = server.aptrepo.models.Section.objects.get(id=section_id)
             new_instance_id = None
             if 'file' in request.FILES:
@@ -271,7 +271,7 @@ class PackageInstanceHandler(BaseAptRepoHandler):
                                                          uploaded_package_file=uploaded_file)
             # otherwise, clone based of the source package or instance ID
             else:
-                clone_args = {'section' : section }
+                clone_args = {'dest_section' : section }
                 if 'source_id' in request.POST:
                     clone_args['instance_id'] = request.POST['instance_id']
                 elif 'package_id' in request.POST:
@@ -325,7 +325,7 @@ class ActionHandler(BaseAptRepoHandler):
         elif distribution_id:
             action_query['distribution_id'] = distribution_id
             
-        repository=get_repository_controller()
+        repository=get_repository_controller(request=request)
         try:
             action_results = repository.get_actions(**action_query)
             return self._constrain_queryset(request, action_results, 

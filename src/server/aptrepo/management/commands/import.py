@@ -44,7 +44,7 @@ class Command(BaseCommand):
                     raise CommandError('Directory does not exist: ' + dir)
 
             # import packages from the specified directories
-            repository = get_repository_controller(logger)
+            repository = get_repository_controller(logger, sys_user=True)
             for dir in dirs:
                 repository.import_dir(section_id=section_id, dir_path=dir,
                                       dry_run=options['readonly'], 

@@ -1,0 +1,70 @@
+[
+	{
+		"pk": 2, 
+		"model": "auth.group", 
+		"fields": {
+			"name": "testgroup_secured" 
+		}
+	}, 
+	{
+		"pk": 3,
+		"model": "auth.user",
+		"fields": {
+		    "username": "testuser1",
+		    "first_name": "Testuser",
+		    "last_name": "1",
+			"email": "testuser1@aptrepo.org",
+		    "password": "sha1$04faf$1c953d636b4b183282c43f0febf9aca11decdcff",
+		    "is_staff": false,
+		    "is_active": true,
+		    "is_superuser": false
+		}
+	},
+	{
+		"pk": 4,
+		"model": "auth.user",
+		"fields": {
+		    "username": "testuser2",
+		    "first_name": "Testuser",
+		    "last_name": "2",
+			"email": "testuser2@aptrepo.org",
+		    "password": "sha1$04faf$1c953d636b4b183282c43f0febf9aca11decdcff",
+		    "is_staff": false,
+		    "is_active": true,
+		    "is_superuser": false,
+			"groups": [
+				2
+			] 
+		}
+	},
+	{
+		"pk": 3,
+		"model": "aptrepo.section",
+		"fields" : {
+			"name" : "test_section_2",
+			"distribution" : ["test_distribution"],
+			"description" : "Test Section 2",
+			"package_prune_limit" : 5,
+			"action_prune_limit" : 10,
+			"enforce_authorization" : true,
+			"authorized_users": [
+				3
+			]
+		}
+	},
+	{
+		"pk": 4,
+		"model": "aptrepo.section",
+		"fields" : {
+			"name" : "test_section_3",
+			"distribution" : ["test_distribution"],
+			"description" : "Test Section 3",
+			"package_prune_limit" : 5,
+			"action_prune_limit" : 10,
+			"enforce_authorization" : true,
+			"authorized_groups": [
+				2
+			]
+		}
+	}
+]

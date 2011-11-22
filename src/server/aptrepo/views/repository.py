@@ -13,7 +13,7 @@ from django.db.models import Q
 from debian_bundle import deb822, debfile
 from lockfile import FileLock
 from server.aptrepo import models
-from server.aptrepo.util import AptRepoException, constants
+from server.aptrepo.util import AptRepoException, AuthorizationException, constants
 from server.aptrepo.util.hash import hash_file_by_fh, GPGSigner
 from server.aptrepo.util.system import get_python_version
 
@@ -26,12 +26,28 @@ class Repository():
     _RELEASE_FILENAME = 'Release'
     _PACKAGES_FILENAME = 'Packages'
     _DEBIAN_EXTENSION = '.deb'
+    
+    def __init__(self, logger=None, user=None, request=None, sys_user=False):
+        """
+        Constructor for Repository class
         
-    def __init__(self, logger=None):
+        logger - (optional) set custom logger, otherwise uses settings.DEFAULT_LOGGER
+        user - (optional) set the current authenticated user
+        request - (optional) current incoming request (which may contain an authenticated user)
+        sys_user - flags whether this is a system user (defaults to False)
+        """
+        # set the logger
         if logger:
             self.logger = logger
         else:
             self.logger = logging.getLogger(settings.DEFAULT_LOGGER)
+            
+        # store the user for authorization checks
+        self.sys_user = sys_user
+        if not sys_user:
+            self.user = user
+            if not user and request:
+                self.user = request.user
         
     def get_gpg_public_key(self):
         """
@@ -134,6 +150,8 @@ class Repository():
                                                  distribution=distribution)
         else:
             raise AptRepoException('No section argument specified')
+        
+        self._enforce_write_access(section)
         
         if not distribution:
             distribution = section.distribution
@@ -246,6 +264,8 @@ class Repository():
         ignore_errors - (optional) if true, continues importing packages even if any fail
         """
 
+        self._enforce_write_access(models.Section.objects.get(id=section_id))
+
         for root, dirs, files in os.walk(dir_path):
             for filename in files:
                 if filename.endswith(self._DEBIAN_EXTENSION):
@@ -282,12 +302,15 @@ class Repository():
         
         Returns the new instance id
         """
+        
+        self._enforce_write_access(dest_section)
+        
         # locate the target section and the source package
         src_package = None
         if package_id:
-            src_package=models.Package.objects.get(package_id)
+            src_package=models.Package.objects.get(id=package_id)
         elif instance_id:
-            src_instance=models.PackageInstance.objects.get(instance_id)
+            src_instance=models.PackageInstance.objects.get(id=instance_id)
             if src_instance.section.id == dest_section.id:
                 raise AptRepoException('Cannot clone into the same section')
             src_package=src_instance.package
@@ -300,7 +323,7 @@ class Repository():
                                                                  section=dest_section)
         
         # insert action
-        self.logger.debug('Recording clone action for instance id=' + package_instance.id)
+        self.logger.debug('Recording clone action for instance id=' + str(package_instance.id))
         models.Action.objects.create(section=dest_section, action=models.Action.COPY,
                                      user=package_instance.creator)
         
@@ -318,6 +341,7 @@ class Repository():
         # remove the instance
         package_instance = models.PackageInstance.objects.get(id=package_instance_id)
         section = package_instance.section
+        self._enforce_write_access(section)
 
         package_id = package_instance.package.id
         self.logger.info('Removing instance id={0} from section id={1}'.format(
@@ -406,6 +430,7 @@ class Repository():
             
             # skip the section if it doesn't require pruning
             section = models.Section.objects.get(id=section_id)
+            self._enforce_write_access(section)
             num_instances_pruned = 0
             
             if check_architecture:
@@ -739,6 +764,41 @@ class Repository():
             return hashlib.sha1()
         elif name == 'sha256':
             return hashlib.sha256()
+        
+    def _has_write_access(self, section):
+        """
+        Determine write access is permitted for the specified section
+        
+        section -- section model object to check
+        """
+        # allow write access if authorization is not enforced
+        if not section.enforce_authorization:
+            return True
+        
+        # always allow write access for system uesrs 
+        if self.sys_user:
+            return True
+        
+        if self.user:
+            # check user access list
+            if section.authorized_users.filter(id=self.user.id):
+                return True
+            
+            # check group access list
+            elif section.authorized_groups.filter(
+                id__in=self.user.groups.all().values_list('id', flat=True)):
+                return True
+        
+        return False
+    
+    def _enforce_write_access(self, section):
+        """
+        Ensures write access to a section or throws an AuthorizationException
+
+        section -- section model object to check
+        """
+        if not self._has_write_access(section):
+            raise AuthorizationException()
 
     @staticmethod
     def _find_oldversion_instances(instances, package_prune_limit):
