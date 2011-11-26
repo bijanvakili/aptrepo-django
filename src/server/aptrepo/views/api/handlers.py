@@ -1,3 +1,4 @@
+from functools import wraps
 import logging
 from django.contrib.auth import authenticate, login, logout
 from django.core.exceptions import ObjectDoesNotExist
@@ -13,6 +14,7 @@ def handle_exception(request_handler_func):
     Decorator function for handling exceptions and converting them
     to the appropriate response for the API client
     """
+    @wraps(request_handler_func)
     def wrapper_handler(*args, **kwargs):
         logger = logging.getLogger(server.settings.DEFAULT_LOGGER)
 
