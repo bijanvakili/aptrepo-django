@@ -1,5 +1,6 @@
 from django.conf.urls.defaults import *
 from django.conf import settings
+from feeds import DistributionFeed
 
 # Web forms/pages for packages
 package_urls = patterns('aptrepo.views.webpages.pages',
@@ -18,6 +19,7 @@ aptrepo_metadata_urls = patterns('aptrepo.views.webpages.pages',
         'package_list'),
     (r'^(?P<distribution>\w+)/Release(?P<extension>.*)', 
         'release_list'),
+    (r'^(?P<distribution>\w+)/rss', DistributionFeed())
 )
 
 urlpatterns = patterns('',

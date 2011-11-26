@@ -56,6 +56,8 @@ URL DESIGN:
 
 	/dists/<distribution>/	(GET)
 		Release(.gpg)		(GET)
+		/rss				(GET) RSS feed for distribution
+		/atom				(GET) ATOM feed for distribution
 		/<section>			(GET)
 			Packages(.gz)	(GET)
 			<.deb>			(POST) does an upload
@@ -63,7 +65,8 @@ URL DESIGN:
 			/delete			(GET, POST)
 			/copy			(GET, POST)
 			/result			(GET, depends on parameters passed in)
-			/rss			(GET)
+			/rss			(GET) RSS feed for section
+			/atom			(GE)) ATOM feed for section
 			
 	Restriction params:
 		offset, limit, descending=?

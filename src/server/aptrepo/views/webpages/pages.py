@@ -22,6 +22,7 @@ class UploadPackageForm(forms.Form):
     """
     file = forms.FileField()
     section = forms.ModelChoiceField(queryset=models.Section.objects.all())
+    comment = forms.CharField(required=False, max_length=models.Action.MAX_COMMENT_LENGTH)
 
 def handle_exception(request_handler_func):
     """
@@ -105,10 +106,12 @@ def upload_file(request):
         form = UploadPackageForm(request.POST, request.FILES)
         if form.is_valid():
             section = form.cleaned_data['section']
+            comment = form.cleaned_data['comment']
             return _handle_uploaded_file(request,
                                          section.distribution.name,
                                          section.name, 
-                                         request.FILES['file'])
+                                         request.FILES['file'],
+                                         comment)
 
     elif request.method == 'GET':
         form = UploadPackageForm()
@@ -194,18 +197,19 @@ def _packages_post(request):
     uploaded_file = request.FILES['file']
     distribution = request.POST['distribution']
     section = request.POST['section']
+    comment = request.POST['comment']
 
     # store result and redirect to success page
-    return _handle_uploaded_file(request, distribution, section, uploaded_file)
+    return _handle_uploaded_file(request, distribution, section, uploaded_file, comment)
 
-def _handle_uploaded_file(request, distribution_name, section_name, uploaded_file):
+def _handle_uploaded_file(request, distribution_name, section_name, uploaded_file, comment):
     """ 
     Handles a successfully uploaded files 
     """
     # add the package
     repository = get_repository_controller(request=request)
     repository.add_package(distribution_name=distribution_name, section_name=section_name, 
-                           uploaded_package_file=uploaded_file)
+                           uploaded_package_file=uploaded_file, comment=comment)
     return HttpResponseRedirect(reverse(upload_success))
     
 def _handle_remove_package(request, package_instance_id):

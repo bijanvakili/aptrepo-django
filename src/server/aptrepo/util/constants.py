@@ -1,3 +1,4 @@
 
 GZIP_EXTENSION = '.gz'
 GPG_EXTENSION = '.gpg'
+SYSUSER_NAME = 'sysuser'

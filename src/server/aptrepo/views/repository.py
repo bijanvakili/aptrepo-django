@@ -1,3 +1,4 @@
+import datetime
 import gzip
 import hashlib
 import logging
@@ -239,15 +240,30 @@ class Repository():
                 raise
 
         # create a package instance
-        # TODO set the creator
-        self.logger.debug('Recording upload action for package file ' + package_name)
+        if self.sys_user:
+            creator = constants.SYSUSER_NAME
+        else:
+            creator = self.user.username
+        self.logger.debug('Creating new package instance for ' + str(package))        
         package_instance, _ = models.PackageInstance.objects.get_or_create(
-            package=package, section=section)
+            package=package, 
+            section=section,
+            creator=creator)
         
-        # insert action
-        models.Action.objects.create(section=section, action=models.Action.UPLOAD,
-                                     user=package_instance.creator)
+        # record an upload action
+        self.logger.debug('Recording upload action for package file ' + str(package))
+        action = models.Action()
+        action.section = section
+        action.user = creator
+        action.action=models.Action.UPLOAD
+        action.package = package
+        action.summary = '{0} added package {1}'.format(action.user,
+                                                        package)
+        if 'comment' in kwargs:
+            action.comment = kwargs['comment']
+        action.save()
         
+        # invalidate the cache and return the new instance ID
         self._clear_cache(distribution.name)
         return package_instance.id
 
@@ -291,7 +307,7 @@ class Repository():
                 del dirs[:]
 
 
-    def clone_package(self, dest_section, package_id=None, instance_id=None):
+    def clone_package(self, dest_section, package_id=None, instance_id=None, comment=None):
         """
         Clones a package to create another instance
         
@@ -324,6 +340,7 @@ class Repository():
                                                                  section=dest_section)
         
         # insert action
+        # TODO implement proper recording of copy action
         self.logger.debug('Recording clone action for instance id=' + str(package_instance.id))
         models.Action.objects.create(section=dest_section, action=models.Action.COPY,
                                      user=package_instance.creator)
@@ -360,7 +377,7 @@ class Repository():
         self._clear_cache(section.distribution.name)
         
         # insert action
-        # TODO change to include request user
+        # TODO implement proper recording of remove action
         self.logger.debug('Recording delete action for instance id=' + str(package_instance_id))
         models.Action.objects.create(section=section, action=models.Action.DELETE,
                                      user="who?")

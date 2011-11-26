@@ -306,7 +306,7 @@ class LargeRepositoryTest(BaseAptRepoTest):
             action.action = models.Action.UPLOAD
             action.user = instance.creator
             action.comment = 'For testing'
-            action.details = self._make_details(package.__dict__) 
+            action.summary = self._make_summary(package.__dict__) 
             action.save()
             
     def tearDown(self):
@@ -315,7 +315,7 @@ class LargeRepositoryTest(BaseAptRepoTest):
             
         super(LargeRepositoryTest, self).tearDown()
             
-    def _make_details(self, package):
+    def _make_summary(self, package):
         return '{0},{1},{2}'.format(package['package_name'], package['version'],
                                     package['architecture'])
         
@@ -361,7 +361,7 @@ class LargeRepositoryTest(BaseAptRepoTest):
                 self.assertEqual(action_list[j]['section']['id'], self.section_id )
                 self.assertEqual(action_list[j]['user'], 'testuser')
                 self.assertEqual(action_list[j]['action'], models.Action.UPLOAD)
-                self.assertEqual(action_list[j]['details'], self._make_details(package_list[j]))
+                self.assertEqual(action_list[j]['summary'], self._make_summary(package_list[j]))
 
     def test_constraints_after_deletion(self):
         """
