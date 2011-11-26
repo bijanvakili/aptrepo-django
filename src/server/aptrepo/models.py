@@ -159,6 +159,7 @@ class Action(models.Model):
     Loggable actions on the apt repo
     """
     UPLOAD, DELETE, MOVE, COPY = range(4)
+    MAX_COMMENT_LENGTH = 1024
     
     _ACTION_TYPE_CHOICES = (
         (UPLOAD, 'upload'),
@@ -170,9 +171,15 @@ class Action(models.Model):
     section = models.ForeignKey('Section', db_index=True)
     timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
     action = models.IntegerField(choices=_ACTION_TYPE_CHOICES)
-    user = models.CharField(max_length=255) 
-    details = models.TextField()
-    comment = models.TextField()
-
+    user = models.CharField(max_length=255)
+    comment = models.TextField(null=True, max_length=MAX_COMMENT_LENGTH)
+    
+    # if the package instance still exists, use the 'instance' weak reference 
+    # to retrieve all data and links.  Otherwise, use the summary field
+    # which contains denormalized data
+    package = models.ForeignKey(Package, blank=True, null=True, default=None,
+                                on_delete=models.SET_NULL)
+    summary = models.TextField()
+    
     def __unicode__(self):
         return '({0}) {1}:{2}'.format(self.timestamp, self.user, self.action)

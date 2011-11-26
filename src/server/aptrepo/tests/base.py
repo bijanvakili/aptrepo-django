@@ -144,7 +144,11 @@ class BaseAptRepoTest(TestCase):
         with open(pkg_filename) as f:
             response = self.client.post(
                 self._ROOT_WEBDIR + '/packages/', {
-                    'file' : f, 'distribution': self.distribution_name, 'section': self.section_name})
+                    'file' : f, 
+                    'distribution': self.distribution_name, 
+                    'section': self.section_name,
+                    'comment': 'Another test upload',
+                })
             self.failUnlessEqual(response.status_code, 302)
 
     def _exists_package(self, package_name, version, architecture):

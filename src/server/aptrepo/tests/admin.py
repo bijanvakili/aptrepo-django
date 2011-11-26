@@ -250,7 +250,7 @@ class ImportTest(BaseAptRepoTest):
                                               self._make_valid_deb_filename(control)))
 
             # import the flat directory only
-            repository = get_repository_controller()
+            repository = get_repository_controller(sys_user=True)
             repository.import_dir(section_id=self.section_id, 
                                   dir_path=temp_import_dir, recursive=False)
 
@@ -297,7 +297,7 @@ class ImportTest(BaseAptRepoTest):
                                      self._make_valid_deb_filename(control)))
 
             # import the flat directory        
-            repository = get_repository_controller()
+            repository = get_repository_controller(sys_user=True)
             repository.import_dir(section_id=self.section_id, 
                                   dir_path=temp_import_dir, recursive=True)
 

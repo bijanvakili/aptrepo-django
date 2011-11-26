@@ -253,13 +253,15 @@ class PackageInstanceHandler(BaseAptRepoHandler):
         repository = get_repository_controller(request=request)
         section = server.aptrepo.models.Section.objects.get(id=section_id)
         new_instance_id = None
+        comment = request.POST.get('comment')
         if 'file' in request.FILES:
             uploaded_file = request.FILES['file']
             new_instance_id = repository.add_package(section=section, 
-                                                     uploaded_package_file=uploaded_file)
+                                                     uploaded_package_file=uploaded_file,
+                                                     comment=comment)
         # otherwise, clone based of the source package or instance ID
         else:
-            clone_args = {'dest_section' : section }
+            clone_args = {'dest_section' : section, 'comment':comment }
             if 'source_id' in request.POST:
                 clone_args['instance_id'] = request.POST['instance_id']
             elif 'package_id' in request.POST:
