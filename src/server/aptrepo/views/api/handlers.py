@@ -6,7 +6,35 @@ from piston.handler import BaseHandler
 from django.conf import settings
 import server.aptrepo.models
 from server.aptrepo.views import get_repository_controller
-from server.aptrepo.util import AptRepoException
+from server.aptrepo.util import AptRepoException, AuthorizationException
+
+def handle_exception(request_handler_func):
+    """
+    Decorator function for handling exceptions and converting them
+    to the appropriate response for the API client
+    """
+    def wrapper_handler(*args, **kwargs):
+        logger = logging.getLogger(server.settings.DEFAULT_LOGGER)
+
+        try:
+            return request_handler_func(*args, **kwargs)
+        except ObjectDoesNotExist:
+            return rc.NOT_FOUND
+        except AuthorizationException as e:
+            logger.info(e)
+            response = rc.FORBIDDEN
+            response.content = str(e)
+            return response
+        except Exception as e:
+            logger.exception(e)
+            response = rc.BAD_REQUEST
+            response.content = str(e)
+            if server.settings.DEBUG:
+                raise HttpStatusCode(response)
+            else:
+                return response
+    
+    return wrapper_handler
 
 class BaseAptRepoHandler(BaseHandler):
     """
@@ -14,23 +42,6 @@ class BaseAptRepoHandler(BaseHandler):
     """
     exclude = ()
 
-    def _error_response(self, exception, return_code=None):
-        """ 
-        Return an error response 
-        """
-        response = rc.BAD_REQUEST
-        response.content = str(exception)
-        if return_code:
-            rc.status_code = return_code
-
-        logger = logging.getLogger(server.settings.DEFAULT_LOGGER)
-        logger.exception(exception)
-        
-        if server.settings.DEBUG:
-            raise HttpStatusCode(response)
-        else:
-            return response
-        
     def _constrain_queryset(self, request, db_result, default_limit):
         """
         Constrain a DB query result based on common HTTP parameters:
@@ -59,47 +70,41 @@ class SessionHandler(BaseAptRepoHandler):
     """
     allowed_methods = ('POST', 'DELETE')
     
+    @handle_exception
     def create(self, request):
         """
         Creates a session (logs in a client)
         """
-        try:
-            # check preconditions
-            if 'username' not in request.POST or 'password' not in request.POST:
-                raise AptRepoException("'username' and 'password' must be specified")
+        # check preconditions
+        if 'username' not in request.POST or 'password' not in request.POST:
+            raise AptRepoException("'username' and 'password' must be specified")
+    
+        # authenticate the user and retrieve the session token
+        user = authenticate(username=request.POST['username'],
+                            password=request.POST['password'])
+        if not user or not user.is_active:
+            response = rc.BAD_REQUEST
+            response.content = 'Invalid username or password'
+            return response
         
-            # authenticate the user and retrieve the session token
-            user = authenticate(username=request.POST['username'],
-                                password=request.POST['password'])
-            if not user or not user.is_active:
-                response = rc.BAD_REQUEST
-                response.content = 'Invalid username or password'
-                return response
+        login(request, user)
+        return request.session.session_key
             
-            login(request, user)
-            return request.session.session_key
-            
-        except Exception, e:
-            return self._error_response(e)
-        
+    @handle_exception
     def delete(self, request, session_key):
         """
         Deletes a session (logs a user out)
         """
-        try:
-            if request.session.session_key == session_key:
-                logout(request)
-                return rc.DELETED
-            else:
-                session_backend = __import__(settings.SESSION_ENGINE)
-                session_db =  session_backend.SessionStore()
-                session_db.delete(session_key)
-                return rc.DELETED
-            return rc.NOT_FOUND
-        except ObjectDoesNotExist:
-            return rc.NOT_FOUND
-        except Exception, e:
-            return self._error_response(e)
+        if request.session.session_key == session_key:
+            logout(request)
+            return rc.DELETED
+        else:
+            session_backend = __import__(settings.SESSION_ENGINE)
+            session_db =  session_backend.SessionStore()
+            session_db.delete(session_key)
+            return rc.DELETED
+        return rc.NOT_FOUND
+
 
 class PackageHandler(BaseAptRepoHandler):
     """
@@ -109,6 +114,7 @@ class PackageHandler(BaseAptRepoHandler):
     model = server.aptrepo.models.Package
     _DEFAULT_MAX_PACKAGES = 100
     
+    @handle_exception
     def read(self, request, **kwargs):
         # if no arguments were specified, return all package
         if (len(kwargs) == 0):
@@ -116,24 +122,14 @@ class PackageHandler(BaseAptRepoHandler):
                                             self._DEFAULT_MAX_PACKAGES)
         
         # otherwise, search for a specific package
-        try:
-            return self._find_package(**kwargs)
-        except ObjectDoesNotExist:
-            return rc.NOT_FOUND
-        except Exception, e:
-            return self._error_response(e)
+        return self._find_package(**kwargs)
 
+    @handle_exception
     def delete(self, request, **kwargs):
-        try:
-            package = self._find_package(**kwargs)
-            repository = get_repository_controller(request=request)
-            repository.remove_all_package_instances(package.id)
-            return rc.DELETED
-        
-        except ObjectDoesNotExist:
-            return rc.NOT_FOUND
-        except Exception, e:
-            return self._error_response(e)
+        package = self._find_package(**kwargs)
+        repository = get_repository_controller(request=request)
+        repository.remove_all_package_instances(package.id)
+        return rc.DELETED
         
     def _find_package(self, id=None, package_name=None, version=None, architecture=None):
         if id:
@@ -148,17 +144,14 @@ class DistributionHandler(BaseAptRepoHandler):
     """
     allowed_methods=('GET')
     model = server.aptrepo.models.Distribution
-    
+
+    @handle_exception
     def read(self, request, distribution_id=None):
-        try:
-            if distribution_id:
-                return self.model.objects.get(id=distribution_id)
-            else:
-                return self.model.objects.all()
-        except ObjectDoesNotExist:
-            return rc.NOT_FOUND
-        except Exception, e:
-            return self._error_response(e)
+        if distribution_id:
+            return self.model.objects.get(id=distribution_id)
+        else:
+            return self.model.objects.all()
+
 
 class SectionHandler(BaseAptRepoHandler):
     """
@@ -168,31 +161,29 @@ class SectionHandler(BaseAptRepoHandler):
     model = server.aptrepo.models.Section
     exclude = ('distribution',)
 
+    @handle_exception
     def read(self, request, distribution_id=None, section_id=None):
         # return a specific section
-        try:
-            if section_id:
-                try:
-                    return self.model.objects.get(id=section_id)
-                except ObjectDoesNotExist:
-                    resp = rc.NOT_FOUND
-                    resp.write('Section not found: {0}'.format(section_id))
-                    return resp
-                
-            # return all sections within a distribution
-            elif distribution_id:
-                try:
-                    return self.model.objects.filter(distribution__id=distribution_id)
-                except ObjectDoesNotExist:
-                    resp = rc.NOT_FOUND
-                    resp.write('Distribution not found: ' + distribution_id)
-                    return resp
+        if section_id:
+            try:
+                return self.model.objects.get(id=section_id)
+            except ObjectDoesNotExist:
+                resp = rc.NOT_FOUND
+                resp.write('Section not found: {0}'.format(section_id))
+                return resp
             
-            # return all available sections
-            else:
-                return self.model.objects.all()
-        except Exception, e:
-            return self._error_response(e)
+        # return all sections within a distribution
+        elif distribution_id:
+            try:
+                return self.model.objects.filter(distribution__id=distribution_id)
+            except ObjectDoesNotExist:
+                resp = rc.NOT_FOUND
+                resp.write('Distribution not found: ' + distribution_id)
+                return resp
+        
+        # return all available sections
+        else:
+            return self.model.objects.all()
 
 
 class PackageInstanceHandler(BaseAptRepoHandler):
@@ -205,6 +196,7 @@ class PackageInstanceHandler(BaseAptRepoHandler):
     
     _DEFAULT_MAX_INSTANCES = 100
     
+    @handle_exception
     def read(self, request, instance_id=None, section_id=None, 
              package_name=None, version=None, architecture=None):
         
@@ -220,9 +212,9 @@ class PackageInstanceHandler(BaseAptRepoHandler):
                 else:
                     resp.content = 'Package instance not found in section {0} '\
                                     'matching criteria: ({1},{2},{3})'.format(section_id, 
-                                                                         package_name, 
-                                                                         version,
-                                                                         architecture) 
+                                                                              package_name, 
+                                                                              version,
+                                                                              architecture) 
                 return resp
             
         # return all packages in a section (within constrained limits)
@@ -236,54 +228,45 @@ class PackageInstanceHandler(BaseAptRepoHandler):
             return self._constrain_queryset(request, all_instances, 
                                             default_limit=self._DEFAULT_MAX_INSTANCES)
             
-                            
+    @handle_exception
     def delete(self, request, instance_id=None, section_id=None, 
                package_name=None, version=None, architecture=None):
         # delete a specific instance
         if instance_id or (section_id and package_name and version and architecture):
-            try:
-                package_instance=self._find_package_instance(instance_id, section_id, 
-                                                             package_name, version, architecture)
-                repository = get_repository_controller(request=request)
-                repository.remove_package(package_instance.id)
-                return rc.DELETED
-            
-            except ObjectDoesNotExist:
-                return rc.NOT_FOUND
-            except Exception, e:
-                return self._error_response(e)
+            package_instance=self._find_package_instance(instance_id, section_id, 
+                                                         package_name, version, architecture)
+            repository = get_repository_controller(request=request)
+            repository.remove_package(package_instance.id)
+            return rc.DELETED
         else:
             return rc.FORBIDDEN      
 
+    @handle_exception
     def create(self, request, section_id):
         
-        try:
-            if not section_id:
-                raise AptRepoException('No repository section specified')
-            
-            # if a file was uploaded, let the repository handle the file
-            repository = get_repository_controller(request=request)
-            section = server.aptrepo.models.Section.objects.get(id=section_id)
-            new_instance_id = None
-            if 'file' in request.FILES:
-                uploaded_file = request.FILES['file']
-                new_instance_id = repository.add_package(section=section, 
-                                                         uploaded_package_file=uploaded_file)
-            # otherwise, clone based of the source package or instance ID
-            else:
-                clone_args = {'dest_section' : section }
-                if 'source_id' in request.POST:
-                    clone_args['instance_id'] = request.POST['instance_id']
-                elif 'package_id' in request.POST:
-                    clone_args['package_id'] = request.POST['package_id']
-                else:
-                    return rc.BAD_REQUEST
-                new_instance_id = repository.clone_package(**clone_args)
-    
-            return self.model.objects.get(id=new_instance_id)
+        if not section_id:
+            raise AptRepoException('No repository section specified')
         
-        except Exception, e:
-            return self._error_response(e)
+        # if a file was uploaded, let the repository handle the file
+        repository = get_repository_controller(request=request)
+        section = server.aptrepo.models.Section.objects.get(id=section_id)
+        new_instance_id = None
+        if 'file' in request.FILES:
+            uploaded_file = request.FILES['file']
+            new_instance_id = repository.add_package(section=section, 
+                                                     uploaded_package_file=uploaded_file)
+        # otherwise, clone based of the source package or instance ID
+        else:
+            clone_args = {'dest_section' : section }
+            if 'source_id' in request.POST:
+                clone_args['instance_id'] = request.POST['instance_id']
+            elif 'package_id' in request.POST:
+                clone_args['package_id'] = request.POST['package_id']
+            else:
+                return rc.BAD_REQUEST
+            new_instance_id = repository.clone_package(**clone_args)
+
+        return self.model.objects.get(id=new_instance_id)
 
     def _find_package_instance(self, instance_id=None, 
                                section_id=None, package_name=None, 
@@ -309,6 +292,7 @@ class ActionHandler(BaseAptRepoHandler):
     
     _DEFAULT_NUM_ACTIONS = 25
     
+    @handle_exception
     def read(self, request, distribution_id=None, section_id=None):
         
         # add restriction parameters
@@ -326,12 +310,6 @@ class ActionHandler(BaseAptRepoHandler):
             action_query['distribution_id'] = distribution_id
             
         repository=get_repository_controller(request=request)
-        try:
-            action_results = repository.get_actions(**action_query)
-            return self._constrain_queryset(request, action_results, 
-                                            default_limit=self._DEFAULT_NUM_ACTIONS)
-        except ObjectDoesNotExist:
-            return rc.NOT_FOUND
-        except Exception, e:
-            return self._error_response(e)
-        
+        action_results = repository.get_actions(**action_query)
+        return self._constrain_queryset(request, action_results, 
+                                        default_limit=self._DEFAULT_NUM_ACTIONS)

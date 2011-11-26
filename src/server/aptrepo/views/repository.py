@@ -151,7 +151,7 @@ class Repository():
         else:
             raise AptRepoException('No section argument specified')
         
-        self._enforce_write_access(section)
+        self._enforce_write_access(section, 'Add package')
         
         if not distribution:
             distribution = section.distribution
@@ -264,7 +264,8 @@ class Repository():
         ignore_errors - (optional) if true, continues importing packages even if any fail
         """
 
-        self._enforce_write_access(models.Section.objects.get(id=section_id))
+        self._enforce_write_access(models.Section.objects.get(id=section_id), 
+                                   "Import package directory")
 
         for root, dirs, files in os.walk(dir_path):
             for filename in files:
@@ -303,7 +304,7 @@ class Repository():
         Returns the new instance id
         """
         
-        self._enforce_write_access(dest_section)
+        self._enforce_write_access(dest_section, "Clone package")
         
         # locate the target section and the source package
         src_package = None
@@ -341,7 +342,7 @@ class Repository():
         # remove the instance
         package_instance = models.PackageInstance.objects.get(id=package_instance_id)
         section = package_instance.section
-        self._enforce_write_access(section)
+        self._enforce_write_access(section, "Remove package")
 
         package_id = package_instance.package.id
         self.logger.info('Removing instance id={0} from section id={1}'.format(
@@ -430,7 +431,7 @@ class Repository():
             
             # skip the section if it doesn't require pruning
             section = models.Section.objects.get(id=section_id)
-            self._enforce_write_access(section)
+            self._enforce_write_access(section, "Prune section")
             num_instances_pruned = 0
             
             if check_architecture:
@@ -791,14 +792,17 @@ class Repository():
         
         return False
     
-    def _enforce_write_access(self, section):
+    def _enforce_write_access(self, section, action=None):
         """
         Ensures write access to a section or throws an AuthorizationException
 
         section -- section model object to check
         """
         if not self._has_write_access(section):
-            raise AuthorizationException()
+            message = "Unauthorized action: " + action
+            if self.user:
+                message = message + " (for user " + self.user.username + ")"
+            raise AuthorizationException(message)
 
     @staticmethod
     def _find_oldversion_instances(instances, package_prune_limit):
