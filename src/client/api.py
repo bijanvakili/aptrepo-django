@@ -166,19 +166,22 @@ class AptRepoClient:
                                                           name, version, architecture)
         return self._get_request(url)
         
-    def upload_package(self, section_id, filename=None, fileobj=None):
+    def upload_package(self, section_id, filename=None, fileobj=None, comment=None):
         """
         Uploads a package
         
         filename -- filename of file to upload
         fileobj -- file object of file to upload
+        comment -- optional user comment
         """
         url = self._section_url(section_id) + '/' + self._INSTANCES_SUFFIX
         data = {}
         data['file'] = httpclient.PostDataFileObject(filename=filename, fileobj=fileobj)
+        if comment:
+            data['comment'] = comment
         return self._post_request(url, data)
                 
-    def copy_package(self, src_instance_id, dest_section_id):
+    def copy_package(self, src_instance_id, dest_section_id, comment=None):
         """
         Copies a package instance
         
@@ -186,7 +189,10 @@ class AptRepoClient:
         dest_section_id - destination section id to create new instance
         """
         url = self._section_url(dest_section_id) + '/' + self._INSTANCES_SUFFIX
-        self._post_request(url, {'id': src_instance_id})
+        data = {'id': src_instance_id}
+        if comment:
+            data['comment'] = comment
+        self._post_request(url, comment)
         
         
     def delete_package_instance(self, instance_id):

@@ -1,4 +1,3 @@
-import datetime
 import gzip
 import hashlib
 import logging
@@ -240,28 +239,19 @@ class Repository():
                 raise
 
         # create a package instance
-        if self.sys_user:
-            creator = constants.SYSUSER_NAME
-        else:
-            creator = self.user.username
         self.logger.debug('Creating new package instance for ' + str(package))        
         package_instance, _ = models.PackageInstance.objects.get_or_create(
             package=package, 
             section=section,
-            creator=creator)
+            creator=self._get_username())
         
         # record an upload action
-        self.logger.debug('Recording upload action for package file ' + str(package))
-        action = models.Action()
-        action.section = section
-        action.user = creator
-        action.action=models.Action.UPLOAD
-        action.package = package
-        action.summary = '{0} added package {1}'.format(action.user,
-                                                        package)
-        if 'comment' in kwargs:
-            action.comment = kwargs['comment']
-        action.save()
+        summary = '{0} added package {1}'.format(package_instance.creator, package)
+        self._record_action(models.Action.UPLOAD, 
+                            section,
+                            summary,
+                            package=package,
+                            comment=kwargs.get('comment'))
         
         # invalidate the cache and return the new instance ID
         self._clear_cache(distribution.name)
@@ -324,32 +314,41 @@ class Repository():
         
         # locate the target section and the source package
         src_package = None
+        src_section = None
         if package_id:
             src_package=models.Package.objects.get(id=package_id)
         elif instance_id:
-            src_instance=models.PackageInstance.objects.get(id=instance_id)
+            src_instance = models.PackageInstance.objects.get(id=instance_id)
+            src_section = src_instance.section
             if src_instance.section.id == dest_section.id:
                 raise AptRepoException('Cannot clone into the same section')
             src_package=src_instance.package
         
         # create the new instance
-        # TODO set the creator
         self.logger.info('Cloning package id={0} into section={1}'.format(
             src_package.id, dest_section.id))
         package_instance = models.PackageInstance.objects.create(package=src_package,
-                                                                 section=dest_section)
+                                                                 section=dest_section,
+                                                                 creator=self._get_username())
         
-        # insert action
-        # TODO implement proper recording of copy action
-        self.logger.debug('Recording clone action for instance id=' + str(package_instance.id))
-        models.Action.objects.create(section=dest_section, action=models.Action.COPY,
-                                     user=package_instance.creator)
+        # insert action for clone
+        summary = '{0} cloned package {1} '.format(
+            package_instance.creator, src_package)
+        if src_section:
+            summary = summary + ' from {0} to {1}'.format(src_section, dest_section)
+        else:
+            summary = summary + ' into {0}'.format(dest_section)
+        self._record_action(models.Action.COPY,
+                            dest_section, 
+                            summary,
+                            package=src_package,
+                            comment=comment)
         
         self._clear_cache(dest_section.distribution.name)
         return package_instance.id
 
         
-    def remove_package(self, package_instance_id):
+    def remove_package(self, package_instance_id, comment=None):
         """
         Removes a package instance
         If there are no instances referencing the actual package, it will be removed as well
@@ -376,14 +375,14 @@ class Repository():
         # update for the package list for the specific section and architecture
         self._clear_cache(section.distribution.name)
         
-        # insert action
-        # TODO implement proper recording of remove action
-        self.logger.debug('Recording delete action for instance id=' + str(package_instance_id))
-        models.Action.objects.create(section=section, action=models.Action.DELETE,
-                                     user="who?")
+        # insert action for removal
+        summary = '{0} removed package {1} from {2}'.format(self._get_username(),
+                                                            package,
+                                                            section) 
+        self._record_action(models.Action.DELETE, section, summary, comment=comment)
         
         
-    def remove_all_package_instances(self, package_id):
+    def remove_all_package_instances(self, package_id, comment=None):
         """
         Removes all instances of a package
         
@@ -391,7 +390,7 @@ class Repository():
         """
         instances = models.PackageInstance.objects.filter(package__id=package_id)
         for instance in instances:
-            self.remove_package(package_instance_id=instance.id)
+            self.remove_package(package_instance_id=instance.id, comment=comment)
 
     
     def get_actions(self, **args):
@@ -525,16 +524,16 @@ class Repository():
                         instance.delete()
                         
             
-            # if pruning occurred, marked distributions caches to be refresh and update
+            # if pruning occurred, record an action and marked distributions caches to be refresh and update
             # any aggregate measures
+            summary = '{0} instances pruned from section {1}'.format(num_instances_pruned, section) 
             if num_instances_pruned > 0:
                 pruned_distribution_names.add(section.distribution.name)
                 total_instances_pruned += num_instances_pruned
+                self._record_action(models.Action.PRUNE, section, summary)
 
-            self.logger.info('%d instances pruned from section %s:%s', 
-                            num_instances_pruned,
-                            section.distribution.name, 
-                            section.name)
+            self.logger.info(summary)
+
                 
             # prune actions for the section            
             if section.action_prune_limit > 0:
@@ -842,3 +841,39 @@ class Repository():
             pruneable_instance_ids.append(prunable_instance.id)
             
         return pruneable_instance_ids
+
+    def _get_username(self):
+        """
+        Returns the appropriate user
+        """
+        if self.sys_user:
+            return constants.SYSUSER_NAME
+        else:
+            return self.user.username
+
+    def _record_action(self, action_type, section, summary,
+                       package=None, comment=None):
+        """
+        Common internal method to record repository actions
+        
+        package_instance -- instance for which the action is applied
+        action_type -- the action type (see models.Action constants)
+        package -- optional package object to reference
+        comment -- optional user-defined comment
+        """
+        action = models.Action()
+        action.section = section
+        action.user = self._get_username()
+        action.action = action_type
+        action.package = package
+        action.summary = summary
+
+        if comment:
+            action.comment = comment
+        self.logger.debug(
+            'Recording action {0} for section {1}'.format(
+                str(action), str(section)
+            )
+        )
+        action.save()
+        

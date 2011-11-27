@@ -158,13 +158,13 @@ class Action(models.Model):
     """
     Loggable actions on the apt repo
     """
-    UPLOAD, DELETE, MOVE, COPY = range(4)
+    UPLOAD, DELETE, PRUNE, COPY = range(4)
     MAX_COMMENT_LENGTH = 1024
     
     _ACTION_TYPE_CHOICES = (
         (UPLOAD, 'upload'),
         (DELETE, 'delete'),
-        (MOVE, 'move'),
+        (PRUNE, 'prune'),
         (COPY, 'copy')
     )
 

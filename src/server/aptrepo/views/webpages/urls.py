@@ -1,6 +1,6 @@
 from django.conf.urls.defaults import *
 from django.conf import settings
-from feeds import DistributionFeed
+from feeds import *
 
 # Web forms/pages for packages
 package_urls = patterns('aptrepo.views.webpages.pages',
@@ -19,7 +19,8 @@ aptrepo_metadata_urls = patterns('aptrepo.views.webpages.pages',
         'package_list'),
     (r'^(?P<distribution>\w+)/Release(?P<extension>.*)', 
         'release_list'),
-    (r'^(?P<distribution>\w+)/rss', DistributionFeed())
+    (r'^(?P<distribution>\w+)/(?P<section>\w+)/{0,1}$',
+        'section_contents_list'),
 )
 
 urlpatterns = patterns('',
@@ -30,7 +31,11 @@ urlpatterns = patterns('',
     ),
     url(r'^packages/', include(package_urls)),
     url(r'^dists/', include(aptrepo_metadata_urls)),
-                       
+    url(r'^rss/(?P<distribution>\w+)/{0,1}$', DistributionRSSFeed()),
+    url(r'^rss/(?P<distribution>\w+)/(?P<section>\w+)/{0,1}$', SectionRSSFeed()),
+    url(r'^atom/(?P<distribution>\w+)/{0,1}$', DistributionAtomFeed()),
+    url(r'^atom/(?P<distribution>\w+)/(?P<section>\w+)/{0,1}$', SectionAtomFeed()),
+                           
     # Debian package files
     url(r'^(public/){0,1}packages/(?P<path>.*)$', 'django.views.static.serve', 
         {
