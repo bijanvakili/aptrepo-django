@@ -48,7 +48,7 @@ def handle_exception(request_handler_func):
         except Exception as e:
             logger.exception(e)
             if settings.DEBUG:
-                raise
+                raise e
             else:
                 return HttpResponse(str(e), 
                                     content_type='text/plain', 

@@ -797,6 +797,15 @@ class Repository():
             return True
         
         if self.user:
+            if self.logger.isEnabledFor(logging.DEBUG):
+                self.logger.debug(
+                    'Check autorization for user {0} in section {1}'.format(self.user.username,
+                                                                            str(section))
+                )
+                self.logger.debug(' Belongs to groups: ' +
+                    ','.join(self.user.groups.all().values_list('name', flat=True)) 
+                )
+            
             # check user access list
             if section.authorized_users.filter(id=self.user.id):
                 return True

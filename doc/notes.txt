@@ -1,7 +1,5 @@
 Remaining goals
 ===============
-- permissions w/support for admin (SQLite) and LDAP users
-	> quick LDAP test
 - NLS with gettext
 - proper web UI templates and interface
 	> copy package

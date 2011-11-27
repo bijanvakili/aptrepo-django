@@ -130,6 +130,40 @@ INSTALLED_APPS = (
 LOGIN_URL = '/aptrepo/login/'
 LOGIN_REDIRECT_URL = '/aptrepo/packages/'
 
+# Authentication configuration
+AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',)
+APTREPO_USELDAP = False
+if APTREPO_USELDAP:
+    import ldap
+    from django_auth_ldap.config import LDAPSearch, PosixGroupType
+    
+    AUTH_LDAP_SERVER_URI = 'ldap://ldap01.dev.oanda.com' 
+    #AUTH_LDAP_BIND_DN = ''
+    #AUTH_LDAP_BIND_PASSWORD = ''
+    AUTH_LDAP_USER_SEARCH = LDAPSearch(
+        'ou=People,dc=toronto,dc=oanda,dc=com',
+        ldap.SCOPE_SUBTREE, 
+        '(uid=%(user)s)'
+    )
+    AUTH_LDAP_USER_ATTR_MAP = {
+        "first_name": "givenName",
+        "last_name": "sn",
+        "email": "mail"
+    }
+    AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
+        'ou=Group,dc=toronto,dc=oanda,dc=com',
+        ldap.SCOPE_SUBTREE,
+        '(objectClass=posixGroup)'
+    )
+    AUTH_LDAP_GROUP_TYPE = PosixGroupType()
+    AUTH_LDAP_MIRROR_GROUPS = True
+    #AUTH_LDAP_USER_FLAGS_BY_GROUP = {
+    #    'is_superuser': 'cn=systems,ou=Group,dc=toronto,dc=oanda,dc=com'
+    #}
+    AUTH_LDAP_CACHE_GROUPS = True
+    AUTH_LDAP_GROUP_CACHE_TIMEOUT = 300
+    AUTHENTICATION_BACKENDS = ('django_auth_ldap.backend.LDAPBackend',) + AUTHENTICATION_BACKENDS
+
 # use only temporary files for upload handlers
 FILE_UPLOAD_HANDLERS = (
     "django.core.files.uploadhandler.TemporaryFileUploadHandler", 
@@ -226,7 +260,12 @@ LOGGING = {
             'handlers': APTREPO_LOGHANDLERS,
             'level': 'DEBUG' if DB_DEBUG else 'INFO',
             'propagate': False,
-        },               
+        },
+        'django_auth_ldap' : {
+            'handlers': APTREPO_LOGHANDLERS,
+            'propagate': True,
+            'level': 'DEBUG' if DEBUG else 'INFO', 
+        }
     }
 }
 
