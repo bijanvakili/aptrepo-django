@@ -79,6 +79,14 @@ def packages(request):
         package_list = models.Package.objects.all().order_by('package_name')
         return render_to_response('aptrepo/packages_index.html', {'packages': package_list})
     
+@handle_exception
+@require_http_methods(["GET"])
+def section_contents_list(request, distribution, section):
+    section_obj = models.Section.objects.get(distribution__name=distribution, name=section)
+    instances = models.PackageInstance.objects.filter(section=section_obj)
+    return render_to_response('aptrepo/section_contents.html', 
+                              { 'section' : section_obj, 
+                                'package_instances': instances} )
 
 def upload_success(request):
     """

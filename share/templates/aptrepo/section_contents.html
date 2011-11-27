@@ -1,0 +1,23 @@
+<h2>Package instance list for {{ section }} </h2>
+<table border="1">
+	<tr>
+		<td>ID</td>			
+		<td>Name</td>
+		<td>Version</td>
+		<td>Architecture</td>
+		<td>Operations</td>
+	</tr>
+	{% for instance in package_instances %}
+	<tr>
+		<td>{{ instance.id }}</td>
+		<td>{{ instance.package.package_name }}</td>
+		<td>{{ instance.package.version }}</td>
+		<td>{{ instance.package.architecture }}</td>
+		<td>
+			<form action="/aptrepo/packages/delete/" method="post">
+				<input type="submit" value="Delete" />
+				<input type="hidden" name="package_instance" value="{{instance.id}}" />
+			</form>
+		</td>
+	{% endfor %}
+</table>

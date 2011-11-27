@@ -1,30 +1,17 @@
 from django.contrib.syndication.views import Feed
 from django.shortcuts import get_object_or_404
+from django.utils.feedgenerator import Atom1Feed
 from server.aptrepo import models
 from server.aptrepo.views import get_repository_controller
 
-class DistributionFeed(Feed):
+class BaseRepositoryFeed(Feed):
     """
-    RSS feed for repository distributions and sections
+    Common base class for syndication feeds
     """
-    
     _MAX_NEWEST_ACTIONS = 25
-    
-    def get_object(self, request, distribution):
-        return get_object_or_404(models.Distribution, name=distribution)
-    
+
     def title(self, obj):
         return str(obj)
-
-    def description(self, obj):
-        return "Activity for distribution " + str(obj)
-    
-    def link(self, obj):
-        return "/dists/" + obj.name
-    
-    def items(self, obj):
-        repository = get_repository_controller()
-        return repository.get_actions(distribution_id=obj.id)[:self._MAX_NEWEST_ACTIONS]
 
     def item_title(self, item):
         return item.summary
@@ -49,3 +36,57 @@ class DistributionFeed(Feed):
 
     def item_pubdate(self, item):
         return item.timestamp
+
+
+class DistributionRSSFeed(BaseRepositoryFeed):
+    """
+    RSS feed for distributions
+    """
+
+    def get_object(self, request, distribution):
+        return get_object_or_404(models.Distribution, name=distribution)
+    
+    def description(self, obj):
+        return "Activity for distribution " + str(obj)
+    
+    def link(self, obj):
+        return "/dists/" + obj.name
+    
+    def items(self, obj):
+        repository = get_repository_controller()
+        return repository.get_actions(distribution_id=obj.id).reverse()[:self._MAX_NEWEST_ACTIONS]
+
+
+class DistributionAtomFeed(DistributionRSSFeed):
+    """
+    ATOM feed for distributions
+    """
+    feed_type = Atom1Feed
+    subtitle = DistributionRSSFeed.description
+
+
+class SectionRSSFeed(BaseRepositoryFeed):
+    """
+    RSS feed for sections
+    """
+    
+    def get_object(self, request, distribution, section):
+        return get_object_or_404(models.Section, distribution__name=distribution, name=section)
+    
+    def description(self, obj):
+        return "Activity for section " + str(obj)
+     
+    def link(self, obj):
+        return "/dists/{0}/{1}/".format(obj.distribution.name, obj.name)
+    
+    def items(self, obj):
+        repository = get_repository_controller()
+        return repository.get_actions(section_id=obj.id).reverse()[:self._MAX_NEWEST_ACTIONS]
+
+
+class SectionAtomFeed(SectionRSSFeed):
+    """
+    ATOM feed for distributions
+    """
+    feed_type = Atom1Feed
+    subtitle = SectionRSSFeed.description

@@ -142,7 +142,7 @@ class PruningTest(BaseAptRepoTest):
             temparch.delete()
             
             # prune the packages
-            repo = get_repository_controller()
+            repo = get_repository_controller(sys_user=True)
             self._ensure_db_logging()
             repo.prune_sections([self.section_id])
             self._disable_db_logging()
@@ -189,7 +189,7 @@ class PruningTest(BaseAptRepoTest):
             self._upload_package_set('b', [6,7,8,9,10], 'amd64')
             
             # prune the packages
-            repo = get_repository_controller()
+            repo = get_repository_controller(sys_user=True)
             self._ensure_db_logging()
             repo.prune_sections([self.section_id])
             self._disable_db_logging()
