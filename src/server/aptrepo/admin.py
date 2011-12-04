@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.translation import ugettext as _
 from models import Architecture, Distribution, Section
 from views import get_repository_controller
 
@@ -18,7 +19,7 @@ class SectionAdmin(admin.ModelAdmin):
     def prune(self, request, queryset):
         repository = get_repository_controller()
         repository.prune_sections(queryset.values_list('id', flat=True))
-    prune.short_description = 'Prune'
+    prune.short_description = _('Prune')
     
     def get_readonly_fields(self, request, obj=None):
         """

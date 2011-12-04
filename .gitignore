@@ -5,4 +5,5 @@ var/public/*
 !var/public/packages/README
 !var/public/dists/README
 *.pyc
+*.mo
 

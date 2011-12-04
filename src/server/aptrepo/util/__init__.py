@@ -1,10 +1,11 @@
+from django.utils.translation import ugettext as _
 
 class AptRepoException(Exception):
     """ 
     Exceptions for the apt repo
     """
     
-    message = "(Unknown error)"
+    message = _('Unknown error')
     
     def __init__(self, message):
         self.message = message
@@ -20,6 +21,6 @@ class AuthorizationException(AptRepoException):
     
     def __init__(self, message=None):
         if not message:
-            message = "Not authorized"
+            message = _('Not authorized')
         
         super(AuthorizationException, self).__init__(message)

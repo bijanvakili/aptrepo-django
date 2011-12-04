@@ -1,4 +1,5 @@
 from django.http import HttpResponse
+from django.utils.translation import ugettext as _
 
 class DjangoSessionAuthentication(object):
     """
@@ -21,6 +22,6 @@ class DjangoSessionAuthentication(object):
         """
         Shows error message requiring authentication
         """
-        resp = HttpResponse("Authentication Required")
+        resp = HttpResponse(_('Authentication Required'))
         resp.status_code = 401
         return resp

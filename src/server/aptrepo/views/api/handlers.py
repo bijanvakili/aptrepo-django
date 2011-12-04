@@ -5,6 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from piston.utils import rc, HttpStatusCode
 from piston.handler import BaseHandler
 from django.conf import settings
+from django.utils.translation import ugettext as _
 import server.aptrepo.models
 from server.aptrepo.views import get_repository_controller
 from server.aptrepo.util import AptRepoException, AuthorizationException
@@ -79,14 +80,14 @@ class SessionHandler(BaseAptRepoHandler):
         """
         # check preconditions
         if 'username' not in request.POST or 'password' not in request.POST:
-            raise AptRepoException("'username' and 'password' must be specified")
+            raise AptRepoException(_("'username' and 'password' must be specified"))
     
         # authenticate the user and retrieve the session token
         user = authenticate(username=request.POST['username'],
                             password=request.POST['password'])
         if not user or not user.is_active:
             response = rc.BAD_REQUEST
-            response.content = 'Invalid username or password'
+            response.content = _('Invalid username or password')
             return response
         
         login(request, user)
@@ -171,7 +172,7 @@ class SectionHandler(BaseAptRepoHandler):
                 return self.model.objects.get(id=section_id)
             except ObjectDoesNotExist:
                 resp = rc.NOT_FOUND
-                resp.write('Section not found: {0}'.format(section_id))
+                resp.write(_('Section not found: {0}').format(section_id))
                 return resp
             
         # return all sections within a distribution
@@ -180,7 +181,7 @@ class SectionHandler(BaseAptRepoHandler):
                 return self.model.objects.filter(distribution__id=distribution_id)
             except ObjectDoesNotExist:
                 resp = rc.NOT_FOUND
-                resp.write('Distribution not found: ' + distribution_id)
+                resp.write(_('Distribution not found: {0}').format(distribution_id))
                 return resp
         
         # return all available sections
@@ -210,13 +211,14 @@ class PackageInstanceHandler(BaseAptRepoHandler):
             except ObjectDoesNotExist:
                 resp = rc.NOT_FOUND
                 if instance_id:
-                    resp.content = 'Package instance not found: {0}'.format(instance_id)
+                    resp.content = _('Package instance not found: {0}').format(instance_id)
                 else:
-                    resp.content = 'Package instance not found in section {0} '\
-                                    'matching criteria: ({1},{2},{3})'.format(section_id, 
-                                                                              package_name, 
-                                                                              version,
-                                                                              architecture) 
+                    resp.content = _(
+                        'Package instance not found in section {section} '\
+                        'matching criteria: ({name},{version},{architecture})').format(section=section_id, 
+                                                                                      name=package_name, 
+                                                                                      version=version,
+                                                                                      architecture=architecture) 
                 return resp
             
         # return all packages in a section (within constrained limits)
@@ -247,7 +249,7 @@ class PackageInstanceHandler(BaseAptRepoHandler):
     def create(self, request, section_id):
         
         if not section_id:
-            raise AptRepoException('No repository section specified')
+            raise AptRepoException(_('No repository section specified'))
         
         # if a file was uploaded, let the repository handle the file
         repository = get_repository_controller(request=request)
