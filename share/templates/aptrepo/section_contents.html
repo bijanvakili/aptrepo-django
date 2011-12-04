@@ -1,11 +1,12 @@
-<h2>Package instance list for {{ section }} </h2>
+{% load i18n %}
+<h2>{% blocktrans %}Package instance list for {{ section }} {% endblocktrans %}</h2>
 <table border="1">
 	<tr>
-		<td>ID</td>			
-		<td>Name</td>
-		<td>Version</td>
-		<td>Architecture</td>
-		<td>Operations</td>
+		<td>{% trans 'ID' %}</td>			
+		<td>{% trans 'Name' %}</td>
+		<td>{% trans 'Version' %}</td>
+		<td>{% trans 'Architecture' %}</td>
+		<td>{% trans 'Operations' %}</td>
 	</tr>
 	{% for instance in package_instances %}
 	<tr>
@@ -15,7 +16,7 @@
 		<td>{{ instance.package.architecture }}</td>
 		<td>
 			<form action="/aptrepo/packages/delete/" method="post">
-				<input type="submit" value="Delete" />
+				<input type="submit" value="{% trans 'Delete' %}" />
 				<input type="hidden" name="package_instance" value="{{instance.id}}" />
 			</form>
 		</td>

@@ -4,12 +4,20 @@ Remaining goals
 - proper web UI templates and interface
 	> copy package
 	> upload from URL
-- Apache and nginx deployment
-- packaging/distribution
 - consider renaming 'prune' admin command to 'cleanup' (subclass the django.core command)
 - load settings from etc directory
-- documentation (user+developer)
-- regression tests that install packages from the repo
+- Apache and nginx deployment
+	> reuse django's templating engine for this? 
+- packaging/distribution
+	> Debian packages
+	> python egg?
+- documentation
+	> user
+	> admin
+	> developer
+- testing
+	- code coverage
+	- regression tests that install packages from the repo
 
 
 REST API DESIGN

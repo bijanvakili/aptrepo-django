@@ -9,6 +9,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 from server.aptrepo import models
@@ -75,7 +76,7 @@ def packages(request):
         return _packages_post(request)
     
     elif request.method == 'GET':
-        """ Get method at root will list all packages """
+        # Get method at root will list all packages
         package_list = models.Package.objects.all().order_by('package_name')
         return render_to_response('aptrepo/packages_index.html', {'packages': package_list})
     
@@ -92,14 +93,14 @@ def upload_success(request):
     """
     Successful upload view
     """
-    return HttpResponse("Package successfully uploaded.")
+    return HttpResponse(_('Package successfully uploaded.'))
 
 
 def remove_success(request):
     """
     Successful removal view
     """
-    return HttpResponse("Package successfully removed.")
+    return HttpResponse(_('Package successfully removed.'))
 
 
 @handle_exception

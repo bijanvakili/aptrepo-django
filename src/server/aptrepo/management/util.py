@@ -1,5 +1,6 @@
 import logging
 from django.core.management.base import CommandError
+from django.utils.translation import ugettext as _
 from server.aptrepo.models import Section
 
 def parse_section_identifier(section_identifier):
@@ -12,13 +13,17 @@ def parse_section_identifier(section_identifier):
     try:
         (distribution_name, section_name) = section_identifier.split(':')
     except Exception:
-        raise CommandError('Invalid section identifier: {0}'.format(section_identifier))
+        raise CommandError(
+            _('Invalid section identifier: {0}').format(section_identifier)
+        )
     
     try:
         section = Section.objects.get(name=section_name,
                                       distribution__name=distribution_name)
     except Exception:
-        raise CommandError('Section does not exist: {0}'.format(section_identifier))
+        raise CommandError(
+            _('Section does not exist: {0}').format(section_identifier)
+        )
 
     return section.id
 

@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.files import File
 from django.db.models import Q
+from django.utils.translation import ugettext as _
 from debian_bundle import deb822, debfile
 from lockfile import FileLock
 from server.aptrepo import models
@@ -149,7 +150,7 @@ class Repository():
             section = models.Section.objects.get(name=kwargs['section_name'], 
                                                  distribution=distribution)
         else:
-            raise AptRepoException('No section argument specified')
+            raise AptRepoException(_('No section argument specified'))
         
         self._enforce_write_access(section, 'Add package')
         
@@ -164,7 +165,7 @@ class Repository():
         else:
             package_fh = File(kwargs['package_fh'])
             package_path = kwargs['package_path']
-            (_, package_name) = os.path.split(package_path)
+            package_name = os.path.split(package_path)[1]
             package_size = kwargs['package_size']
         
         self.logger.info(
@@ -174,9 +175,9 @@ class Repository():
         )
         
         # check preconditions
-        (_, ext) = os.path.splitext(package_name)
+        ext = os.path.splitext(package_name)[1]
         if ext != self._DEBIAN_EXTENSION:
-            raise AptRepoException('Invalid extension: {0}'.format(ext))        
+            raise AptRepoException(_('Invalid extension: {ext}'.format(ext=ext)))        
 
         # extract control file information for denormalized searches
         deb = debfile.DebFile(filename=package_path)
@@ -187,8 +188,8 @@ class Repository():
         
         if not distribution.allowed_architecture(control['Architecture']):
             raise AptRepoException(
-                'Invalid architecture for distribution ({0}) : {1}'.format(
-                    distribution.name, control['Architecture']))
+                _('Invalid architecture for distribution ({dist}) : {arch}').format(
+                    dist=distribution.name, arch=control['Architecture']))
 
         # compute hashes
         hashes = {}
@@ -206,8 +207,8 @@ class Repository():
                package.hash_sha1 != hashes['sha1'] or \
                package.hash_sha256 != hashes['sha256']:
                 raise AptRepoException(
-                    '({0}, {1}, {2}) already exist with different file contents'.format(
-                        package.package_name, package.version, package.architecture))
+                    _('({name}, {version}, {arch}) already exist with different file contents').format(
+                        name=package.package_name, version=package.version, arch=package.architecture))
         else:
             package = models.Package()
             try:
@@ -240,13 +241,12 @@ class Repository():
 
         # create a package instance
         self.logger.debug('Creating new package instance for ' + str(package))        
-        package_instance, _ = models.PackageInstance.objects.get_or_create(
-            package=package, 
-            section=section,
-            creator=self._get_username())
+        package_instance = models.PackageInstance.objects.get_or_create(
+            package=package, section=section, creator=self._get_username())[0]
         
         # record an upload action
-        summary = '{0} added package {1}'.format(package_instance.creator, package)
+        summary = _('{creator} added package {package}').format(creator=package_instance.creator,
+                                                                package=package)
         self._record_action(models.Action.UPLOAD, 
                             section,
                             summary,
@@ -271,7 +271,7 @@ class Repository():
         """
 
         self._enforce_write_access(models.Section.objects.get(id=section_id), 
-                                   "Import package directory")
+                                   'Import package directory')
 
         for root, dirs, files in os.walk(dir_path):
             for filename in files:
@@ -321,7 +321,7 @@ class Repository():
             src_instance = models.PackageInstance.objects.get(id=instance_id)
             src_section = src_instance.section
             if src_instance.section.id == dest_section.id:
-                raise AptRepoException('Cannot clone into the same section')
+                raise AptRepoException(_('Cannot clone into the same section'))
             src_package=src_instance.package
         
         # create the new instance
@@ -332,12 +332,12 @@ class Repository():
                                                                  creator=self._get_username())
         
         # insert action for clone
-        summary = '{0} cloned package {1} '.format(
-            package_instance.creator, src_package)
+        summary = _('{creator} cloned package {package} ').format(
+            creator=package_instance.creator, package=src_package)
         if src_section:
-            summary = summary + ' from {0} to {1}'.format(src_section, dest_section)
+            summary = summary + _(' from {src_section} to {dest_section}').format(src_section, dest_section)
         else:
-            summary = summary + ' into {0}'.format(dest_section)
+            summary = summary + _(' into {0}').format(dest_section)
         self._record_action(models.Action.COPY,
                             dest_section, 
                             summary,
@@ -376,9 +376,8 @@ class Repository():
         self._clear_cache(section.distribution.name)
         
         # insert action for removal
-        summary = '{0} removed package {1} from {2}'.format(self._get_username(),
-                                                            package,
-                                                            section) 
+        summary = _('{user} removed package {package} from {section}').format(
+            user=self._get_username(), package=package, section=section) 
         self._record_action(models.Action.DELETE, section, summary, comment=comment)
         
         
@@ -447,7 +446,7 @@ class Repository():
             
             # skip the section if it doesn't require pruning
             section = models.Section.objects.get(id=section_id)
-            self._enforce_write_access(section, "Prune section")
+            self._enforce_write_access(section, 'Prune section')
             num_instances_pruned = 0
             
             if check_architecture:
@@ -558,7 +557,8 @@ class Repository():
         # prune any associated package files by locating all Package objects that have
         # no associated PackageInstance (a LEFT OUTER JOIN).
         #
-        # NOTE: django will still need to make select calls to ensure there are no associated PackageInstances
+        # NOTE: django will still need to make select calls to ensure there are no 
+        # associated PackageInstances
         pruneable_package_ids = models.Package.objects.filter(
             packageinstance__id__isnull=True).values_list('id', flat=True)
         total_packages_pruned = 0
@@ -824,7 +824,7 @@ class Repository():
         section -- section model object to check
         """
         if not self._has_write_access(section):
-            message = "Unauthorized action: " + action
+            message = _('Unauthorized action: {action}').format(action=action)
             if self.user:
                 message = message + " (for user " + self.user.username + ")"
             raise AuthorizationException(message)

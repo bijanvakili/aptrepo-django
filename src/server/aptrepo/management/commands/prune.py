@@ -1,5 +1,6 @@
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
+from django.utils.translation import ugettext as _
 from server.aptrepo.views import get_repository_controller
 from server.aptrepo.models import Section
 from server.aptrepo.management.util import parse_section_identifier, init_cli_logger
@@ -8,19 +9,19 @@ class Command(BaseCommand):
     """
     'prune' admin command
     """
-    args = '[distribution:section ...]'
-    help = 'Removes old package versions from the specific sections in the repository'
+    args = _('[distribution:section ...]')
+    help = _('Removes old package versions from the specific sections in the repository')
     option_list = (
         make_option('--dry-run',
             action='store_true',
             dest='dry_run',
             default=False,
-            help='Do not persist any pruning actions'),
+            help=_('Do not persist any pruning actions')),
         make_option('--ignore-arch',
             action='store_false',
             dest='check_architecture',
             default=True,
-            help='Ignore packages whose architecture is invalid for the distribution'),
+            help=_('Ignore packages whose architecture is invalid for the distribution')),
         ) + BaseCommand.option_list 
 
     def handle(self, *args, **options):

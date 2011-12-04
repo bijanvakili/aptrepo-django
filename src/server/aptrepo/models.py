@@ -4,13 +4,14 @@ from django.contrib.auth.models import User, Group
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
+from django.utils.translation import ugettext as _
 
 def nowhitespace(value):
     """
     Validation function to ensure no whitespace
     """
     if re.search('\s+', value):
-        raise ValidationError("'{0}' contains whitespace".format(value))
+        raise ValidationError(_("'{0}' contains whitespace").format(value))
 
 def uniquefile_upload_path(instance, filename):
     """
@@ -125,13 +126,15 @@ class Section(models.Model):
     name = models.CharField(max_length=255, db_index=True, validators=[nowhitespace])
     distribution = models.ForeignKey('Distribution', db_index=True)
     description = models.TextField()
-    package_prune_limit = models.PositiveIntegerField(default=0,
-                                                      help_text='Maximum latest versions to keep for a package')
-    action_prune_limit = models.PositiveIntegerField(default=0,
-                                                     help_text='Maximum latest actions to store (e.g. for the RSS feed)')
+    package_prune_limit = models.PositiveIntegerField(
+        default=0, help_text=_('Maximum latest versions to keep for a package'))
+    action_prune_limit = models.PositiveIntegerField(
+        default=0, help_text=_('Maximum latest actions to store (e.g. for the RSS feed)'))
     
-    enforce_authorization = models.BooleanField(default=False,
-        help_text='Check this box and click Save to restrict write access to selected users and groups below<br/>Uncheck this box and click Save to allow anyone to change this section')
+    enforce_authorization = models.BooleanField(
+        default=False, 
+        help_text=_('Check this box and click Save to restrict write access to selected users and groups below<br/> ' \
+                    'Uncheck this box and click Save to allow anyone to change this section'))
     authorized_users = models.ManyToManyField(User, blank=True,
                                               db_table='aptrepo_authorized_users') 
     authorized_groups = models.ManyToManyField(Group, blank=True,
