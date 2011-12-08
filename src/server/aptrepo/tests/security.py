@@ -15,6 +15,8 @@ class AuthenticationTest(BaseAptRepoTest):
     Ensures authentication is enforced depending on the URLs that 
     do or do not require it
     """
+    INVALID_CREDENTIALS_EN_MSG = 'Invalid username or password'
+    FORCE_LANGUAGE = 'en'
     
     def setUp(self):
         # initialize base class
@@ -22,6 +24,7 @@ class AuthenticationTest(BaseAptRepoTest):
         
         # force a logout
         self.client.logout()
+        self.client.cookies[settings.LANGUAGE_COOKIE_NAME]=self.FORCE_LANGUAGE
         
         # store the login URL
         self.login_url = self._ROOT_WEBDIR + '/login/'
@@ -142,14 +145,14 @@ class AuthenticationTest(BaseAptRepoTest):
             self.login_url,
             { 'username': 'nonexistentuser', 'password': self.password }
         )
-        self.assertContains(response, 'Invalid username or password')
+        self.assertContains(response, self.INVALID_CREDENTIALS_EN_MSG)
 
         # do an invalid password through the web page
         response = self.client.post(
             self.login_url,
             { 'username': self.username, 'password': 'badpassword' }
         )
-        self.assertContains(response, 'Invalid username or password')
+        self.assertContains(response, self.INVALID_CREDENTIALS_EN_MSG)
 
         
         # do a valid login through the web page
@@ -171,14 +174,14 @@ class AuthenticationTest(BaseAptRepoTest):
             login_api_url,
             { 'username': 'nonexistentuser', 'password': self.password }
         )
-        self.assertContains(response, 'Invalid username or password', status_code=400)
+        self.assertContains(response, self.INVALID_CREDENTIALS_EN_MSG, status_code=400)
         
         # do an invalid password through the web page
         response = self.client.post(
             login_api_url,
             { 'username': self.username, 'password': 'badpassword' }
         )
-        self.assertContains(response, 'Invalid username or password', status_code=400)
+        self.assertContains(response, self.INVALID_CREDENTIALS_EN_MSG, status_code=400)
         
         # do a valid login through the web page
         response = self.client.post(

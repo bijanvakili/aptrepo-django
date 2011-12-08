@@ -1,6 +1,5 @@
 Remaining goals
 ===============
-- NLS with gettext
 - proper web UI templates and interface
 	> copy package
 	> upload from URL
