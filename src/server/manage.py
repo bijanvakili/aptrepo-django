@@ -10,8 +10,7 @@ try:
         sys.exit(1)
     
 except ImportError:
-    import sys
-    sys.stderr.write(_("Error: Can't find the file 'settings.py' in the directory containing %r. It appears you've customized things.\nYou'll have to run django-admin.py, passing it your settings module.\n(If the file settings.py does indeed exist, it's causing an ImportError somehow.)\n") % __file__)
+    print >>sys.stderr, _("'settings.py' not found or invalid")
     sys.exit(1)
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ class Command(BaseCommand):
     'import' admin command
     """
     args = _('<distribution>:<section> <dir> [<dir> ...]')
-    help = _('Imports package files from local file system into the repository')
+    help = _('Imports package files from a local directory into the repository')
     option_list = (
         make_option('--recursive',
             action='store_true',

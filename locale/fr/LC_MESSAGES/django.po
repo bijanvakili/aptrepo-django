@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-12-03 23:40-0500\n"
+"POT-Creation-Date: 2011-12-07 22:53-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,167 +19,171 @@ msgstr ""
 
 #: share/templates/404.html:4 share/templates/404.html.py:8
 msgid "Page not found"
-msgstr ""
+msgstr "Cette page n'a pas été trouvée"
 
 #: share/templates/404.html:10
 msgid "We're sorry, but the requested page could not be found."
-msgstr ""
+msgstr "Nous sommes désolés, mais la page demandée est introuvable."
 
 #: share/templates/500.html:4
 msgid "Home"
-msgstr ""
+msgstr "Accueil"
 
 #: share/templates/500.html:4
 msgid "Server error"
-msgstr ""
+msgstr "Erreur du serveur"
 
 #: share/templates/500.html:6
 msgid "Server error (500)"
-msgstr ""
+msgstr "Erreur du serveur (500)"
 
 #: share/templates/500.html:9
 msgid "Server Error <em>(500)</em>"
-msgstr ""
+msgstr "Erreur du serveur <em>(500)</em>"
 
 #: share/templates/500.html:10
 msgid ""
 "There's been an error. It's been reported to the site administrators via e-"
 "mail and should be fixed shortly. Thanks for your patience."
 msgstr ""
+"Une erreur est survenue. Elle a été transmise par courriel aux "
+"administrateurs du site et sera corrigée dans les meilleurs délais. Merci "
+"pour votre patience."
 
 #: share/templates/aptrepo/login.html:2
 msgid "Login"
-msgstr ""
+msgstr "Connexion"
 
 #: share/templates/aptrepo/login.html:7
 msgid "Invalid username or password. Please try again."
 msgstr ""
+"Votre nom d'utilisateur ou votre mot de passe n'étaient  pas valide.  "
+"Essayez encore."
 
 #: share/templates/aptrepo/login.html:23
 msgid "login"
-msgstr ""
+msgstr "connexion"
 
 #: share/templates/aptrepo/packages_index.html:2
 msgid "Current package list"
-msgstr ""
+msgstr "Liste courante de paquets"
 
 #: share/templates/aptrepo/packages_index.html:3
 msgid "Upload package"
-msgstr ""
+msgstr "Télécharge un paquet"
 
 #: share/templates/aptrepo/packages_index.html:7
 #: share/templates/aptrepo/section_contents.html:6
 msgid "Name"
-msgstr ""
+msgstr "Paquet"
 
 #: share/templates/aptrepo/packages_index.html:8
 #: share/templates/aptrepo/section_contents.html:7
 msgid "Version"
-msgstr ""
+msgstr "Version"
 
 #: share/templates/aptrepo/packages_index.html:9
 #: share/templates/aptrepo/section_contents.html:8
 msgid "Architecture"
-msgstr ""
+msgstr "Architecture"
 
 #: share/templates/aptrepo/packages_index.html:10
 msgid "Download"
-msgstr ""
+msgstr "Télécharge"
 
 #: share/templates/aptrepo/section_contents.html:2
 #, python-format
-msgid "Package instance list for %(section)s "
-msgstr ""
+msgid "List of packages for %(section)s"
+msgstr "Liste des paquets pour %(section)s"
 
 #: share/templates/aptrepo/section_contents.html:5
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: share/templates/aptrepo/section_contents.html:9
 msgid "Operations"
-msgstr ""
+msgstr "Opérations"
 
 #: share/templates/aptrepo/section_contents.html:19
 msgid "Delete"
-msgstr ""
+msgstr "Supprimer"
 
 #: share/templates/aptrepo/upload_package.html:4
 msgid "Upload"
-msgstr ""
+msgstr "Télécharge"
 
 #: src/server/manage.py:9
 msgid "APTREPO_ROOT must be specified"
-msgstr ""
+msgstr "APTREPO_ROOT doit être spécifiée"
 
-#: src/server/manage.py:14
-#, python-format
-msgid ""
-"Error: Can't find the file 'settings.py' in the directory containing %r. It "
-"appears you've customized things.\n"
-"You'll have to run django-admin.py, passing it your settings module.\n"
-"(If the file settings.py does indeed exist, it's causing an ImportError "
-"somehow.)\n"
-msgstr ""
+#: src/server/manage.py:13
+msgid "'settings.py' not found or invalid"
+msgstr "'settings.py' est introuvable ou non valide"
 
 #: src/server/aptrepo/admin.py:22
 msgid "Prune"
-msgstr ""
+msgstr "Tailler"
 
 #: src/server/aptrepo/models.py:14
 msgid "'{0}' contains whitespace"
-msgstr ""
+msgstr "'{0}' contient des espaces blancs"
 
 #: src/server/aptrepo/models.py:130
-msgid "Maximum latest versions to keep for a package"
-msgstr ""
+msgid "Maximum package versions to keep"
+msgstr "Nombre de paquets à garder"
 
 #: src/server/aptrepo/models.py:132
-msgid "Maximum latest actions to store (e.g. for the RSS feed)"
-msgstr ""
+msgid "Maximum actions to keep"
+msgstr "Nombre d'actions à garder"
 
 #: src/server/aptrepo/models.py:136
 msgid ""
-"Check this box and click Save to restrict write access to selected users and "
-"groups below<br/> Uncheck this box and click Save to allow anyone to change "
-"this section"
+"Check this box and click 'Save' to restrict write access for this section to "
+"the selected users and groups below<br/> Uncheck this box and click 'Save' "
+"to provide write access for this section to anyone (default)"
 msgstr ""
+"Cochez cette case et cliquez 'Enregistrer' pour limiter l'écriture  à cette "
+"sectionpour les utilisateurs et les groupes sélectionnés ci-dessous<br/"
+">Décochez cette case et cliquez 'Enregistrer' pour fournir l'écriture  à "
+"cette section à n'importe qui (le défaut)"
 
 #: src/server/aptrepo/management/util.py:17
 msgid "Invalid section identifier: {0}"
-msgstr ""
+msgstr "Cette identifiant n'est pas valid pour une section: {0}"
 
 #: src/server/aptrepo/management/util.py:25
 msgid "Section does not exist: {0}"
-msgstr ""
+msgstr "Section n'existe pas: {0}"
 
 #: src/server/aptrepo/management/commands/import.py:12
 msgid "<distribution>:<section> <dir> [<dir> ...]"
 msgstr ""
 
 #: src/server/aptrepo/management/commands/import.py:13
-msgid "Imports package files from local file system into the repository"
+msgid "Imports package files from a local directory into the repository"
 msgstr ""
+"Importera des fichiers de paquet à partir d'un répertoire local dans le dépôt"
 
 #: src/server/aptrepo/management/commands/import.py:19
 msgid "Check all subdirectories for packages"
-msgstr ""
+msgstr "Examinez tous les sous-répertoires pour des paquets"
 
 #: src/server/aptrepo/management/commands/import.py:24
 msgid "Abort if a single package fails to be imported"
-msgstr ""
+msgstr "Abandonner si un seul paquet n'importe pas"
 
 #: src/server/aptrepo/management/commands/import.py:29
 #: src/server/aptrepo/management/commands/prune.py:19
 msgid "Do not persist any pruning actions"
-msgstr ""
+msgstr "N'écrive pas les actions de tailler"
 
 #: src/server/aptrepo/management/commands/import.py:39
 msgid "Invalid command line"
-msgstr ""
+msgstr "Ligne de commande n'est pas valide"
 
 #: src/server/aptrepo/management/commands/import.py:46
 msgid "Directory does not exist: {0}"
-msgstr ""
+msgstr "Répertoire n'existe pas: {0}"
 
 #: src/server/aptrepo/management/commands/prune.py:12
 msgid "[distribution:section ...]"
@@ -189,101 +193,109 @@ msgstr ""
 msgid ""
 "Removes old package versions from the specific sections in the repository"
 msgstr ""
+"Supprime les paquets avec les anciennes versions des sections spécifiées "
+"dans le dépot"
 
 #: src/server/aptrepo/management/commands/prune.py:24
 msgid "Ignore packages whose architecture is invalid for the distribution"
 msgstr ""
+"Ignorer les paquets dont l'architecture n'est pas valide pour la distribution"
 
 #: src/server/aptrepo/util/__init__.py:8
 msgid "Unknown error"
-msgstr ""
+msgstr "Erreur inconnue"
 
 #: src/server/aptrepo/util/__init__.py:24
 msgid "Not authorized"
-msgstr ""
+msgstr "Non autorisé"
 
 #: src/server/aptrepo/views/repository.py:153
 msgid "No section argument specified"
-msgstr ""
+msgstr "Aucune section spécifiée"
 
 #: src/server/aptrepo/views/repository.py:180
 msgid "Invalid extension: {ext}"
-msgstr ""
+msgstr "Extension non valide: {ext}"
 
 #: src/server/aptrepo/views/repository.py:191
 msgid "Invalid architecture for distribution ({dist}) : {arch}"
 msgstr ""
+"L'architecture n'était pas valide pour la distribution ({dist}) : {arch}"
 
 #: src/server/aptrepo/views/repository.py:210
 msgid "({name}, {version}, {arch}) already exist with different file contents"
 msgstr ""
+"({name}, {version}, {arch}) existe déjà avec un contenu de fichiers "
+"différents"
 
 #: src/server/aptrepo/views/repository.py:248
 msgid "{creator} added package {package}"
-msgstr ""
+msgstr "{creator} a  ajouté le paquet {package}"
 
 #: src/server/aptrepo/views/repository.py:324
 msgid "Cannot clone into the same section"
-msgstr ""
+msgstr "Impossible de cloner dans la même section"
 
 #: src/server/aptrepo/views/repository.py:335
 msgid "{creator} cloned package {package} "
-msgstr ""
+msgstr "{creator} a  cloné le paquet {package}"
 
 #: src/server/aptrepo/views/repository.py:338
 msgid " from {src_section} to {dest_section}"
-msgstr ""
+msgstr " de {src_section} à {dest_section}"
 
 #: src/server/aptrepo/views/repository.py:340
 msgid " into {0}"
-msgstr ""
+msgstr "en {0}"
 
 #: src/server/aptrepo/views/repository.py:379
 msgid "{user} removed package {package} from {section}"
-msgstr ""
+msgstr "{user} a supprimé le paquet {package} de {section}"
 
 #: src/server/aptrepo/views/repository.py:827
 msgid "Unauthorized action: {action}"
-msgstr ""
+msgstr "Action non autorisée: {action}"
 
 #: src/server/aptrepo/views/api/auth.py:25
 msgid "Authentication Required"
-msgstr ""
+msgstr "Authentification Requise"
 
 #: src/server/aptrepo/views/api/handlers.py:83
 msgid "'username' and 'password' must be specified"
-msgstr ""
+msgstr "'username' et 'password' doit être spécifiée"
 
 #: src/server/aptrepo/views/api/handlers.py:90
 msgid "Invalid username or password"
-msgstr ""
+msgstr "Nom d'utilisateur ou mot de passe n'est pas valide"
 
 #: src/server/aptrepo/views/api/handlers.py:175
 msgid "Section not found: {0}"
-msgstr ""
+msgstr "Section inconnu: {0}"
 
 #: src/server/aptrepo/views/api/handlers.py:184
 msgid "Distribution not found: {0}"
-msgstr ""
+msgstr "Distribution inconnu: {0}"
 
 #: src/server/aptrepo/views/api/handlers.py:214
 msgid "Package instance not found: {0}"
-msgstr ""
+msgstr "L'instance de paquet inconnu: {0}"
 
 #: src/server/aptrepo/views/api/handlers.py:217
 msgid ""
 "Package instance not found in section {section} matching criteria: ({name},"
 "{version},{architecture})"
 msgstr ""
+"L'instance de paquet inconnu dams section {section} avec critères: ({name},"
+"{version},{architecture})"
 
 #: src/server/aptrepo/views/api/handlers.py:252
 msgid "No repository section specified"
-msgstr ""
+msgstr "Aucune section de dépôt spécifiée"
 
 #: src/server/aptrepo/views/webpages/pages.py:96
 msgid "Package successfully uploaded."
-msgstr ""
+msgstr "Paquet téléchargé avec succès"
 
 #: src/server/aptrepo/views/webpages/pages.py:103
 msgid "Package successfully removed."
-msgstr ""
+msgstr "Paquet supprimé avec succès"

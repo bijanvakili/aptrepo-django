@@ -127,14 +127,14 @@ class Section(models.Model):
     distribution = models.ForeignKey('Distribution', db_index=True)
     description = models.TextField()
     package_prune_limit = models.PositiveIntegerField(
-        default=0, help_text=_('Maximum latest versions to keep for a package'))
+        default=0, help_text=_('Maximum package versions to keep'))
     action_prune_limit = models.PositiveIntegerField(
-        default=0, help_text=_('Maximum latest actions to store (e.g. for the RSS feed)'))
+        default=0, help_text=_('Maximum actions to keep'))
     
     enforce_authorization = models.BooleanField(
         default=False, 
-        help_text=_('Check this box and click Save to restrict write access to selected users and groups below<br/> ' \
-                    'Uncheck this box and click Save to allow anyone to change this section'))
+        help_text=_("Check this box and click 'Save' to restrict write access for this section to the selected users and groups below<br/> " \
+                    "Uncheck this box and click 'Save' to provide write access for this section to anyone (default)"))
     authorized_users = models.ManyToManyField(User, blank=True,
                                               db_table='aptrepo_authorized_users') 
     authorized_groups = models.ManyToManyField(Group, blank=True,
