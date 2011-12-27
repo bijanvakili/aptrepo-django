@@ -1,0 +1,120 @@
+<mockup version="1.0" skin="sketch" measuredW="836" measuredH="648" mockupW="801" mockupH="646">
+  <controls>
+    <control controlID="0" controlTypeID="com.balsamiq.mockups::BrowserWindow" x="35" y="2" w="801" h="646" measuredW="450" measuredH="400" zOrder="0" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>apt%20repository%0Ahttp%3A//www.aptrepository.com/distributions/lucid/main</text>
+        <verticalScrollbar>true</verticalScrollbar>
+      </controlProperties>
+    </control>
+    <control controlID="1" controlTypeID="com.balsamiq.mockups::Link" x="773" y="96" w="-1" h="-1" measuredW="35" measuredH="21" zOrder="1" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Login</text>
+      </controlProperties>
+    </control>
+    <control controlID="2" controlTypeID="com.balsamiq.mockups::HRule" x="61" y="117" w="747" h="-1" measuredW="100" measuredH="5" zOrder="2" locked="false" isInGroup="-1"/>
+    <control controlID="4" controlTypeID="com.balsamiq.mockups::BreadCrumbs" x="61" y="94" w="-1" h="-1" measuredW="218" measuredH="24" zOrder="3" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Home%2C%20Distributions%2C%20lucid%2C%20main</text>
+      </controlProperties>
+    </control>
+    <control controlID="10" controlTypeID="com.balsamiq.mockups::DataGrid" x="61" y="164" w="140" h="373" measuredW="82" measuredH="265" zOrder="4" locked="false" isInGroup="-1">
+      <controlProperties>
+        <borderStyle>none</borderStyle>
+        <hasHeader>true</hasHeader>
+        <hLines>false</hLines>
+        <selectedIndex>6</selectedIndex>
+        <text>Package%0Aaide%0Aapache%0Aapache-ant%0Aapr%0Aapr-util%0Abjam%0Agzip%0Aprotobuf%0A%7B0L%7D</text>
+        <value>0</value>
+        <verticalScrollbar>false</verticalScrollbar>
+        <vLines>false</vLines>
+      </controlProperties>
+    </control>
+    <control controlID="12" controlTypeID="com.balsamiq.mockups::DataGrid" x="208" y="164" w="474" h="115" measuredW="200" measuredH="115" zOrder="5" locked="false" isInGroup="-1">
+      <controlProperties>
+        <borderStyle>none</borderStyle>
+        <selectedIndex>0</selectedIndex>
+        <text>Version%20%2C%20Architectures%0A*1.4.0*%2C%20%7Bcolor%3A%23FF0000%7D%26i386%26%7Bcolor%7D%20%26amd64%26%20%26sparc%26%0A1.3.12%2C%20%26i386%26%20%26sparc%26%0A1.3.6%2C%20%26i386%26%20%26sparc%26%0A%7B0L%2C%200L%7D</text>
+        <verticalScrollbar>true</verticalScrollbar>
+      </controlProperties>
+    </control>
+    <control controlID="32" controlTypeID="__group__" x="61" y="585" w="748" h="26" measuredW="748" measuredH="26" zOrder="11" locked="false" isInGroup="-1">
+      <groupChildrenDescriptors>
+        <control controlID="0" controlTypeID="com.balsamiq.mockups::HRule" x="0" y="0" w="748" h="-1" measuredW="100" measuredH="5" zOrder="0" locked="false" isInGroup="32"/>
+        <control controlID="1" controlTypeID="com.balsamiq.mockups::Label" x="294" y="8" w="-1" h="-1" measuredW="198" measuredH="17" zOrder="1" locked="false" isInGroup="32">
+          <controlProperties>
+            <align>center</align>
+            <size>10</size>
+            <text>Page%20generated%3A%20Dec%2026%2C%202011%208%3A22%3A31%20PM</text>
+          </controlProperties>
+        </control>
+        <control controlID="2" controlTypeID="com.balsamiq.mockups::Link" x="657" y="9" w="-1" h="-1" measuredW="90" measuredH="17" zOrder="2" locked="false" isInGroup="32">
+          <controlProperties>
+            <size>10</size>
+            <text>apt%20repository%20v1.0</text>
+          </controlProperties>
+        </control>
+        <control controlID="3" controlTypeID="com.balsamiq.mockups::Label" x="0" y="7" w="-1" h="-1" measuredW="188" measuredH="17" zOrder="3" locked="false" isInGroup="32">
+          <controlProperties>
+            <size>10</size>
+            <text>Contact%3A%20%26webmaster@aptrepository.com%26</text>
+          </controlProperties>
+        </control>
+      </groupChildrenDescriptors>
+    </control>
+    <control controlID="34" controlTypeID="__group__" x="61" y="131" w="621" h="25" measuredW="621" measuredH="25" zOrder="10" locked="false" isInGroup="-1">
+      <groupChildrenDescriptors>
+        <control controlID="0" controlTypeID="com.balsamiq.mockups::SearchBox" x="244" y="0" w="377" h="-1" measuredW="65" measuredH="25" zOrder="0" locked="false" isInGroup="34">
+          <controlProperties>
+            <text>search</text>
+          </controlProperties>
+        </control>
+        <control controlID="1" controlTypeID="com.balsamiq.mockups::IconLabel" x="48" y="1" w="-1" h="-1" measuredW="121" measuredH="24" zOrder="1" locked="false" isInGroup="34">
+          <controlProperties>
+            <icon>RSSIcon%7Csmall</icon>
+            <labelPosition>right</labelPosition>
+            <text>%26Recent%20Activity%26</text>
+          </controlProperties>
+        </control>
+        <control controlID="2" controlTypeID="com.balsamiq.mockups::Link" x="0" y="1" w="-1" h="-1" measuredW="45" measuredH="21" zOrder="2" locked="false" isInGroup="34">
+          <controlProperties>
+            <text>Upload</text>
+          </controlProperties>
+        </control>
+        <control controlID="3" controlTypeID="com.balsamiq.mockups::Link" x="176" y="1" w="-1" h="-1" measuredW="32" measuredH="21" zOrder="3" locked="false" isInGroup="34">
+          <controlProperties>
+            <text>Help</text>
+          </controlProperties>
+        </control>
+      </groupChildrenDescriptors>
+    </control>
+    <control controlID="35" controlTypeID="com.balsamiq.mockups::List" x="208" y="279" w="474" h="265" measuredW="100" measuredH="258" zOrder="6" locked="false" isInGroup="-1">
+      <controlProperties>
+        <alternateRowColor>15134199</alternateRowColor>
+        <rowHeight>16</rowHeight>
+        <size>11</size>
+        <text>Package%3A%20gzip%0AVersion%3A%201.3.12-9ubuntu1.1%0AArchitecture%3A%20amd64%0AFilename%3A%20pool/main/g/gzip/gzip_1.3.12-9ubuntu1.1_amd64.deb%0APre-Depends%3A%20libc6%20%28%3E%3D%202.4%29%0ASuggests%3A%20less%0AMaintainer%3A%20Ubuntu%20Core%20Developers%20%3Cubuntu-devel-discuss@lists.ubuntu.com%3E%0ASize%3A%20107272%0AMD5sum%3A%200bd8f0142af87c72c18f9c8f5b5ef2c7%0ASHA1%3A%2040877ac35af571b5710d63426154ebcfa329bf80%0ASHA256%3A%207f8062b158a04dcda952dc59c7aa8927a106db36c5885dc1f46774606efbb433%0ADescription%3A%20GNU%20compression%20utilities%0A%20This%20package%20provides%20the%20standard%20GNU%20file%20compression%20utilities%2C%20which%0A%20are%20also%20the%20default%20compression%20tools%20for%20Debian.%20%20They%20typically%20operate%0A%20on%20files%20with%20names%20ending%20in%20%27.gz%27%2C%20but%20can%20also%20decompress%20files%20ending%0A%20in%20%27.Z%27%20created%20with%20%27compress%27.</text>
+      </controlProperties>
+    </control>
+    <control controlID="36" controlTypeID="com.balsamiq.mockups::PointyButton" x="688" y="171" w="-1" h="-1" measuredW="102" measuredH="31" zOrder="7" locked="false" isInGroup="-1">
+      <controlProperties>
+        <direction>center</direction>
+        <icon>DownArrowIcon%7Csmall</icon>
+        <text>Download</text>
+      </controlProperties>
+    </control>
+    <control controlID="37" controlTypeID="com.balsamiq.mockups::PointyButton" x="689" y="205" w="102" h="-1" measuredW="78" measuredH="31" zOrder="8" locked="false" isInGroup="-1">
+      <controlProperties>
+        <direction>center</direction>
+        <icon>CopyIcon%7Csmall</icon>
+        <text>Copy</text>
+      </controlProperties>
+    </control>
+    <control controlID="38" controlTypeID="com.balsamiq.mockups::PointyButton" x="689" y="242" w="101" h="-1" measuredW="87" measuredH="31" zOrder="9" locked="false" isInGroup="-1">
+      <controlProperties>
+        <direction>center</direction>
+        <icon>XIcon%7Csmall</icon>
+        <text>Delete</text>
+      </controlProperties>
+    </control>
+  </controls>
+</mockup>

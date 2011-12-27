@@ -3,6 +3,8 @@ Remaining goals
 - proper web UI templates and interface
 	> copy package
 	> upload from URL
+	> restrict admin access
+	> top level search
 - consider renaming 'prune' admin command to 'cleanup' (subclass the django.core command)
 - load settings from etc directory
 - Apache and nginx deployment
