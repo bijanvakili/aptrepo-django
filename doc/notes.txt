@@ -1,10 +1,14 @@
 Remaining goals
 ===============
 - proper web UI templates and interface
-	> copy package
 	> upload from URL
-	> restrict admin access
+		> copy package
 	> top level search
+	> UI history
+	> show client setup instructions
+- restrict admin access
+- consider denormalizing (package,version,arch) at the instance level instead of the package level
+	> this may help reduce the number of SQL joins
 - consider renaming 'prune' admin command to 'cleanup' (subclass the django.core command)
 - load settings from etc directory
 - Apache and nginx deployment

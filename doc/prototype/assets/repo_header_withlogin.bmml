@@ -1,0 +1,44 @@
+<mockup version="1.0" skin="sketch" measuredW="808" measuredH="140" mockupW="747" mockupH="61">
+  <controls>
+    <control controlID="13" controlTypeID="__group__" x="61" y="79" w="747" h="61" measuredW="747" measuredH="61" zOrder="0" locked="false" isInGroup="-1">
+      <groupChildrenDescriptors>
+        <control controlID="1" controlTypeID="com.balsamiq.mockups::HRule" x="0" y="56" w="747" h="-1" measuredW="100" measuredH="5" zOrder="0" locked="false" isInGroup="13"/>
+        <control controlID="2" controlTypeID="com.balsamiq.mockups::SearchBox" x="471" y="31" w="200" h="-1" measuredW="65" measuredH="25" zOrder="1" locked="false" isInGroup="13">
+          <controlProperties>
+            <text>search</text>
+          </controlProperties>
+        </control>
+        <control controlID="3" controlTypeID="com.balsamiq.mockups::Button" x="681" y="29" w="-1" h="-1" measuredW="66" measuredH="28" zOrder="2" locked="false" isInGroup="13">
+          <controlProperties>
+            <text>Search</text>
+          </controlProperties>
+        </control>
+        <control controlID="4" controlTypeID="com.balsamiq.mockups::Icon" x="0" y="1" w="-1" h="-1" measuredW="48" measuredH="48" zOrder="3" locked="false" isInGroup="13">
+          <controlProperties>
+            <icon>YIMIcon%7Clarge</icon>
+          </controlProperties>
+        </control>
+        <control controlID="5" controlTypeID="com.balsamiq.mockups::Title" x="54" y="0" w="-1" h="-1" measuredW="265" measuredH="50" zOrder="4" locked="false" isInGroup="13">
+          <controlProperties>
+            <text>Apt%20Repository</text>
+          </controlProperties>
+        </control>
+      </groupChildrenDescriptors>
+    </control>
+    <control controlID="14" controlTypeID="__group__" x="574" y="85" w="234" h="22" measuredW="234" measuredH="22" zOrder="1" locked="false" isInGroup="-1">
+      <groupChildrenDescriptors>
+        <control controlID="0" controlTypeID="com.balsamiq.mockups::LinkBar" x="161" y="0" w="-1" h="-1" measuredW="73" measuredH="21" zOrder="0" locked="false" isInGroup="14">
+          <controlProperties>
+            <hrefs/>
+            <text>%20%2C%20%26Logout%26</text>
+          </controlProperties>
+        </control>
+        <control controlID="1" controlTypeID="com.balsamiq.mockups::Label" x="0" y="0" w="174" h="22" measuredW="174" measuredH="21" zOrder="1" locked="false" isInGroup="14">
+          <controlProperties>
+            <text>Logged%20in%20as%20John%20Doe%20%28jdoe%29</text>
+          </controlProperties>
+        </control>
+      </groupChildrenDescriptors>
+    </control>
+  </controls>
+</mockup>

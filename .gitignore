@@ -6,4 +6,4 @@ var/public/*
 !var/public/dists/README
 *.pyc
 *.mo
-
+.DS_Store*
