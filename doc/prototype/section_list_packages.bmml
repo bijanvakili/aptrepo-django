@@ -1,0 +1,105 @@
+<mockup version="1.0" skin="sketch" measuredW="836" measuredH="648" mockupW="801" mockupH="646">
+  <controls>
+    <control controlID="0" controlTypeID="com.balsamiq.mockups::BrowserWindow" x="35" y="2" w="801" h="646" measuredW="450" measuredH="400" zOrder="0" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>apt%20repository%0Ahttp%3A//www.aptrepository.com/distributions/lucid/main/%3Fview%3Dsimple%5C%26offset%3D25%5C%26limit%3D10</text>
+        <verticalScrollbar>true</verticalScrollbar>
+      </controlProperties>
+    </control>
+    <control controlID="12" controlTypeID="com.balsamiq.mockups::DataGrid" x="46" y="266" w="494" h="290" measuredW="330" measuredH="295" zOrder="1" locked="false" isInGroup="-1">
+      <controlProperties>
+        <borderStyle>none</borderStyle>
+        <selectedIndex>1</selectedIndex>
+        <text>%20%2CPackage%2C%20Version%20%2C%20Architectures%0A%2Capache2%2C2.2.14-5%2C%20%26i386%26%0A%2Cgzip%2C*1.4.0*%2C%20%7Bcolor%3A%23FF0000%7D%26i386%26%7Bcolor%7D%20%26amd64%26%20%26sparc%26%0A%2C%20%2C1.3.12%2C%20%26i386%26%20%26sparc%26%0A%2C%20%2C1.3.6%2C%20%26i386%26%20%26sparc%26%0A%2Chexer%2C%200.1.5-1%2C%20%26i386%26%20%26amd64%26%20%26sparc%26%0A%2Clibfuse2%2C%202.8.1-1%2C%20%26i386%26%20%26amd64%26%0A%2Cpython-django-doc%2C%201.1.1-2%2C%20%26all%26%0A%2Csun-java6-jre%2C%206.26-2%2C%20%26i386%26%20%26amd64%26%0A%2C%20%2C6.26-1%2C%20%26i386%26%20%26amd64%26%0A%7B0C%2C%200L%2C%200L%2C%200L%7D</text>
+        <verticalScrollbar>false</verticalScrollbar>
+      </controlProperties>
+    </control>
+    <control controlID="48" controlTypeID="com.balsamiq.mockups::Component" x="46" y="79" w="747" h="61" measuredW="747" measuredH="61" zOrder="2" locked="false" isInGroup="-1">
+      <controlProperties>
+        <src>./assets/repo_header_nologin.bmml</src>
+      </controlProperties>
+    </control>
+    <control controlID="49" controlTypeID="__group__" x="46" y="140" w="747" h="42" measuredW="747" measuredH="42" zOrder="3" locked="false" isInGroup="-1">
+      <groupChildrenDescriptors>
+        <control controlID="0" controlTypeID="__group__" x="0" y="0" w="747" h="42" measuredW="747" measuredH="42" zOrder="0" locked="false" isInGroup="49">
+          <groupChildrenDescriptors>
+            <control controlID="0" controlTypeID="com.balsamiq.mockups::Canvas" x="0" y="0" w="747" h="42" measuredW="100" measuredH="70" zOrder="0" locked="false" isInGroup="0">
+              <controlProperties>
+                <color>14540253</color>
+              </controlProperties>
+            </control>
+          </groupChildrenDescriptors>
+        </control>
+        <control controlID="1" controlTypeID="com.balsamiq.mockups::BreadCrumbs" x="4" y="9" w="-1" h="-1" measuredW="219" measuredH="24" zOrder="1" locked="false" isInGroup="49">
+          <controlProperties>
+            <text>Home%2C%20Distributions%2C%20lucid%2C%20main</text>
+          </controlProperties>
+        </control>
+      </groupChildrenDescriptors>
+    </control>
+    <control controlID="51" controlTypeID="com.balsamiq.mockups::Component" x="46" y="556" w="467" h="22" measuredW="467" measuredH="22" zOrder="4" locked="false" isInGroup="-1">
+      <controlProperties>
+        <src>./assets/repo_pagination_nav.bmml</src>
+      </controlProperties>
+    </control>
+    <control controlID="52" controlTypeID="com.balsamiq.mockups::Component" x="46" y="587" w="748" h="26" measuredW="748" measuredH="26" zOrder="5" locked="false" isInGroup="-1">
+      <controlProperties>
+        <src>./assets/repo_footer.bmml</src>
+      </controlProperties>
+    </control>
+    <control controlID="59" controlTypeID="com.balsamiq.mockups::Component" x="46" y="182" w="242" h="87" measuredW="242" measuredH="87" zOrder="6" locked="false" isInGroup="-1">
+      <controlProperties>
+        <src>./assets/repo_packagelist_controls.bmml</src>
+      </controlProperties>
+    </control>
+    <control controlID="60" controlTypeID="com.balsamiq.mockups::Icon" x="50" y="477" w="-1" h="-1" measuredW="16" measuredH="16" zOrder="7" locked="false" isInGroup="-1">
+      <controlProperties>
+        <icon>RightFillTriangleIcon%7Cxsmall</icon>
+      </controlProperties>
+    </control>
+    <control controlID="61" controlTypeID="com.balsamiq.mockups::Icon" x="50" y="504" w="-1" h="-1" measuredW="16" measuredH="16" zOrder="8" locked="false" isInGroup="-1">
+      <controlProperties>
+        <icon>DownTriangleIcon%7Cxsmall</icon>
+      </controlProperties>
+    </control>
+    <control controlID="64" controlTypeID="com.balsamiq.mockups::Icon" x="50" y="294" w="-1" h="-1" measuredW="16" measuredH="16" zOrder="9" locked="false" isInGroup="-1">
+      <controlProperties>
+        <icon>RightFillTriangleIcon%7Cxsmall</icon>
+      </controlProperties>
+    </control>
+    <control controlID="65" controlTypeID="com.balsamiq.mockups::Icon" x="50" y="325" w="-1" h="-1" measuredW="16" measuredH="16" zOrder="10" locked="false" isInGroup="-1">
+      <controlProperties>
+        <icon>DownTriangleIcon%7Cxsmall</icon>
+      </controlProperties>
+    </control>
+    <control controlID="66" controlTypeID="com.balsamiq.mockups::Icon" x="50" y="415" w="-1" h="-1" measuredW="16" measuredH="16" zOrder="11" locked="false" isInGroup="-1">
+      <controlProperties>
+        <icon>RightFillTriangleIcon%7Cxsmall</icon>
+      </controlProperties>
+    </control>
+    <control controlID="67" controlTypeID="com.balsamiq.mockups::Icon" x="50" y="446" w="-1" h="-1" measuredW="16" measuredH="16" zOrder="12" locked="false" isInGroup="-1">
+      <controlProperties>
+        <icon>RightFillTriangleIcon%7Cxsmall</icon>
+      </controlProperties>
+    </control>
+    <control controlID="69" controlTypeID="__group__" x="547" y="325" w="64" h="16" measuredW="64" measuredH="16" zOrder="13" locked="false" isInGroup="-1">
+      <groupChildrenDescriptors>
+        <control controlID="0" controlTypeID="com.balsamiq.mockups::Icon" x="0" y="0" w="-1" h="-1" measuredW="16" measuredH="16" zOrder="0" locked="false" isInGroup="69">
+          <controlProperties>
+            <icon>Info2Icon%7Cxsmall</icon>
+          </controlProperties>
+        </control>
+        <control controlID="1" controlTypeID="com.balsamiq.mockups::Icon" x="24" y="0" w="-1" h="-1" measuredW="16" measuredH="16" zOrder="1" locked="false" isInGroup="69">
+          <controlProperties>
+            <icon>CopyIcon%7Cxsmall</icon>
+          </controlProperties>
+        </control>
+        <control controlID="2" controlTypeID="com.balsamiq.mockups::Icon" x="48" y="0" w="-1" h="-1" measuredW="16" measuredH="16" zOrder="2" locked="false" isInGroup="69">
+          <controlProperties>
+            <icon>TrashIcon%7Cxsmall</icon>
+          </controlProperties>
+        </control>
+      </groupChildrenDescriptors>
+    </control>
+  </controls>
+</mockup>
