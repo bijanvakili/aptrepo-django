@@ -2,10 +2,12 @@ Remaining goals
 ===============
 - proper web UI templates and interface
 	> upload from URL
-		> copy package
+	> show client setup instructions
+	> logo and favicon
+	> how to browse sections? (simple/advanced?)
+	> copy package
 	> top level search
 	> UI history
-	> show client setup instructions
 - restrict admin access
 - consider denormalizing (package,version,arch) at the instance level instead of the package level
 	> this may help reduce the number of SQL joins
