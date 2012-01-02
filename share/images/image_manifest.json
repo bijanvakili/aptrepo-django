@@ -1,0 +1,10 @@
+[
+	{
+		"name": "rss_feed",
+		"sizes": ["16x16", "32x32"] 
+	},
+	{
+		"name": "atom_feed",
+		"sizes": ["16x16", "32x32"] 
+	}
+]

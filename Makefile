@@ -8,22 +8,16 @@ DJANGO_TESTSERVER_ADDRESS=0.0.0.0:8000
 BUILD_DIR=.build
 
 SRC_IMAGES_DIR=share/images
-
-ALL_IMAGES = \
-	$(patsubst %.svg, $(BUILD_DIR)/%.png, \
-		$(shell find $(SRC_IMAGES_DIR) -name \*.svg -print)	\
-	) 
+DEST_IMAGES_DIR=$(BUILD_DIR)/$(SRC_IMAGES_DIR)
+IMAGE_CONVERT=python src/build/images.py
 
 # Construct directory hierarchy for build directory
 dirs:
 	mkdir -p $(BUILD_DIR)/locale
 	mkdir -p $(BUILD_DIR)/share/images 
 
-# Common rule to convert scalable (.svg) images to raster images (.png)
-$(BUILD_DIR)/share/images/%.png: share/images/%.svg dirs
-	convert -resize 16x16 -background none $< $@ 
-
-build-images: $(ALL_IMAGES)
+build-images: dirs
+	$(IMAGE_CONVERT) $(SRC_IMAGES_DIR) $(DEST_IMAGES_DIR)
 	
 build:
 	@echo "Localizing strings..."
