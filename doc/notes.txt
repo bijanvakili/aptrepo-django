@@ -26,6 +26,32 @@ Remaining goals
 	- code coverage
 	- regression tests that install packages from the repo
 
+Build dependencies
+==================
+GNU make
+python
+	django
+imagemagick
+
+Test dependencies
+=================
+SQLite
+
+Runtime dependencies
+====================
+python >= 2.6
+	django
+	django-piston
+	lockfile
+	python-apt
+	python-debian
+	python-pyme
+		
+Optional
+========
+django-auth-ldap
+pycurl
+poster
 
 REST API DESIGN
 ===============
@@ -114,3 +140,28 @@ URL DESIGN:
 			/package-instances	(GET, POST(upload or copy another instance))
 				/deb822/<name>/<version>/<architecture>				(GET,DELETE)
 			/actions	(GET)
+
+ASSETS REQUIRED
+===============
+Icons:
+	RSS [small, medium]
+	Atom [small, medium]
+	scroll (history) [medium]
+	exclamation (warning) [small]
+	Magnifying glass (for search bar) [small]
+	Open folder [small, medium]
+	Closed folder [small]
+	Information [small, medium]
+	Download [small, medium]
+
+	key (GPG public key) [medium]
+	toolbox & wrench (admin) [medium]
+	question mark (help) [medium]
+	two pages (copy) [small, medium]
+	trash bin (delete) [small, medium]
+	red cross (close/remove) [small, medium]
+	arrow right [small]
+	arrow down [small]
+
+Other:
+	Logo [large + favicon]

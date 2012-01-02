@@ -6,4 +6,5 @@ var/public/*
 !var/public/dists/README
 *.pyc
 *.mo
+.build
 .DS_Store*
