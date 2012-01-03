@@ -31,7 +31,7 @@ Build dependencies
 GNU make
 python
 	django
-imagemagick
+rsvg
 
 Test dependencies
 =================

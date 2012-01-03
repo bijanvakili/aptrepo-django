@@ -16,14 +16,16 @@ dirs:
 	mkdir -p $(BUILD_DIR)/locale
 	mkdir -p $(BUILD_DIR)/share/images 
 
-build-images: dirs
+# Convert any vector graphics to raster images
+convert-images: dirs
 	$(IMAGE_CONVERT) $(SRC_IMAGES_DIR) $(DEST_IMAGES_DIR)
-	
-build:
-	@echo "Localizing strings..."
+
+# Localize strings using django gettext
+localize:
 	$(DJANGO_ADMINCMD) makemessages -a
 	$(DJANGO_ADMINCMD) compilemessages
-	@echo "Done"  
+	
+build: convert-images localize
 
 clean:
 	@echo "Removing build directory..."
@@ -59,4 +61,4 @@ todos:
 	@grep -R TODO src/* share/* test/*
 
 
-.PHONY: clean-testenv db-init test build build-images dirs
+.PHONY: clean-testenv db-init test build convert-images localize dirs

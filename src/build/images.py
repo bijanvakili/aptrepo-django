@@ -1,10 +1,10 @@
 import json
 import os
+import subprocess
 import sys
-import PythonMagick
 
 """
-Converts images based on manifest using Imagemagick
+Converts images based on manifest using rsvg
 """
 
 class ConvertImagesException:
@@ -32,6 +32,13 @@ class ImageConverter:
     
     _MANIFEST_FILENAME = 'image_manifest.json'
     
+    def svg2png(self, src_svg, dest_png, width, height):
+        retcode = subprocess.call(
+            ["rsvg", '-w '+ str(width), '-h ' + str(height), src_svg, dest_png]
+        )
+        if retcode != 0:
+            raise ConvertImagesException("Unable to convert: " + src_svg)        
+    
     def run(self, argv):
         
         # parse the arguments and check the preconditions
@@ -53,15 +60,19 @@ class ImageConverter:
             # output requirements
             for image_source in manifest:
                 for size_str in image_source['sizes']:
-                    image = PythonMagick.Image(_u2a(os.path.join(source_dir, image_source['name']) + '.svg'))
-                    image.backgroundColor()
-                    image.transform(_u2a(size_str))
+                    in_file = os.path.join(source_dir, image_source['name']) + '.svg'
+                    width, height = size_str.split('x')
 
-                    out_file = os.path.join(dest_dir, size_str, image_source['name'] + '.png')
+                    if 'folder' in image_source:
+                        out_file = os.path.join(dest_dir, image_source['folder'], image_source['name'] + '.png')
+                    else: 
+                        out_file = os.path.join(dest_dir, size_str, image_source['name'] + '.png')
                     out_dir = os.path.dirname(out_file)
                     if not os.path.isdir(out_dir):
                         os.makedirs(out_dir)
-                    image.write(_u2a(out_file))
+                        
+                    print "Converting image {0} to {1} with dimensions {2}".format(in_file, out_file, size_str)
+                    self.svg2png(src_svg=in_file, dest_png=out_file, width=width, height=height)
 
 if __name__ == "__main__":
     try:

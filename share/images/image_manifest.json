@@ -6,5 +6,10 @@
 	{
 		"name": "atom_feed",
 		"sizes": ["16x16", "32x32"] 
+	},
+	{
+		"name": "repository_logo",
+		"sizes": ["225x100"],
+		"folder": "custom"
 	}
 ]
