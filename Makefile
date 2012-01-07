@@ -8,13 +8,15 @@ DJANGO_TESTSERVER_ADDRESS=0.0.0.0:8000
 BUILD_DIR=.build
 
 SRC_IMAGES_DIR=share/images
-DEST_IMAGES_DIR=$(BUILD_DIR)/$(SRC_IMAGES_DIR)
+DEST_IMAGES_DIR=var/public/images
 IMAGE_CONVERT=python src/build/images.py
+
+TEST_DATABASE=var/db/aptrepo.db
 
 # Construct directory hierarchy for build directory
 dirs:
 	mkdir -p $(BUILD_DIR)/locale
-	mkdir -p $(BUILD_DIR)/share/images 
+	mkdir -p $(DEST_IMAGES_DIR) 
 
 # Convert any vector graphics to raster images
 convert-images: dirs
@@ -28,6 +30,8 @@ localize:
 build: convert-images localize
 
 clean:
+	@echo "Removing test files..."
+	rm -rf var/db/aptrepo.db var/cache/* $(DEST_IMAGES_DIR)
 	@echo "Removing build directory..."
 	rm -rf $(BUILD_DIR)
 	@echo "Removing all binary l10n catalogs from the locale hierarchy..."
@@ -35,13 +39,8 @@ clean:
 	@echo "Done"
 
 
-# Removes the repository and associated content
-clean-testenv:
-	rm -rf var/db/aptrepo.db var/cache/*
-
-	
 # Initializes the aptrepo database to a useable state
-db-init: clean-testenv
+$(TEST_DATABASE): 
 	$(DJANGO_ADMINCMD) syncdb --noinput
 	$(DJANGO_ADMINCMD) loaddata simple_repository
 
@@ -52,7 +51,7 @@ unittest:
 
 
 # Runs the local test server (allows outside access)
-testserver:
+testserver: build $(TEST_DATABASE) 
 	$(DJANGO_ADMINCMD) runserver $(DJANGO_TESTSERVER_ADDRESS)
 
 	
@@ -61,4 +60,4 @@ todos:
 	@grep -R TODO src/* share/* test/*
 
 
-.PHONY: clean-testenv db-init test build convert-images localize dirs
+.PHONY: clean unittest testserver build convert-images localize dirs

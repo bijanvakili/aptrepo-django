@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans 'Welcome' %}{% endblock %}
+
+{% block body %}
+
+<ul>
+	<li>Browse Repository</li>
+	<li>Recent Activity</li>
+	<li><a href="dists/publickey.gpg">Download GPG Public Key</a></li>
+	<li>Administration</li>
+	<li>Help</li>
+</ul>
+
+{% endblock %}

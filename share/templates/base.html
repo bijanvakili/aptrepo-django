@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+{% load i18n %}
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+        {% block head %}
+        <title>{% block title %}{% endblock %} | apt repository</title>
+        {% endblock %}
+    </head>
+    <body>
+		<!-- Site Logo -->
+		<img src="images/custom/repository_logo.png"/>
+
+		<!-- Authentication display and link -->
+		{% if user.is_authenticated %}
+			{% trans "Logged in as " %}
+			{% if user.first_name and user.last_name %}
+				{{ user.first_name }} {{ user.last_name }} ({{ user.username }})
+			{% else %}
+				{{ user.username }}
+			{% endif %}
+			&nbsp;|&nbsp;
+			<a href="/aptrepo/logout">{% trans 'Logout' %}</a>
+		{% else %}
+			<a href="/aptrepo/login/">{% trans 'Login' %}</a>
+		{% endif %}
+		
+		
+		<!-- Package search -->
+		<form action="/aptrepo/search" method="post">
+			{% csrf_token %}
+			<input type="text" name="search_text" id="id_search_text" />
+			<input type="submit" value="{% trans 'Search' %}" />
+		</form>
+
+		<hr />
+    	
+        {% block body %}{% endblock %}
+        
+		<hr />
+		
+		{% trans "Contact: " %}<a href="mailto:{{ webmaster.email }}">{{ webmaster.name }} &lt;{{webmaster.email}}&gt;</a>
+		
+		<a href="http://bijan.dyndns.org">apt repository v{{ repository_version }}</a>
+        
+    </body>
+</html>

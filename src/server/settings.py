@@ -24,7 +24,7 @@ if 'APTREPO_DEBUG' in os.environ:
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-    ('Build Administrator', 'buildadmins@oanda.com'),
+    ('Repository Administrator', 'webmaster@localhost'),
 )
 
 MANAGERS = ADMINS
@@ -99,6 +99,16 @@ TEMPLATE_LOADERS = (
 #     'django.template.loaders.eggs.Loader',
 )
 
+TEMPLATE_CONTEXT_PROCESSORS = (
+    "django.contrib.auth.context_processors.auth",
+    "django.core.context_processors.debug",
+    "django.core.context_processors.i18n",
+    "django.core.context_processors.media",
+    "django.core.context_processors.static",
+    "django.contrib.messages.context_processors.messages", 
+    "aptrepo.views.common_template_variables",
+)
+
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -123,10 +133,10 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.messages',
-    # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
+    
     'aptrepo'
 )
 
@@ -273,3 +283,4 @@ LOGGING = {
 }
 
 DEFAULT_LOGGER = 'aptrepo'
+

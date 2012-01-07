@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-12-08 00:30-0500\n"
+"POT-Creation-Date: 2012-01-07 12:43-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -50,9 +50,29 @@ msgstr ""
 "administrateurs du site et sera corrigée dans les meilleurs délais. Merci "
 "pour votre patience."
 
-#: share/templates/aptrepo/login.html:2
+#: share/templates/base.html:16
+msgid "Logged in as "
+msgstr "Connecté en tant que "
+
+#: share/templates/base.html:22
+msgid "Logout"
+msgstr "Déconnexion"
+
+#: share/templates/base.html:24 share/templates/aptrepo/login.html:2
 msgid "Login"
 msgstr "Connexion"
+
+#: share/templates/base.html:32
+msgid "Search"
+msgstr "Cherche"
+
+#: share/templates/base.html:41
+msgid "Contact: "
+msgstr "Contacter:"
+
+#: share/templates/aptrepo/home.html:4
+msgid "Welcome"
+msgstr "Bienvenue"
 
 #: share/templates/aptrepo/login.html:7
 msgid "Invalid username or password. Please try again."
@@ -292,10 +312,10 @@ msgstr ""
 msgid "No repository section specified"
 msgstr "Aucune section de dépôt spécifiée"
 
-#: src/server/aptrepo/views/webpages/pages.py:96
+#: src/server/aptrepo/views/webpages/pages.py:103
 msgid "Package successfully uploaded."
 msgstr "Paquet téléchargé avec succès"
 
-#: src/server/aptrepo/views/webpages/pages.py:103
+#: src/server/aptrepo/views/webpages/pages.py:110
 msgid "Package successfully removed."
 msgstr "Paquet supprimé avec succès"

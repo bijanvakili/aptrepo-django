@@ -59,6 +59,13 @@ def handle_exception(request_handler_func):
 
 @handle_exception
 @require_http_methods(["GET"])
+def repository_home(request):
+    return render_to_response('aptrepo/home.html', {}, 
+                              context_instance=RequestContext(request))
+    
+
+@handle_exception
+@require_http_methods(["GET"])
 def gpg_public_key(request):
     """
     Retrieves the GPG public key

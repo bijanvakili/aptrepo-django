@@ -14,7 +14,8 @@ Remaining goals
 - consider renaming 'prune' admin command to 'cleanup' (subclass the django.core command)
 - load settings from etc directory
 - Apache and nginx deployment
-	> reuse django's templating engine for this? 
+	> reuse django's templating engine for this?
+	> override handling of static files
 - packaging/distribution
 	> Debian packages
 	> python egg?
