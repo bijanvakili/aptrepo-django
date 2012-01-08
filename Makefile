@@ -28,10 +28,12 @@ localize:
 	$(DJANGO_ADMINCMD) compilemessages
 	
 build: convert-images localize
+	mkdir -p var/public/css
+	cp -R share/css var/public/.
 
 clean:
 	@echo "Removing test files..."
-	rm -rf var/db/aptrepo.db var/cache/* $(DEST_IMAGES_DIR)
+	rm -rf var/db/aptrepo.db var/cache/* $(DEST_IMAGES_DIR) var/public/css
 	@echo "Removing build directory..."
 	rm -rf $(BUILD_DIR)
 	@echo "Removing all binary l10n catalogs from the locale hierarchy..."

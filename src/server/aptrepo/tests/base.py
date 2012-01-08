@@ -49,7 +49,6 @@ class BaseAptRepoTest(TestCase):
         self.section_id = section.id
         
         # remove all metafiles and previously uploaded Debian files
-        self._clean_public_folder(settings.APTREPO_FILESTORE['metadata_subdir'])
         self._clean_public_folder(settings.APTREPO_FILESTORE['packages_subdir'])
         cache_dir = settings.CACHES['default']['LOCATION']
         if os.path.exists(cache_dir):

@@ -1,47 +1,65 @@
 <!DOCTYPE html>
 {% load i18n %}
+{% load url_extras %}
+
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+         <link rel="stylesheet" type="text/css" href="{% media_file 'css/aptrepo.css' %}" />
         {% block head %}
         <title>{% block title %}{% endblock %} | apt repository</title>
         {% endblock %}
     </head>
     <body>
-		<!-- Site Logo -->
-		<img src="images/custom/repository_logo.png"/>
-
-		<!-- Authentication display and link -->
-		{% if user.is_authenticated %}
-			{% trans "Logged in as " %}
-			{% if user.first_name and user.last_name %}
-				{{ user.first_name }} {{ user.last_name }} ({{ user.username }})
-			{% else %}
-				{{ user.username }}
-			{% endif %}
-			&nbsp;|&nbsp;
-			<a href="/aptrepo/logout">{% trans 'Logout' %}</a>
-		{% else %}
-			<a href="/aptrepo/login/">{% trans 'Login' %}</a>
-		{% endif %}
+    	<div id="container">
+	    	<div id="header">
+				<!-- Site Logo -->
+				<div id="logo">
+					<img src="{% media_file 'images/custom/repository_logo.png' %}"/>
+				</div>
 		
-		
-		<!-- Package search -->
-		<form action="/aptrepo/search" method="post">
-			{% csrf_token %}
-			<input type="text" name="search_text" id="id_search_text" />
-			<input type="submit" value="{% trans 'Search' %}" />
-		</form>
-
-		<hr />
-    	
-        {% block body %}{% endblock %}
-        
-		<hr />
-		
-		{% trans "Contact: " %}<a href="mailto:{{ webmaster.email }}">{{ webmaster.name }} &lt;{{webmaster.email}}&gt;</a>
-		
-		<a href="http://bijan.dyndns.org">apt repository v{{ repository_version }}</a>
-        
+				<!-- Authentication display and link -->
+				<div id="header_navs">
+					<div id="nav_auth">
+						{% if user.is_authenticated %}
+							{% trans "Logged in as " %}
+							{% if user.first_name and user.last_name %}
+								{{ user.first_name }} {{ user.last_name }} ({{ user.username }})
+							{% else %}
+								{{ user.username }}
+							{% endif %}
+							&nbsp;|&nbsp;
+							<a href="/aptrepo/logout">{% trans 'Logout' %}</a>
+						{% else %}
+							<a href="/aptrepo/login/">{% trans 'Login' %}</a>
+						{% endif %}
+					</div>
+					
+					<!-- Package search -->
+					<div id="nav_search">
+						<form action="/aptrepo/search" method="post">
+							{% csrf_token %}
+							<input type="text" name="search_text" id="id_search_text" />
+							<input type="submit" value="{% trans 'Search' %}" />
+						</form>
+					</div>
+				</div>
+			</div>
+	    	
+	    	<!-- Main content -->
+	    	<div id="content">
+	        	{% block body %}{% endblock %}
+	        </div>
+	        
+			<div id="footer">
+				<div id="nav_webmaster">
+					{% trans "Contact: " %}<a href="mailto:{{ webmaster.email }}">{{ webmaster.name }} &lt;{{webmaster.email}}&gt;</a>
+				</div>
+				
+				<div id="nav_projectlink">
+					<a href="http://bijan.dyndns.org">apt repository v{{ repository_version }}</a>
+				</div>
+	        </div>
+        </div>
     </body>
 </html>

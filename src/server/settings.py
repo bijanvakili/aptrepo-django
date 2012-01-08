@@ -1,5 +1,6 @@
 # Django settings for aptrepo2 project.
 
+import time
 import logging
 import os
 import sys
@@ -20,6 +21,10 @@ if 'APTREPO_DEBUG' in os.environ:
     debug_params = os.environ['APTREPO_DEBUG'].lower().split() 
     DEBUG = 'true' in debug_params
     DB_DEBUG = 'db' in debug_params
+    
+MEDIA_TOKEN = None
+if DEBUG:
+    MEDIA_TOKEN = time.time()
 
 TEMPLATE_DEBUG = DEBUG
 
@@ -283,4 +288,3 @@ LOGGING = {
 }
 
 DEFAULT_LOGGER = 'aptrepo'
-

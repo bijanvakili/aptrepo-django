@@ -38,16 +38,11 @@ urlpatterns = patterns('',
     url(r'^rss/(?P<distribution>\w+)/(?P<section>\w+)/{0,1}$', SectionRSSFeed()),
     url(r'^atom/(?P<distribution>\w+)/{0,1}$', DistributionAtomFeed()),
     url(r'^atom/(?P<distribution>\w+)/(?P<section>\w+)/{0,1}$', SectionAtomFeed()),
-                           
-    # Debian package files
+    
+    # Debian package files (can include 'public' prefix or not)
     url(r'^(public/){0,1}packages/(?P<path>.*)$', 'django.views.static.serve', 
         {
             'document_root': settings.MEDIA_ROOT + '/' + settings.APTREPO_FILESTORE['packages_subdir'],
         }
-    ),
-    url(r'^(public/){0,1}images/(?P<path>.*)$', 'django.views.static.serve', 
-        {
-            'document_root': settings.MEDIA_ROOT + '/images',
-        }
-    ),
+    ),    
 )

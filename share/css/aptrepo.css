@@ -1,0 +1,66 @@
+/* Default styles */
+body {
+	background-color: white;
+	color: black;
+	font-family: Arial, Helvetica, Sans-Serif;
+	font-size: 0.75em;
+	margin:0;
+	padding:0;  
+}
+
+#container
+{
+	margin: 0 auto;
+	width: 100%;
+}
+
+
+#header,#footer {
+	padding: 0.5em;
+}
+
+#header {
+	position: relative;
+	background-color: #efefef;
+	border-bottom: 1px solid #000;
+	height: 100px;
+}
+
+#footer {
+	border-top: 1px solid #000;
+}
+
+/* Header styles */
+#logo {
+	float: left;
+	width: 225px;
+}
+
+#header_navs {
+	text-align: right;
+	max-height: 100%;	
+}
+
+#nav_search {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+}
+
+/* Footer styles */
+#nav_webmaster {
+	float: left;
+	text-align: left;
+	width: 50%;	
+}
+
+#nav_projectlink {
+	float: left;
+	text-align: right;
+	width: 50%;
+}
+
+/* Content styles */
+#content {
+	clear: both;
+}
