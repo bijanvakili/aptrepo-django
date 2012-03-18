@@ -46,6 +46,7 @@ $(TEST_DATABASE):
 	$(DJANGO_ADMINCMD) syncdb --noinput
 	$(DJANGO_ADMINCMD) loaddata simple_repository
 
+dbinit: $(TEST_DATABASE)
 
 # Runs the unit tests
 unittest:
@@ -53,7 +54,7 @@ unittest:
 
 
 # Runs the local test server (allows outside access)
-testserver: build $(TEST_DATABASE) 
+testserver: build dbinit 
 	$(DJANGO_ADMINCMD) runserver $(DJANGO_TESTSERVER_ADDRESS)
 
 	
@@ -62,4 +63,4 @@ todos:
 	@grep -R TODO src/* share/* test/*
 
 
-.PHONY: clean unittest testserver build convert-images localize dirs
+.PHONY: clean unittest testserver build convert-images localize dirs dbinit

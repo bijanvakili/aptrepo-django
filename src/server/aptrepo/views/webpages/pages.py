@@ -60,7 +60,18 @@ def handle_exception(request_handler_func):
 @handle_exception
 @require_http_methods(["GET"])
 def repository_home(request):
-    return render_to_response('aptrepo/home.html', {}, 
+    """
+    Outputs the home page
+    """
+    menu_items_list = [ 
+        (_('Browse Repository'), _('Browse the packages in the repository'), 'dists/', 'browse'),
+        (_('Recent Activity'), _('Review the change history in the repository'), 'rss/', 'scroll'),
+        (_('Download Public Key'), _('Download the GPG public key used for signing metadata'), 'dists/publickey.gpg', 'key'),
+        (_('Administration'), _('Manage your repository (requires administrative privileges)'), 'admin/', 'admin'),
+        (_('Help'), _('Documentation for using the repository'), 'help/', 'help')
+    ]
+    
+    return render_to_response('aptrepo/home.html', {'menu_items': menu_items_list}, 
                               context_instance=RequestContext(request))
     
 

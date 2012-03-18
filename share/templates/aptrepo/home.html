@@ -1,16 +1,24 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% load url_extras %}
 
 {% block title %}{% trans 'Welcome' %}{% endblock %}
 
 {% block body %}
 
-<ul>
-	<li>Browse Repository</li>
-	<li>Recent Activity</li>
-	<li><a href="dists/publickey.gpg">Download GPG Public Key</a></li>
-	<li>Administration</li>
-	<li>Help</li>
-</ul>
+<table id="home_page_menu">
+	
+	{# Output the main menu items #}
+	{% for item in menu_items %}
+	
+	<tr class="homepage_menu_item" title="{{ item.1 }}">
+		{# Don't use media_file tag here.  Use MEDIA_URL instead #}
+		<td><img class="homepage_menu_image" src="{{ MEDIA_URL }}images/64x64/{{ item.3 }}.png" /></td>
+		<td><a class="homepage_menu_link" href="{{ item.2 }}">{{ item.0 }}</a></td>
+	</tr>
+	
+	{% endfor %}
+	
+</table>
 
 {% endblock %}

@@ -1,5 +1,6 @@
-Remaining goals
-===============
+Plan
+====
+Current -> 0.01
 - proper web UI templates and interface
 	> upload from URL
 	> show client setup instructions
@@ -8,21 +9,26 @@ Remaining goals
 	> copy package
 	> top level search
 	> UI history
-- restrict admin access
-- consider denormalizing (package,version,arch) at the instance level instead of the package level
-	> this may help reduce the number of SQL joins
+- restrict admin access	
 - consider renaming 'prune' admin command to 'cleanup' (subclass the django.core command)
-- load settings from etc directory
-- Apache and nginx deployment
-	> reuse django's templating engine for this?
-	> override handling of static files
 - packaging/distribution
 	> Debian packages
 	> python egg?
+
+Next -> 0.02
+- Apache and nginx deployment
+	> reuse django's templating engine for this?
+	> override handling of static files
 - documentation
 	> user
 	> admin
 	> developer
+- caching
+	> memcached
+- consider denormalizing (package,version,arch) at the instance level instead of the package level
+	> this may help reduce the number of SQL joins
+- proper UI images & polished layout
+- load settings from etc directory
 - testing
 	- code coverage
 	- regression tests that install packages from the repo
@@ -142,8 +148,8 @@ URL DESIGN:
 				/deb822/<name>/<version>/<architecture>				(GET,DELETE)
 			/actions	(GET)
 
-ASSETS REQUIRED
-===============
+VISUAL ASSETS REQUIRED
+======================
 Icons:
 	RSS [small, medium]
 	Atom [small, medium]
@@ -156,7 +162,7 @@ Icons:
 	Download [small, medium]
 
 	key (GPG public key) [medium]
-	toolbox & wrench (admin) [medium]
+	screwdriver & wrench (admin) [medium]
 	question mark (help) [medium]
 	two pages (copy) [small, medium]
 	trash bin (delete) [small, medium]

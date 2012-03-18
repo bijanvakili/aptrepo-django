@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-08 00:20-0500\n"
+"POT-Creation-Date: 2012-03-18 12:33-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -70,7 +70,7 @@ msgstr "Cherche"
 msgid "Contact: "
 msgstr "Contacter:"
 
-#: share/templates/aptrepo/home.html:4
+#: share/templates/aptrepo/home.html:5
 msgid "Welcome"
 msgstr "Bienvenue"
 
@@ -312,10 +312,50 @@ msgstr ""
 msgid "No repository section specified"
 msgstr "Aucune section de dépôt spécifiée"
 
-#: src/server/aptrepo/views/webpages/pages.py:103
+#: src/server/aptrepo/views/webpages/pages.py:67
+msgid "Browse Repository"
+msgstr "Explorer le Dépôt"
+
+#: src/server/aptrepo/views/webpages/pages.py:67
+msgid "Browse the packages in the repository"
+msgstr "Explorer les paquets dans le dépôt"
+
+#: src/server/aptrepo/views/webpages/pages.py:68
+msgid "Recent Activity"
+msgstr "Activités Récentes"
+
+#: src/server/aptrepo/views/webpages/pages.py:68
+msgid "Review the change history in the repository"
+msgstr "Revoir l'historique des changements dans le dépôt"
+
+#: src/server/aptrepo/views/webpages/pages.py:69
+msgid "Download Public Key"
+msgstr "Télécharge la Clé Publique"
+
+#: src/server/aptrepo/views/webpages/pages.py:69
+msgid "Download the GPG public key used for signing metadata"
+msgstr "Télécharge la clé publique utilisé pour la signature des fichiers"
+
+#: src/server/aptrepo/views/webpages/pages.py:70
+msgid "Administration"
+msgstr "Administration"
+
+#: src/server/aptrepo/views/webpages/pages.py:70
+msgid "Manage your repository (requires administrative privileges)"
+msgstr "Gérer votre dépôt (nécessite des privilèges administratifs)"
+
+#: src/server/aptrepo/views/webpages/pages.py:71
+msgid "Help"
+msgstr "Aide"
+
+#: src/server/aptrepo/views/webpages/pages.py:71
+msgid "Documentation for using the repository"
+msgstr "Documentation pour l'utilisation du dépôt"
+
+#: src/server/aptrepo/views/webpages/pages.py:114
 msgid "Package successfully uploaded."
 msgstr "Paquet téléchargé avec succès"
 
-#: src/server/aptrepo/views/webpages/pages.py:110
+#: src/server/aptrepo/views/webpages/pages.py:121
 msgid "Package successfully removed."
 msgstr "Paquet supprimé avec succès"

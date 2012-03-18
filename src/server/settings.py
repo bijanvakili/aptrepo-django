@@ -5,22 +5,27 @@ import logging
 import os
 import sys
 
-# load the project root
-APTREPO_ROOT = '/oanda/aptrepo'
-if 'APTREPO_ROOT' in os.environ:
-    APTREPO_ROOT = os.environ['APTREPO_ROOT']
+def env_override(key, default_value):
+    """
+    Macro to check environment for overriding default values
+    """
+    if key in os.environ:
+        return os.environ[key]
+    else:
+        return default_value
+
+
+# project directories
+APTREPO_ROOT = env_override('APTREPO_ROOT', '/usr/local')
 APTREPO_CONFIG_ROOT = os.path.join(APTREPO_ROOT, 'etc')
 APTREPO_VAR_ROOT = os.path.join(APTREPO_ROOT, 'var')
 APTREPO_SHARE_ROOT =  os.path.join(APTREPO_ROOT, 'share')
 TEST_DATA_ROOT = os.path.join(APTREPO_ROOT, 'test/data')
 
 # set the appropriate Debug level
-DEBUG = False
-DB_DEBUG = False
-if 'APTREPO_DEBUG' in os.environ:
-    debug_params = os.environ['APTREPO_DEBUG'].lower().split() 
-    DEBUG = 'true' in debug_params
-    DB_DEBUG = 'db' in debug_params
+APTREPO_DEBUG = env_override('APTREPO_DEBUG', '').lower().split()
+DEBUG = 'true' in APTREPO_DEBUG
+DB_DEBUG = 'db' in APTREPO_DEBUG
     
 MEDIA_TOKEN = None
 if DEBUG:
@@ -56,7 +61,7 @@ TIME_ZONE = 'America/Toronto'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = env_override('APTREPO_LANGUAGE', 'en-us')
 
 LOCALE_PATHS = (os.path.join(APTREPO_ROOT, 'locale'),)
 
@@ -116,7 +121,10 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware',
+
+#    (disabling LocaleMiddleware for development purposes)
+#    'django.middleware.locale.LocaleMiddleware',
+
     'django.middleware.common.CommonMiddleware',    
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -206,11 +214,7 @@ class LevelLessThan(logging.Filter):
         return record.levelno <= self.max_level
 
 # logging configuration
-
-APTREPO_LOGHANDLERS = ['console_stdout', 'console_stderr']
-if 'APTREPO_LOGHANDLERS' in os.environ:
-    APTREPO_LOGHANDLERS = os.environ['APTREPO_LOGHANDLERS'].lower().split()
-
+APTREPO_LOGHANDLERS = env_override('APTREPO_LOGHANDLERS', 'console_stdout console_stderr').lower().split() 
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,

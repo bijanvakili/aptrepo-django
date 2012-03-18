@@ -1,5 +1,9 @@
 [
 	{
+		"name": "placeholder",
+		"sizes": ["64x64"]
+	},
+	{
 		"name": "rss_feed",
 		"sizes": ["16x16", "32x32"] 
 	},
@@ -11,5 +15,25 @@
 		"name": "repository_logo",
 		"sizes": ["225x100"],
 		"folder": "custom"
+	},
+	{
+		"name": "browse",
+		"sizes": ["64x64"]
+	},
+	{
+		"name": "scroll",
+		"sizes": ["64x64"]
+	},
+	{
+		"name": "key",
+		"sizes": ["64x64"]
+	},
+	{
+		"name": "admin",
+		"sizes": ["64x64"]
+	},
+	{
+		"name": "help",
+		"sizes": ["64x64"]
 	}
 ]

@@ -63,4 +63,25 @@ body {
 /* Content styles */
 #content {
 	clear: both;
+	min-height: 600px;
+}
+
+/* Home page menu styles */
+.homepage_menu_item {
+	margin-top: 20px;
+	margin-bottom: 30px;
+}
+
+img.homepage_menu_image  {
+	height: 64px;
+	width: 64px;
+	margin-left: 40px;	
+}
+
+.homepage_menu_link {
+	font-size: 1.5em;
+	height: 64px;
+	text-align: left;
+	padding-left: 15px;
+	vertical-align: middle;
 }
