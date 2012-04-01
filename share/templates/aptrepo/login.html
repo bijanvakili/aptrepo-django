@@ -1,27 +1,53 @@
+{% extends "base.html" %}
 {% load i18n %}
-<h2>{% trans 'Login' %}</h2>
+{% load url_extras %}
 
-{% block content %}
+{% block title %}{% trans 'Logon' %}{% endblock %}
 
-{% if form.errors %}
-<p>{% trans 'Invalid username or password. Please try again.' %}'</p>
-{% endif %}
+{% block body %}
 
-<form method="post" action="/aptrepo/login/">
+<form class="login_form" method="post" action="/aptrepo/login/">
+
 {% csrf_token %}
+
 <table>
-<tr>
-    <td>{{ form.username.label_tag }}</td>
-    <td>{{ form.username }}</td>
-</tr>
-<tr>
-    <td>{{ form.password.label_tag }}</td>
-    <td>{{ form.password }}</td>
-</tr>
+	<tr>
+		<td />
+		<td class="login_error_msg">
+			{% for error in form.non_field_errors %}
+				{{ error }}
+			{% endfor %}
+			{% for error in form.username.errors %}
+				{{ form.username.label_tag }}: {{ error }}
+			{% endfor %}
+			{% for error in form.password.errors %}
+				{{ form.password.label_tag }}: {{ error }}
+			{% endfor %}
+		</td>
+	</tr>
+	<tr>
+		<td class="login_label">{{ form.username.label_tag }}</td>
+		<td class="login_textfield">{{ form.username }}</td>
+	</tr>
+	<tr>
+	    <td class="login_label">{{ form.password.label_tag }}</td>
+	    <td class="login_textfield">{{ form.password }}</td>
+	</tr>
+	<tr>
+		<td/>
+		<td class="login_holder">
+			<div>
+				<a class="login_help_link" href="mailto:{{ webmaster.email }}">{% trans 'Help! I forgot my username or password...' %}</a>
+			</div>
+			<div class="login_submit_container">
+				<input id="login_submit" type="submit" value="{% trans 'Log in' %}" />
+			</div>
+		<td/>
+	</tr>
 </table>
 
-<input type="submit" value="{% trans 'login' %}" />
 <input type="hidden" name="next" value="{{ next }}" />
+
 </form>
 
 {% endblock %}

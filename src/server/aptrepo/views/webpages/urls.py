@@ -26,12 +26,8 @@ aptrepo_metadata_urls = patterns('aptrepo.views.webpages.pages',
 urlpatterns = patterns('',
                        
     (r'^$', 'aptrepo.views.webpages.pages.repository_home'),
-                       
-    url(r'^login/$', 'django.contrib.auth.views.login',
-        {
-            'template_name': 'aptrepo/login.html'         
-        }
-    ),
+    url(r'^login/$', 'aptrepo.views.webpages.pages.login'),
+    url(r'^logout/$', 'aptrepo.views.webpages.pages.logout'),
     url(r'^packages/', include(package_urls)),
     url(r'^dists/', include(aptrepo_metadata_urls)),
     url(r'^rss/(?P<distribution>\w+)/{0,1}$', DistributionRSSFeed()),

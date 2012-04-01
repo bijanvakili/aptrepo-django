@@ -46,6 +46,14 @@
 				</div>
 			</div>
 	    	
+	    	<!-- Breadcumb bar -->
+	    	<div id="nav_breadcumbs">
+	    		<a href="/aptrepo">{% trans "Home" %}</a>
+	    		{% for crumb in breadcumbs %}
+	    			<span>&nbsp;&gt;&nbsp;</span>{{ crumb.get_html_tag }}
+	    		{% endfor %}
+	    	</div>
+	    	
 	    	<!-- Main content -->
 	    	<div id="content">
 	        	{% block body %}{% endblock %}

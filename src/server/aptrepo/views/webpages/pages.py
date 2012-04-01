@@ -4,6 +4,7 @@ import logging
 from django import forms
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+import django.contrib.auth.views
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
@@ -24,6 +25,17 @@ class UploadPackageForm(forms.Form):
     file = forms.FileField()
     section = forms.ModelChoiceField(queryset=models.Section.objects.all())
     comment = forms.CharField(required=False, max_length=models.Action.MAX_COMMENT_LENGTH)
+    
+class Breadcrumb():
+    def __init__(self, description, link):
+        self.description = description
+        self.link = link
+        
+    def get_html_tag(self):
+        if self.link:
+            return '<a href="{link}">{description}</a>'.format(description=self.description, link=self.link)
+        else:
+            return self.description
 
 def handle_exception(request_handler_func):
     """
@@ -71,9 +83,26 @@ def repository_home(request):
         (_('Help'), _('Documentation for using the repository'), 'help/', 'help')
     ]
     
-    return render_to_response('aptrepo/home.html', {'menu_items': menu_items_list}, 
+    return render_to_response('aptrepo/home.html', 
+                              {'menu_items': menu_items_list, 'breadcumbs': [] }, 
                               context_instance=RequestContext(request))
     
+
+def login(request):
+    """
+    Performs user login
+    """
+    breadcrumbs = [ Breadcrumb(_('Logon'), None) ]
+    return django.contrib.auth.views.login(request=request, template_name='aptrepo/login.html', 
+                                           extra_context={ 'breadcumbs': breadcrumbs, 'next': '/aptrepo/' })
+
+def logout(request):
+    """
+    Logs the user out
+    """
+    breadcrumbs = [ Breadcrumb(_('Logout'), None) ]    
+    return django.contrib.auth.views.logout(request=request, template_name='aptrepo/logout.html',
+                                            extra_context={ 'breadcumbs': breadcrumbs})
 
 @handle_exception
 @require_http_methods(["GET"])

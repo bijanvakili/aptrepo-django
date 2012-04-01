@@ -15,7 +15,7 @@ body {
 }
 
 
-#header,#footer {
+#header,#footer, #nav_breadcumbs {
 	padding: 0.5em;
 }
 
@@ -45,6 +45,12 @@ body {
 	position: absolute;
 	bottom: 0;
 	right: 0;
+}
+
+#nav_breadcumbs {
+	min-height: 20px;
+	background-color: #207f7f;
+	border-bottom: 1px solid #000;
 }
 
 /* Footer styles */
@@ -84,4 +90,48 @@ img.homepage_menu_image  {
 	text-align: left;
 	padding-left: 15px;
 	vertical-align: middle;
+}
+
+/* Login screen styles */
+.login_form {
+	position: relative;
+	left: 20%;
+}
+
+.login_label {
+	text-align: right;
+	font-weight: bold;
+}
+
+input#id_username,input#id_password {
+	width: 300px;
+}
+
+td.login_holder {
+	position: relative;
+}
+
+td.login_error_msg {
+	color: red;
+}
+
+.login_help_link {
+	position: absolute;
+	left: 0px;
+	font-size: 0.90em;
+}
+
+.login_submit_container {
+	position: absolute;
+	right: 0px;
+}
+
+/* Logout screen styles */
+p#logout_message,a#logout_relogin_link {
+	position: relative;
+	left: 20%;
+}
+
+a#logout_relogin_link {
+	font-size: 0.90em;	
 }
