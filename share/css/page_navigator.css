@@ -1,0 +1,15 @@
+
+div#nav_pages {
+	padding: 0.5em;
+}
+
+div#nav_pages_pagelinks {
+	float: left;
+	width: 25%;	
+}
+
+div#nav_pages_countperpage {
+	float: left;
+	width: 50%;
+	text-align: center;
+}

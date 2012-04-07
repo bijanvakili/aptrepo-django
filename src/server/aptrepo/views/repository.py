@@ -422,10 +422,28 @@ class Repository():
         if 'max_ts' in args:
             query_args.append(Q(timetsamp__lte=args['max_ts']))
             
-        # execute the query and return the result
-        actions = models.Action.objects.filter(*query_args).order_by('timestamp')
-        return actions
+        # return the action query
+        return models.Action.objects.filter(*query_args).order_by('timestamp')
         
+    def get_historical_actions(self, distribution_name, section_name):
+        """
+        Retrieves repository actions (alternate query)
+        """
+        self.logger.debug('Retrieving historical actions')
+        
+        # construct the query based on the restrictions
+        query_args = []
+        if distribution_name:
+            query_args.append(Q(section__distribution__name=distribution_name))
+            if section_name:
+                query_args.append(Q(section__name=section_name))
+                self.logger.debug(' for section {0}:{1}'.format(distribution_name, section_name))
+            else:
+                self.logger.debug(' for distribution {0}'.format(distribution_name))
+        self.logger.debug('\n')
+        
+        # return the action query
+        return models.Action.objects.filter(*query_args).order_by('-timestamp')
     
     def prune_sections(self, section_id_list, dry_run=False, check_architecture=True):
         """

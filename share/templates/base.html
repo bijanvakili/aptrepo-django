@@ -4,14 +4,15 @@
 
 <html>
     <head>
-        <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-         <link rel="stylesheet" type="text/css" href="{% media_file 'css/aptrepo.css' %}" />
-        {% block head %}
-        <title>{% block title %}{% endblock %} | apt repository</title>
-        {% endblock %}
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+		<title>{% block title %}{% endblock %} | apt repository</title>
+		<link rel="stylesheet" type="text/css" href="{% media_file 'css/aptrepo.css' %}" />
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.js"></script>
+        {% block head %}{% endblock %}
     </head>
     <body>
     	<div id="container">
+    		<!-- Header -->
 	    	<div id="header">
 				<!-- Site Logo -->
 				<div id="logo">
@@ -29,7 +30,7 @@
 								{{ user.username }}
 							{% endif %}
 							&nbsp;|&nbsp;
-							<a href="/aptrepo/logout">{% trans 'Logout' %}</a>
+							<a href="/aptrepo/logout/">{% trans 'Logout' %}</a>
 						{% else %}
 							<a href="/aptrepo/login/">{% trans 'Login' %}</a>
 						{% endif %}
@@ -47,11 +48,13 @@
 			</div>
 	    	
 	    	<!-- Breadcumb bar -->
-	    	<div id="nav_breadcumbs">
+	    	<div id="nav_breadcrumbs">
 	    		<a href="/aptrepo">{% trans "Home" %}</a>
-	    		{% for crumb in breadcumbs %}
-	    			<span>&nbsp;&gt;&nbsp;</span>{{ crumb.get_html_tag }}
+	    		
+	    		{% for crumb in breadcrumbs %}
+	    			<span>&nbsp;&gt;&nbsp;</span>{% autoescape off %}{{ crumb.get_html_tag }}{% endautoescape %}
 	    		{% endfor %}
+	    		
 	    	</div>
 	    	
 	    	<!-- Main content -->
@@ -59,6 +62,12 @@
 	        	{% block body %}{% endblock %}
 	        </div>
 	        
+	        <!-- Page navigation -->
+	        <div id="nav_pages">
+	        	{% block page_navigator %}{% endblock %}
+	        </div>
+	        
+	        <!-- Footer -->
 			<div id="footer">
 				<div id="nav_webmaster">
 					{% trans "Contact: " %}<a href="mailto:{{ webmaster.email }}">{{ webmaster.name }} &lt;{{webmaster.email}}&gt;</a>

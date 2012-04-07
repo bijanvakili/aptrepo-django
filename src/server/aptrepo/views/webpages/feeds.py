@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.syndication.views import Feed
 from django.shortcuts import get_object_or_404
 from django.utils.feedgenerator import Atom1Feed
@@ -8,8 +9,6 @@ class BaseRepositoryFeed(Feed):
     """
     Common base class for syndication feeds
     """
-    _MAX_NEWEST_ACTIONS = 25
-
     def title(self, obj):
         return str(obj)
 
@@ -36,7 +35,16 @@ class BaseRepositoryFeed(Feed):
 
     def item_pubdate(self, item):
         return item.timestamp
-
+    
+    def _init_query_limits(self, request):
+        """
+        Extract query limit parameters
+        """
+        self.limit = request.GET.get('limit', settings.APTREPO_PAGINATION_LIMITS[0])
+        
+    def _constrain_result(self, result):
+        return result.reverse()[:self.limit]
+            
 
 class DistributionRSSFeed(BaseRepositoryFeed):
     """
@@ -44,6 +52,7 @@ class DistributionRSSFeed(BaseRepositoryFeed):
     """
 
     def get_object(self, request, distribution):
+        self._init_query_limits(request)
         return get_object_or_404(models.Distribution, name=distribution)
     
     def description(self, obj):
@@ -54,7 +63,7 @@ class DistributionRSSFeed(BaseRepositoryFeed):
     
     def items(self, obj):
         repository = get_repository_controller()
-        return repository.get_actions(distribution_id=obj.id).reverse()[:self._MAX_NEWEST_ACTIONS]
+        return self._constrain_result(repository.get_actions(distribution_id=obj.id))
 
 
 class DistributionAtomFeed(DistributionRSSFeed):
@@ -71,6 +80,7 @@ class SectionRSSFeed(BaseRepositoryFeed):
     """
     
     def get_object(self, request, distribution, section):
+        self._init_query_limits(request)
         return get_object_or_404(models.Section, distribution__name=distribution, name=section)
     
     def description(self, obj):
@@ -81,7 +91,7 @@ class SectionRSSFeed(BaseRepositoryFeed):
     
     def items(self, obj):
         repository = get_repository_controller()
-        return repository.get_actions(section_id=obj.id).reverse()[:self._MAX_NEWEST_ACTIONS]
+        return self._constrain_result(repository.get_actions(section_id=obj.id))
 
 
 class SectionAtomFeed(SectionRSSFeed):

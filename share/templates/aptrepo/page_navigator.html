@@ -1,0 +1,39 @@
+{% load i18n %}
+{% load url_extras %}
+
+{% block head %}
+<link rel="stylesheet" type="text/css" href="{% media_file 'css/page_navigator.css' %}" />
+{% endblock %}
+
+{% block page_navigator %}
+
+<div id="nav_pages_pagelinks"/>
+
+	{% if page_navigate.has_previous %}
+		<a href="{{ page_navigate.previous_page_number }}">{% trans "<< Previous" %}</a>
+	{% endif %}
+
+	{% for page_link in page_navigate.specific_page_links %}
+		{% if page_link.link != '' %}
+			<a href="{{ page_link.page }}">{{ page_link.link }}</a>
+		{% else %}
+			{{ page_link.page }}
+		{% endif %}		
+	{% endfor %}
+
+	{% if page_navigate.has_next %}
+		<a href="{{ page_navigate.next_page_number }}">{% trans "Next >>" %}</a>
+	{% endif %}
+	
+	{# (page_min-page_max/total) for items #}
+	({{ page_navigate.position_summary }})
+</div>
+
+<div id="nav_pages_countperpage">
+	{% trans "Per page:" %}
+	{% for page_size in pagination_limits %}
+		<a href="">{{ page_size }}</a><span> </span>
+	{% endfor %}
+</div>
+
+{% endblock %}

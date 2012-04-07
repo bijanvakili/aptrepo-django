@@ -8,7 +8,7 @@ from django.conf import settings
 from django.utils.translation import ugettext as _
 import server.aptrepo.models
 from server.aptrepo.views import get_repository_controller
-from server.aptrepo.util import AptRepoException, AuthorizationException
+from server.aptrepo.util import AptRepoException, AuthorizationException, constrain_queryset
 
 def handle_exception(request_handler_func):
     """
@@ -45,27 +45,6 @@ class BaseAptRepoHandler(BaseHandler):
     """
     exclude = ()
 
-    def _constrain_queryset(self, request, db_result, default_limit):
-        """
-        Constrain a DB query result based on common HTTP parameters:
-        
-        offset -- Start of the range (defaults to 0)
-        limit -- Maximum number of items to return (defaults to 'default_limit')
-        descending -- Should the results should be in reverse order (defaults to False)
-        """
-        min = 0
-        if 'offset' in request.GET:
-            min = int(request.GET['offset']) 
-        
-        max = default_limit
-        if 'limit' in request.GET:
-            max = min + int(request.GET['limit'])
-        
-        resultset = db_result[min:max]
-        if 'descending' in request.GET and request.GET['descending']:
-            resultset = resultset.reverse()
-            
-        return resultset
 
 class SessionHandler(BaseAptRepoHandler):
     """
@@ -115,14 +94,13 @@ class PackageHandler(BaseAptRepoHandler):
     """
     allowed_methods = ('GET', 'DELETE')
     model = server.aptrepo.models.Package
-    _DEFAULT_MAX_PACKAGES = 100
     
     @handle_exception
     def read(self, request, **kwargs):
         # if no arguments were specified, return all package
         if (len(kwargs) == 0):
-            return self._constrain_queryset(request, self.model.objects.all(), 
-                                            self._DEFAULT_MAX_PACKAGES)
+            return constrain_queryset(request, self.model.objects.all(), 
+                                      settings.APTREPO_API_PAGINATION_LIMIT) 
         
         # otherwise, search for a specific package
         return self._find_package(**kwargs)
@@ -197,8 +175,6 @@ class PackageInstanceHandler(BaseAptRepoHandler):
     model = server.aptrepo.models.PackageInstance
     fields = ('id', 'package', 'creator', 'creation_date')
     
-    _DEFAULT_MAX_INSTANCES = 100
-    
     @handle_exception
     def read(self, request, instance_id=None, section_id=None, 
              package_name=None, version=None, architecture=None):
@@ -224,13 +200,12 @@ class PackageInstanceHandler(BaseAptRepoHandler):
         # return all packages in a section (within constrained limits)
         elif section_id:
             section_instances = self.model.objects.filter(section__id=section_id) 
-            return self._constrain_queryset(request, section_instances, self._DEFAULT_MAX_INSTANCES) 
+            return constrain_queryset(request, section_instances, settings.APTREPO_API_PAGINATION_LIMIT) 
         
         # display all package instances (within constrained limits)
         else:
             all_instances = self.model.objects.all()
-            return self._constrain_queryset(request, all_instances, 
-                                            default_limit=self._DEFAULT_MAX_INSTANCES)
+            return constrain_queryset(request, all_instances, settings.APTREPO_API_PAGINATION_LIMIT)
             
     @handle_exception
     def delete(self, request, instance_id=None, section_id=None, 
@@ -296,8 +271,6 @@ class ActionHandler(BaseAptRepoHandler):
     allowed_methods=('GET')
     model = server.aptrepo.models.Action
     
-    _DEFAULT_NUM_ACTIONS = 25
-    
     @handle_exception
     def read(self, request, distribution_id=None, section_id=None):
         
@@ -317,5 +290,4 @@ class ActionHandler(BaseAptRepoHandler):
             
         repository=get_repository_controller(request=request)
         action_results = repository.get_actions(**action_query)
-        return self._constrain_queryset(request, action_results, 
-                                        default_limit=self._DEFAULT_NUM_ACTIONS)
+        return constrain_queryset(request, action_results, settings.APTREPO_API_PAGINATION_LIMIT)

@@ -100,14 +100,17 @@ URL DESIGN:
 		/<hashprefix>/<name>_<version>_<architecture>.deb	(GET) 
 
 	/rss/
-		/<distribution> (GET)
-			/<section>  (GET)
 	/atom/
-		/<distribution> (GET)
-			/<section>  (GET)
+	/history/
 	/dists/<distribution>/	(GET)
+		/rss/
+		/atom/
+		/history/
 		Release(.gpg)		(GET)
 		/<section>			(GET)
+			/rss/
+			/atom/
+			/history/
 			Packages(.gz)	(GET)
 			<.deb>			(POST) does an upload
 			/upload			(GET, POST)

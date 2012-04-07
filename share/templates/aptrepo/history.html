@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load url_extras %}
+
+{% block title %}{% trans 'History' %} | {{ current_area.description }}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" type="text/css" href="{% media_file 'css/history.css' %}" />
+{% endblock %}
+
+{% block body %}
+
+<!-- TODO figure out how to redo same HTTP GET request when changing any parameters -->
+
+<div id="history_header">
+
+	{# Select between view types #}
+	<form method="get" action="{{ request.url }}">
+		{% csrf_token %}
+		{% trans "Recent history for "%}<a href="{{ current_area.link }}">{{ current_area.description }}</a>
+		<input type="radio" name="view_type" value="simple">{% trans "Simple" %} </input>  
+		<input type="radio" name="view_type" value="table">{% trans "Table" %} </input>
+	</form>
+</div>
+
+<br/>
+
+{# History content #}
+<div id="history_content">
+	
+	{# simple view #}
+	{% if view_type == "simple" %}
+		{% for action in actions %}
+			<div class="history_item_timestamp">{{ action.timestamp }}</div>
+			
+			<div class="history_item_description">
+				<!-- TODO Find out how to HTML format the action.summary -->
+				<span class="history_item_summary">{{ action.summary }}</span>
+				{% include "aptrepo/history_item_links.html" %}
+			</div>
+			
+			<div class="history_item_comment">
+				{{ action.comment }}
+			</div>
+			<br/>
+		{% endfor %}
+	
+	{% endif %}
+	
+	{# table view #}
+	{% if view_type == "table" %}
+	
+		<table class="history_table">
+			<tr>
+				<th>{% trans "Time" %}</th>
+				<th>{% trans "User" %}</th>
+				<th>{% trans "Package" %}</th>
+				<th>{% trans "Version" %}</th>
+				<th>{% trans "Architecture" %}</th>
+				<th>{% trans "Links" %}</th>
+				<th>{% trans "Comment" %}</th>
+			</tr>
+			{% for action in actions %}
+				<tr>
+					<td>{{ action.timestamp }}</td>
+					<td>{{ action.user }}</td>
+					<td>{{ action.package.package_name }}</td>
+					<td>{{ action.package.version }}</td>
+					<td>{{ action.package.architecture }}</td>
+					<td>{% include "aptrepo/history_item_links.html" %}</td>
+					<td>{{ action.summary }}<br/>{{ action.comment }}</td>
+				</tr>
+			{% endfor %}
+		</table>
+	{% endif %}
+	
+</div>
+
+<script type="text/javascript">
+	// set the callbacks for the view type radio buttons
+	$(document).ready(function(){
+		var viewTypeForm = $('div#history_header > form')
+		viewTypeForm.find('input[name="view_type"]').click( function() {
+			window.location.href = '/aptrepo/history/?view_type=' + this.value;
+		});
+		
+		// set the current view type radio button
+		viewTypeForm.find(
+			'input[name="view_type"][value="{{ view_type }}"]'
+		).attr('checked', true);
+	});
+</script>
+
+{% endblock %}
+
+{# page navigators and links to syndication feeds  #}	
+{% block page_navigator %}
+{% include "aptrepo/page_navigator.html" %}
+<div id="feed_links">
+	<!-- TODO Syndication feed links -->
+	{% trans "Also available in:" %}
+	<a href="" class="history_icon">
+		<img src="{{ MEDIA_URL }}images/16x16/rss_feed.png" />RSS
+	</a>
+	<a href="" class="history_icon">
+		<img src="{{ MEDIA_URL }}images/16x16/atom_feed.png" />Atom
+	</a>
+</div>
+{% endblock %}
+

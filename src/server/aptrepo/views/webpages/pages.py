@@ -14,7 +14,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 from server.aptrepo import models
-from server.aptrepo.util import AuthorizationException, constants
+from server.aptrepo.util import AuthorizationException, constants, constrain_queryset
 from server.aptrepo.views import get_repository_controller
 
 
@@ -27,6 +27,9 @@ class UploadPackageForm(forms.Form):
     comment = forms.CharField(required=False, max_length=models.Action.MAX_COMMENT_LENGTH)
     
 class Breadcrumb():
+    """
+    Holds a breadcrumb for the header navigation bar
+    """
     def __init__(self, description, link):
         self.description = description
         self.link = link
@@ -35,7 +38,54 @@ class Breadcrumb():
         if self.link:
             return '<a href="{link}">{description}</a>'.format(description=self.description, link=self.link)
         else:
-            return self.description
+            return '<span>{0}</span>'.format(self.description)
+
+class PageNavigation():
+    """
+    Holds the current pagination state
+    """
+    def __init__(self, request, total_items):
+        self.total_items = total_items
+        self.page_limit = request.GET.get('page_limit', settings.APTREPO_PAGINATION_LIMITS[0])
+        self.offset = request.GET.get('offset', 0)
+
+    def current_page_number(self):
+        return self.offset / self.page_limit + 1
+    
+    def has_previous(self):
+        return self.current_page_number() > 1
+    
+    def has_next(self):
+        return self.current_page_number() < self.total_pages()
+    
+    def previous_page_number(self):
+        return self.current_page_number() - 1
+    
+    def next_page_number(self):
+        return self.current_page_number() + 1
+        
+    def last_item_number(self):
+        return min(self.offset + self.page_limit, self.total_items)
+    
+    def total_pages(self):
+        return self.total_items / self.page_limit + 1 
+    
+    def position_summary(self):
+        return '{0}-{1}/{2}'.format( self.offset + 1, self.last_item_number(), self.total_items )
+    
+    def specific_page_links(self):
+        current_page = self.current_page_number()
+        total_pages = self.total_pages()
+        
+        near_pages = range(max(1, current_page - 2), min(current_page + 2, total_pages))
+        page_links = []
+        for i in near_pages:
+            page_links.append( {'page': str(i), 'link': str(i) } )
+        if near_pages[0] != 1:
+            page_links.insert(0, [ {'page': '1', 'link': '1'}, {'page': '...', 'link': ''} ] )
+        if near_pages[-1] != total_pages:
+            page_links.append([ {'page': '...', 'link': ''}, {'page': str(total_pages), 'link': str(total_pages)} ] )
+        return page_links
 
 def handle_exception(request_handler_func):
     """
@@ -77,14 +127,14 @@ def repository_home(request):
     """
     menu_items_list = [ 
         (_('Browse Repository'), _('Browse the packages in the repository'), 'dists/', 'browse'),
-        (_('Recent Activity'), _('Review the change history in the repository'), 'rss/', 'scroll'),
+        (_('Recent Activity'), _('Review the change history in the repository'), 'history/', 'scroll'),
         (_('Download Public Key'), _('Download the GPG public key used for signing metadata'), 'dists/publickey.gpg', 'key'),
         (_('Administration'), _('Manage your repository (requires administrative privileges)'), 'admin/', 'admin'),
         (_('Help'), _('Documentation for using the repository'), 'help/', 'help')
     ]
     
     return render_to_response('aptrepo/home.html', 
-                              {'menu_items': menu_items_list, 'breadcumbs': [] }, 
+                              {'menu_items': menu_items_list, 'breadcrumbs': [] }, 
                               context_instance=RequestContext(request))
     
 
@@ -94,7 +144,7 @@ def login(request):
     """
     breadcrumbs = [ Breadcrumb(_('Logon'), None) ]
     return django.contrib.auth.views.login(request=request, template_name='aptrepo/login.html', 
-                                           extra_context={ 'breadcumbs': breadcrumbs, 'next': '/aptrepo/' })
+                                           extra_context={ 'breadcrumbs': breadcrumbs, 'next': '/aptrepo/' })
 
 def logout(request):
     """
@@ -102,7 +152,7 @@ def logout(request):
     """
     breadcrumbs = [ Breadcrumb(_('Logout'), None) ]    
     return django.contrib.auth.views.logout(request=request, template_name='aptrepo/logout.html',
-                                            extra_context={ 'breadcumbs': breadcrumbs})
+                                            extra_context={ 'breadcrumbs': breadcrumbs})
 
 @handle_exception
 @require_http_methods(["GET"])
@@ -197,6 +247,44 @@ def delete_package_instance(request):
         package_instance_id = package_instance.id
         
     return _handle_remove_package(request, package_instance_id)
+
+@handle_exception
+@require_http_methods(["GET"])
+def history(request, distribution=None, section=None):
+    """
+    Displays the history for distribution or section within the repository
+    
+    distribution - name of distribution to filter (defaults to entire repository)
+    section - name of section to filter (defaults to all sections in a distribution)
+    offset - offset within historical query (defaults to 0)
+    limit - page limit (see util.contraint_queryset)
+     
+    """
+    # set the default view type
+    view_type = request.GET.get('view_type', 'simple')
+    
+    # construct query and breadcrumb links based on query parameters
+    breadcrumbs = [Breadcrumb(_('Distributions'), '/aptrepo/dists')]
+    if distribution:
+        breadcrumbs.append( Breadcrumb(distribution, "/aptrepo/dists/{0}".format(distribution)) )
+        if section:
+            breadcrumbs.append(
+                Breadcrumb(section, "/aptrepo/dists/{0}/{1}".format(distribution, section)))
+    breadcrumbs.append( Breadcrumb(_('Recent History'), None) )
+    
+    # retrieve historical actions
+    repository = get_repository_controller(request=request)        
+    actions = repository.get_historical_actions(distribution, section)
+
+    # render result along with data for pagination    
+    page_navigate = PageNavigation(request, actions.count())
+    return render_to_response('aptrepo/history.html', 
+                              {'breadcrumbs': breadcrumbs, 
+                               'current_area': breadcrumbs[-2],
+                               'actions': constrain_queryset(request, actions),
+                               'page_navigate': page_navigate,
+                               'view_type': view_type },
+                              context_instance=RequestContext(request))  
 
 @handle_exception
 @require_http_methods(["GET"])

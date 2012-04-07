@@ -33,6 +33,14 @@
 		"sizes": ["64x64"]
 	},
 	{
+		"name": "info",
+		"sizes": ["16x16"]
+	},
+	{
+		"name": "download",
+		"sizes": ["16x16"]
+	},
+	{
 		"name": "help",
 		"sizes": ["64x64"]
 	}

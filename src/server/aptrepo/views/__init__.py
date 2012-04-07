@@ -20,4 +20,5 @@ def common_template_variables(request):
     return {
         'repository_version': '.'.join(get_repository_version()),             
         'webmaster': webmaster,
+        'pagination_limits': settings.APTREPO_PAGINATION_LIMITS,
     }

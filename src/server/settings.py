@@ -91,6 +91,9 @@ APTREPO_FILESTORE = {
     'hash_depth': 2 
 }
 
+APTREPO_PAGINATION_LIMITS = [25, 50, 100]
+APTREPO_API_PAGINATION_LIMIT = 100
+
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
