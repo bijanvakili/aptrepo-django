@@ -7,7 +7,7 @@ DJANGO_ADMINCMD=\
 DJANGO_TESTSERVER_ADDRESS=0.0.0.0:8000
 BUILD_DIR=.build
 
-SRC_IMAGES_DIR=share/media/images
+SRC_IMAGES_DIR=share/media/images/source
 DEST_IMAGES_DIR=share/media/images/raster
 IMAGE_CONVERTER=python src/build/images.py --srcdir=$(SRC_IMAGES_DIR) --destdir=$(DEST_IMAGES_DIR)
 IMAGE_MANIFEST=$(SRC_IMAGES_DIR)/image_manifest.json
@@ -61,4 +61,4 @@ todos:
 	@grep -R TODO src/* share/* test/*
 
 
-.PHONY: clean unittest testserver build images localize dbinit
+.PHONY: clean unittest testserver build images localize dbinit todos

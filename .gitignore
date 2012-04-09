@@ -1,4 +1,5 @@
 .pydevproject
+share/media/images/raster
 var/db/*.db
 var/log/*.log*
 var/public/*
