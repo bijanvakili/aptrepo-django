@@ -9,21 +9,27 @@ BUILD_DIR=.build
 
 SRC_IMAGES_DIR=share/media/images
 DEST_IMAGES_DIR=share/media/images/raster
-IMAGE_CONVERT=python src/build/images.py
+IMAGE_CONVERTER=python src/build/images.py --srcdir=$(SRC_IMAGES_DIR) --destdir=$(DEST_IMAGES_DIR)
+IMAGE_MANIFEST=$(SRC_IMAGES_DIR)/image_manifest.json
 
 TEST_DATABASE=var/db/aptrepo.db
 
 # Convert any vector graphics to raster images
-convert-images:
-	mkdir -p $(DEST_IMAGES_DIR) 
-	$(IMAGE_CONVERT) $(SRC_IMAGES_DIR) $(DEST_IMAGES_DIR)
+SOURCE_IMAGES=$(shell $(IMAGE_CONVERTER) sources)
+OUTPUT_IMAGES=$(shell $(IMAGE_CONVERTER) destfiles)
+
+$(OUTPUT_IMAGES): $(SOURCE_IMAGES) $(IMAGE_MANIFEST)
+	mkdir -p $(DEST_IMAGES_DIR)
+	$(IMAGE_CONVERTER) build $(SRC_IMAGES_DIR) $(DEST_IMAGES_DIR)
+ 
+images: $(OUTPUT_IMAGES)
 
 # Localize strings using django gettext
 localize:
 	$(DJANGO_ADMINCMD) makemessages -a
 	$(DJANGO_ADMINCMD) compilemessages
 	
-build: convert-images localize
+build: images localize
 
 clean:
 	@echo "Removing test files..."
@@ -55,4 +61,4 @@ todos:
 	@grep -R TODO src/* share/* test/*
 
 
-.PHONY: clean unittest testserver build convert-images localize dbinit
+.PHONY: clean unittest testserver build images localize dbinit
