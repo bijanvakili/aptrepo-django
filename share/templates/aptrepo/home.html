@@ -12,8 +12,8 @@
 	{% for item in menu_items %}
 	
 	<tr class="homepage_menu_item" title="{{ item.1 }}">
-		{# Don't use media_file tag here.  Use MEDIA_URL instead #}
-		<td><img class="homepage_menu_image" src="{{ MEDIA_URL }}images/64x64/{{ item.3 }}.png" /></td>
+		{# Don't use media_file tag here.  Use STATIC_URL instead #}
+		<td><img class="homepage_menu_image" src="{{ STATIC_URL }}images/raster/64x64/{{ item.3 }}.png" /></td>
 		<td><a class="homepage_menu_link" href="{{ item.2 }}">{{ item.0 }}</a></td>
 	</tr>
 	

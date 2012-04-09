@@ -27,10 +27,6 @@ APTREPO_DEBUG = env_override('APTREPO_DEBUG', '').lower().split()
 DEBUG = 'true' in APTREPO_DEBUG
 DB_DEBUG = 'db' in APTREPO_DEBUG
     
-MEDIA_TOKEN = None
-if DEBUG:
-    MEDIA_TOKEN = time.time()
-
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -83,6 +79,15 @@ MEDIA_ROOT = os.path.join(APTREPO_VAR_ROOT, 'public') + '/'
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
 MEDIA_URL = '/aptrepo/public/'
+
+# Static media files
+STATIC_URL = '/aptrepo/media/'
+STATICFILES_DIRS = (
+    os.path.join(APTREPO_SHARE_ROOT, 'media') + '/',
+)
+STATIC_MEDIA_TOKEN = None
+if DEBUG:
+    STATIC_MEDIA_TOKEN = time.time()
 
 APTREPO_FILESTORE = {
     'metadata_subdir' : 'dists',
@@ -150,6 +155,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.admin',
+    'django.contrib.staticfiles',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     

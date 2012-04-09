@@ -6,7 +6,7 @@
     <head>
 		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 		<title>{% block title %}{% endblock %} | apt repository</title>
-		<link rel="stylesheet" type="text/css" href="{% media_file 'css/aptrepo.css' %}" />
+		<link rel="stylesheet" type="text/css" href="{% static_media_url 'css/aptrepo.css' %}" />
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.js"></script>
         {% block head %}{% endblock %}
     </head>
@@ -16,7 +16,7 @@
 	    	<div id="header">
 				<!-- Site Logo -->
 				<div id="logo">
-					<img src="{% media_file 'images/custom/repository_logo.png' %}"/>
+					<img src="{% raster_image_url 'custom/repository_logo.png' %}"/>
 				</div>
 		
 				<!-- Authentication display and link -->

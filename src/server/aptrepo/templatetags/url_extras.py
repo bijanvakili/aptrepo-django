@@ -4,11 +4,20 @@ from django import template
 register = template.Library()
 
 @register.simple_tag
-def media_file(path):
+def static_media_url(path):
     """
     Used to specify URLs to static media files.
     
     For debugging, this also appends parameter suffixes for debugging purposes to get around 
     client web browsers that cache stale files
     """
-    return settings.MEDIA_URL + path + ('?{0}'.format(settings.MEDIA_TOKEN) if settings.DEBUG else '')
+    return settings.STATIC_URL + path + ('?{0}'.format(settings.STATIC_MEDIA_TOKEN) if settings.DEBUG else '')
+
+@register.simple_tag
+def raster_image_url(path):
+    """
+    Used to specify URLs to a static raster image
+    
+    As above, this can append a suffix for debugging purposes
+    """
+    return static_media_url('images/raster/' + path)

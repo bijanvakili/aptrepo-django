@@ -5,7 +5,7 @@
 {% block title %}{% trans 'History' %} | {{ current_area.description }}{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" type="text/css" href="{% media_file 'css/history.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static_media_url 'css/history.css' %}" />
 {% endblock %}
 
 {% block body %}
@@ -100,10 +100,10 @@
 	<!-- TODO Syndication feed links -->
 	{% trans "Also available in:" %}
 	<a href="" class="history_icon">
-		<img src="{{ MEDIA_URL }}images/16x16/rss_feed.png" />RSS
+		<img src="{% raster_image_url '16x16/rss_feed.png'%}" />RSS
 	</a>
 	<a href="" class="history_icon">
-		<img src="{{ MEDIA_URL }}images/16x16/atom_feed.png" />Atom
+		<img src="{% raster_image_url '16x16/atom_feed.png' %}" />Atom
 	</a>
 </div>
 {% endblock %}

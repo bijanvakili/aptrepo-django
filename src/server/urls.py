@@ -14,6 +14,11 @@ urlpatterns = patterns('',
     (r'^aptrepo/', include('aptrepo.views.webpages.urls')),
     
     # static files
+    url(r'^aptrepo/media/(?P<path>.*)$', 'django.views.static.serve', 
+        {
+            'document_root': settings.STATIC_ROOT,
+        }
+    ),
     url(r'^aptrepo/public/(?P<path>.*)$', 'django.views.static.serve', 
         {
             'document_root': settings.MEDIA_ROOT,

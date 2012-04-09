@@ -81,10 +81,11 @@ class PageNavigation():
         page_links = []
         for i in near_pages:
             page_links.append( {'page': str(i), 'link': str(i) } )
-        if near_pages[0] != 1:
-            page_links.insert(0, [ {'page': '1', 'link': '1'}, {'page': '...', 'link': ''} ] )
-        if near_pages[-1] != total_pages:
-            page_links.append([ {'page': '...', 'link': ''}, {'page': str(total_pages), 'link': str(total_pages)} ] )
+        if len(near_pages) > 0:
+            if near_pages[0] != 1:
+                page_links.insert(0, [ {'page': '1', 'link': '1'}, {'page': '...', 'link': ''} ] )
+            if near_pages[-1] != total_pages:
+                page_links.append([ {'page': '...', 'link': ''}, {'page': str(total_pages), 'link': str(total_pages)} ] )
         return page_links
 
 def handle_exception(request_handler_func):

@@ -7,19 +7,15 @@ DJANGO_ADMINCMD=\
 DJANGO_TESTSERVER_ADDRESS=0.0.0.0:8000
 BUILD_DIR=.build
 
-SRC_IMAGES_DIR=share/images
-DEST_IMAGES_DIR=var/public/images
+SRC_IMAGES_DIR=share/media/images
+DEST_IMAGES_DIR=share/media/images/raster
 IMAGE_CONVERT=python src/build/images.py
 
 TEST_DATABASE=var/db/aptrepo.db
 
-# Construct directory hierarchy for build directory
-dirs:
-	mkdir -p $(BUILD_DIR)/locale
-	mkdir -p $(DEST_IMAGES_DIR) 
-
 # Convert any vector graphics to raster images
-convert-images: dirs
+convert-images:
+	mkdir -p $(DEST_IMAGES_DIR) 
 	$(IMAGE_CONVERT) $(SRC_IMAGES_DIR) $(DEST_IMAGES_DIR)
 
 # Localize strings using django gettext
@@ -28,14 +24,10 @@ localize:
 	$(DJANGO_ADMINCMD) compilemessages
 	
 build: convert-images localize
-	mkdir -p var/public/css
-	cp -R share/css var/public/.
 
 clean:
 	@echo "Removing test files..."
-	rm -rf var/db/aptrepo.db var/cache/* $(DEST_IMAGES_DIR) var/public/css
-	@echo "Removing build directory..."
-	rm -rf $(BUILD_DIR)
+	rm -rf $(TEST_DATABASE) var/cache/* $(DEST_IMAGES_DIR)
 	@echo "Removing all binary l10n catalogs from the locale hierarchy..."
 	find . -name \*.mo -exec rm -rf '{}' \;
 	@echo "Done"
@@ -63,4 +55,4 @@ todos:
 	@grep -R TODO src/* share/* test/*
 
 
-.PHONY: clean unittest testserver build convert-images localize dirs dbinit
+.PHONY: clean unittest testserver build convert-images localize dbinit
