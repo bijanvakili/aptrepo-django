@@ -1,0 +1,25 @@
+{
+	"defaults": {
+		"package": {
+			"name-prefix": "test-package",
+			"subdir": "XX",
+			"section": "oanda",
+			"priority": "optional",
+            "priority": "optional",
+            "architecture": 1,
+            "maintainer": "Test Maintainer <tester@aptrepo.com>",
+            "size": 100,
+            "hash_md5": "XX",
+            "hash_sha1": "XX",
+            "hash_sha256": "XX"
+		},
+		"upload": {
+			"section": 2,
+			"creator": "testuser0",
+			"comment": "For testing"
+		}
+	},
+	"dataset": {
+		"size": 250
+	}
+}

@@ -46,6 +46,10 @@ DATABASES = {
     }
 }
 
+SERIALIZATION_MODULES = {
+    'largeset': 'aptrepo.util.serializers.largeset'
+}
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
@@ -102,7 +106,7 @@ APTREPO_API_PAGINATION_LIMIT = 100
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = '/media/'
+ADMIN_MEDIA_PREFIX = STATIC_URL + 'admin/'
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'o0__bdt)eggafe6gp#4*&^+w7ma-bb1y(6n%o7k2u7)!fyk#8w'
