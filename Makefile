@@ -59,7 +59,7 @@ unittest:
 
 # Runs the local test server (allows outside access)
 testserver: build dbinit 
-	$(DJANGO_ADMINCMD) runserver $(DJANGO_TESTSERVER_ADDRESS)
+	$(DJANGO_ADMINCMD) runserver --insecure $(DJANGO_TESTSERVER_ADDRESS)
 
 	
 # Output TODO items from source code

@@ -14,6 +14,7 @@ Current -> 0.01
 - packaging/distribution
 	> Debian packages
 	> python egg?
+	NOTE:  --insecure is required to serve static files
 
 Next -> 0.02
 - Apache and nginx deployment
