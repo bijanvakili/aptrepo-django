@@ -26,6 +26,8 @@ TEST_DATA_ROOT = os.path.join(APTREPO_ROOT, 'test/data')
 APTREPO_DEBUG = env_override('APTREPO_DEBUG', '').lower().split()
 DEBUG = 'true' in APTREPO_DEBUG
 DB_DEBUG = 'db' in APTREPO_DEBUG
+if DEBUG:
+    INTERNAL_IPS = ['127.0.0.1']
     
 TEMPLATE_DEBUG = DEBUG
 
@@ -100,7 +102,7 @@ APTREPO_FILESTORE = {
     'hash_depth': 2 
 }
 
-APTREPO_PAGINATION_LIMITS = [25, 50, 100]
+APTREPO_PAGINATION_LIMITS = [15, 25, 50, 100]
 APTREPO_API_PAGINATION_LIMIT = 100
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a

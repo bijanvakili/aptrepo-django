@@ -7,33 +7,36 @@
 
 {% block page_navigator %}
 
-<div id="nav_pages_pagelinks"/>
-
-	{% if page_navigate.has_previous %}
-		<a href="{{ page_navigate.previous_page_number }}">{% trans "<< Previous" %}</a>
-	{% endif %}
-
-	{% for page_link in page_navigate.specific_page_links %}
-		{% if page_link.link != '' %}
-			<a href="{{ page_link.page }}">{{ page_link.link }}</a>
-		{% else %}
-			{{ page_link.page }}
-		{% endif %}		
-	{% endfor %}
-
-	{% if page_navigate.has_next %}
-		<a href="{{ page_navigate.next_page_number }}">{% trans "Next >>" %}</a>
-	{% endif %}
+{% if page_navigate.total_items > 1 %}
+	<div id="nav_pages_pagelinks">
 	
-	{# (page_min-page_max/total) for items #}
-	({{ page_navigate.position_summary }})
-</div>
-
-<div id="nav_pages_countperpage">
-	{% trans "Per page:" %}
-	{% for page_size in pagination_limits %}
-		<a href="">{{ page_size }}</a><span> </span>
-	{% endfor %}
-</div>
+			{% if page_navigate.has_previous %}
+				<a href="{{ page_navigate.previous_page_link }}">{% trans "<< Previous" %}</a>
+			{% endif %}
+		
+			{% for page_link in page_navigate.specific_page_links %}
+				{% if page_link.link != '' %}
+					<a href="{{ page_link.link }}">{{ page_link.page }}</a>
+				{% else %}
+					{{ page_link.page }}
+				{% endif %}
+			{% endfor %}
+		
+			{% if page_navigate.has_next %}
+				<a href="{{ page_navigate.next_page_link }}">{% trans "Next >>" %}</a>
+			{% endif %}
+			
+			{# (page_min-page_max/total) for items #}
+			<span>{{ page_navigate.position_summary }}</span>
+		
+	</div>
+	
+	<div id="nav_pages_countperpage">
+		{% trans "Per page:" %}
+		{% for item in urls.change_pagination_links %}
+			<a href="{{ item.url }}">{{ item.limit }}</a><span> </span>
+		{% endfor %}
+	</div>
+{% endif %}
 
 {% endblock %}

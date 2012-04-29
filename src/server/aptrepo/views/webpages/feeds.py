@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.syndication.views import Feed
 from django.shortcuts import get_object_or_404
 from django.utils.feedgenerator import Atom1Feed
+from django.utils.translation import ugettext as _
 from server.aptrepo import models
 from server.aptrepo.views import get_repository_controller
 
@@ -46,6 +47,36 @@ class BaseRepositoryFeed(Feed):
         return result.reverse()[:self.limit]
             
 
+# TODO Try and collapse the Repository, Distribution and Feed classes into one class which behaves based
+#        on the queried object type
+
+class RepositoryRSSFeed(BaseRepositoryFeed):
+    """
+    RSS feed for the entire repository
+    """
+    def get_object(self, request):
+        self._init_query_limits(request)
+        return None
+    
+    def description(self):
+        return _("Activity for repository")
+    
+    def link(self):
+        return "/"
+    
+    def items(self):
+        repository = get_repository_controller()
+        return self._constrain_result(repository.get_actions())
+
+
+class RepositoryAtomFeed(RepositoryRSSFeed):
+    """
+    ATOM feed for distributions
+    """
+    feed_type = Atom1Feed
+    subtitle = RepositoryRSSFeed.description
+
+
 class DistributionRSSFeed(BaseRepositoryFeed):
     """
     RSS feed for distributions
@@ -56,7 +87,7 @@ class DistributionRSSFeed(BaseRepositoryFeed):
         return get_object_or_404(models.Distribution, name=distribution)
     
     def description(self, obj):
-        return "Activity for distribution " + str(obj)
+        return _("Activity for distribution {0}".format(str(obj)))
     
     def link(self, obj):
         return "/dists/" + obj.name
@@ -84,7 +115,7 @@ class SectionRSSFeed(BaseRepositoryFeed):
         return get_object_or_404(models.Section, distribution__name=distribution, name=section)
     
     def description(self, obj):
-        return "Activity for section " + str(obj)
+        return _("Activity for section {0}".format(str(obj)))    
      
     def link(self, obj):
         return "/dists/{0}/{1}/".format(obj.distribution.name, obj.name)

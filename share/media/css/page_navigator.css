@@ -5,11 +5,12 @@ div#nav_pages {
 
 div#nav_pages_pagelinks {
 	float: left;
-	width: 25%;	
+	width: 40%;
+	text-align: left;
 }
 
 div#nav_pages_countperpage {
 	float: left;
-	width: 50%;
+	width: 20%;
 	text-align: center;
 }

@@ -22,6 +22,7 @@ body {
 }
 
 #footer {
+	margin-top: 10px;
 	border-top: 1px solid #000;
 	padding: 0.5em;
 }
@@ -57,6 +58,7 @@ div#nav_breadcrumbs>* {
 /* Footer styles */
 div#footer {
 	clear: both;
+	margin-top: 0.5em;
 }
 
 #nav_webmaster {

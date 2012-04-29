@@ -414,8 +414,6 @@ class Repository():
             query_args.append(Q(section__id=args['section_id']))
         elif 'distribution_id' in args:
             query_args.append(Q(section__distribution__id=args['distribution_id']))
-        else:
-            raise AptRepoException('No section or distribution specified for action query')
             
         if 'min_ts' in args:
             query_args.append(Q(timestamp__gte=args['min_ts']))

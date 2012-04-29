@@ -52,7 +52,7 @@ table.history_table tr:nth-child(odd) {
 
 /* Syndication link group */
 div#feed_links {
-	float: left;
-	width: 25%;
+	float: right;
 	text-align: right;
+	padding-bottom: 0.5em;
 }

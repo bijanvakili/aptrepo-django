@@ -10,12 +10,10 @@
 
 {% block body %}
 
-<!-- TODO figure out how to redo same HTTP GET request when changing any parameters -->
-
 <div id="history_header">
 
 	{# Select between view types #}
-	<form method="get" action="{{ request.url }}">
+	<form method="get">
 		{% csrf_token %}
 		{% trans "Recent history for "%}<a href="{{ current_area.link }}">{{ current_area.description }}</a>
 		<input type="radio" name="view_type" value="simple">{% trans "Simple" %} </input>  
@@ -77,11 +75,19 @@
 </div>
 
 <script type="text/javascript">
-	// set the callbacks for the view type radio buttons
+
 	$(document).ready(function(){
+		// set the callbacks for the view type radio buttons
 		var viewTypeForm = $('div#history_header > form')
-		viewTypeForm.find('input[name="view_type"]').click( function() {
-			window.location.href = '/aptrepo/history/?view_type=' + this.value;
+		viewTypeForm.find('input[name="view_type"][value="simple"]').click( function() {
+			{% autoescape off %}
+			window.location.href = '{{ urls.view_simple }}';
+			{% endautoescape %}
+		});
+		viewTypeForm.find('input[name="view_type"][value="table"]').click( function() {
+			{% autoescape off %}
+			window.location.href = '{{ urls.view_table }}';
+			{% endautoescape %} 
 		});
 		
 		// set the current view type radio button
@@ -89,22 +95,21 @@
 			'input[name="view_type"][value="{{ view_type }}"]'
 		).attr('checked', true);
 	});
+	
 </script>
 
 {% endblock %}
 
-{# page navigators and links to syndication feeds  #}	
+{# page navigators and links to syndication feeds  #}
 {% block page_navigator %}
 {% include "aptrepo/page_navigator.html" %}
 <div id="feed_links">
-	<!-- TODO Syndication feed links -->
 	{% trans "Also available in:" %}
-	<a href="" class="history_icon">
+	<a href="{{ urls.syndication_feeds.rss }}" class="history_icon">
 		<img src="{% raster_image_url '16x16/rss_feed.png'%}" />RSS
 	</a>
-	<a href="" class="history_icon">
+	<a href="{{ urls.syndication_feeds.atom }}" class="history_icon">
 		<img src="{% raster_image_url '16x16/atom_feed.png' %}" />Atom
 	</a>
 </div>
 {% endblock %}
-
