@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-04-29 10:35-0400\n"
+"POT-Creation-Date: 2012-04-29 11:25-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,8 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
 
-#: share/templates/404.html:4
-#: share/templates/404.html.py:8
+#: share/templates/404.html:4 share/templates/404.html.py:8
 msgid "Page not found"
 msgstr "Cette page n'a pas été trouvée"
 
@@ -26,8 +25,7 @@ msgstr "Cette page n'a pas été trouvée"
 msgid "We're sorry, but the requested page could not be found."
 msgstr "Nous sommes désolés, mais la page demandée est introuvable."
 
-#: share/templates/500.html:4
-#: share/templates/base.html:58
+#: share/templates/500.html:4 share/templates/base.html:58
 msgid "Home"
 msgstr "Accueil"
 
@@ -47,7 +45,8 @@ msgstr "Erreur du serveur <em>(500)</em>"
 msgid ""
 "There's been an error. It's been reported to the site administrators via e-"
 "mail and should be fixed shortly. Thanks for your patience."
-msgstr "Une erreur est survenue. Elle a été transmise par courriel aux "
+msgstr ""
+"Une erreur est survenue. Elle a été transmise par courriel aux "
 "administrateurs du site et sera corrigée dans les meilleurs délais. Merci "
 "pour votre patience."
 
@@ -55,8 +54,7 @@ msgstr "Une erreur est survenue. Elle a été transmise par courriel aux "
 msgid "Logged in as "
 msgstr "Connecté en tant que "
 
-#: share/templates/base.html:39
-#: share/templates/aptrepo/logout.html:4
+#: share/templates/base.html:39 share/templates/aptrepo/logout.html:4
 #: src/server/aptrepo/views/webpages/pages.py:167
 msgid "Logout"
 msgstr "Déconnexion"
@@ -77,51 +75,51 @@ msgstr "Contacter:"
 msgid "History"
 msgstr "Histoire"
 
-#: share/templates/aptrepo/history.html:19
+#: share/templates/aptrepo/history.html:18
 msgid "Recent history for "
 msgstr "Historique récente pour"
 
-#: share/templates/aptrepo/history.html:20
+#: share/templates/aptrepo/history.html:19
 msgid "Simple"
 msgstr "Simple"
 
-#: share/templates/aptrepo/history.html:21
+#: share/templates/aptrepo/history.html:20
 msgid "Table"
 msgstr "Table"
 
-#: share/templates/aptrepo/history.html:54
+#: share/templates/aptrepo/history.html:53
 msgid "Time"
 msgstr "Temps"
 
-#: share/templates/aptrepo/history.html:55
+#: share/templates/aptrepo/history.html:54
 msgid "User"
 msgstr "Utilisateur"
 
-#: share/templates/aptrepo/history.html:56
+#: share/templates/aptrepo/history.html:55
 msgid "Package"
 msgstr "Paquet"
 
-#: share/templates/aptrepo/history.html:57
+#: share/templates/aptrepo/history.html:56
 #: share/templates/aptrepo/packages_index.html:8
 #: share/templates/aptrepo/section_contents.html:7
 msgid "Version"
 msgstr "Version"
 
-#: share/templates/aptrepo/history.html:58
+#: share/templates/aptrepo/history.html:57
 #: share/templates/aptrepo/packages_index.html:9
 #: share/templates/aptrepo/section_contents.html:8
 msgid "Architecture"
 msgstr "Architecture"
 
-#: share/templates/aptrepo/history.html:59
+#: share/templates/aptrepo/history.html:58
 msgid "Links"
 msgstr "Liens"
 
-#: share/templates/aptrepo/history.html:60
+#: share/templates/aptrepo/history.html:59
 msgid "Comment"
 msgstr "Commentaire"
 
-#: share/templates/aptrepo/history.html:108
+#: share/templates/aptrepo/history.html:107
 msgid "Also available in:"
 msgstr "Aussi disponible en:"
 
@@ -167,15 +165,15 @@ msgstr "Paquet"
 msgid "Download"
 msgstr "Télécharge"
 
-#: share/templates/aptrepo/page_navigator.html:16
+#: share/templates/aptrepo/page_navigator.html:14
 msgid "<< Previous"
 msgstr "<< Précédent"
 
-#: share/templates/aptrepo/page_navigator.html:28
+#: share/templates/aptrepo/page_navigator.html:26
 msgid "Next >>"
 msgstr "Prochain >>"
 
-#: share/templates/aptrepo/page_navigator.html:38
+#: share/templates/aptrepo/page_navigator.html:30
 msgid "Per page:"
 msgstr "Par page:"
 
@@ -229,7 +227,8 @@ msgid ""
 "Check this box and click 'Save' to restrict write access for this section to "
 "the selected users and groups below<br/> Uncheck this box and click 'Save' "
 "to provide write access for this section to anyone (default)"
-msgstr "Cochez cette case et cliquez 'Enregistrer' pour limiter l'écriture  à cette "
+msgstr ""
+"Cochez cette case et cliquez 'Enregistrer' pour limiter l'écriture  à cette "
 "sectionpour les utilisateurs et les groupes sélectionnés ci-dessous<br/"
 ">Décochez cette case et cliquez 'Enregistrer' pour fournir l'écriture  à "
 "cette section à n'importe qui (le défaut)"
@@ -248,7 +247,8 @@ msgstr ""
 
 #: src/server/aptrepo/management/commands/import.py:13
 msgid "Imports package files from a local directory into the repository"
-msgstr "Importera des fichiers de paquet à partir d'un répertoire local dans le dépôt"
+msgstr ""
+"Importera des fichiers de paquet à partir d'un répertoire local dans le dépôt"
 
 #: src/server/aptrepo/management/commands/import.py:19
 msgid "Check all subdirectories for packages"
@@ -278,12 +278,14 @@ msgstr ""
 #: src/server/aptrepo/management/commands/prune.py:13
 msgid ""
 "Removes old package versions from the specific sections in the repository"
-msgstr "Supprime les paquets avec les anciennes versions des sections spécifiées "
+msgstr ""
+"Supprime les paquets avec les anciennes versions des sections spécifiées "
 "dans le dépot"
 
 #: src/server/aptrepo/management/commands/prune.py:24
 msgid "Ignore packages whose architecture is invalid for the distribution"
-msgstr "Ignorer les paquets dont l'architecture n'est pas valide pour la distribution"
+msgstr ""
+"Ignorer les paquets dont l'architecture n'est pas valide pour la distribution"
 
 #: src/server/aptrepo/util/__init__.py:9
 msgid "Unknown error"
@@ -303,11 +305,13 @@ msgstr "Extension non valide: {ext}"
 
 #: src/server/aptrepo/views/repository.py:191
 msgid "Invalid architecture for distribution ({dist}) : {arch}"
-msgstr "L'architecture n'était pas valide pour la distribution ({dist}) : {arch}"
+msgstr ""
+"L'architecture n'était pas valide pour la distribution ({dist}) : {arch}"
 
 #: src/server/aptrepo/views/repository.py:210
 msgid "({name}, {version}, {arch}) already exist with different file contents"
-msgstr "({name}, {version}, {arch}) existe déjà avec un contenu de fichiers "
+msgstr ""
+"({name}, {version}, {arch}) existe déjà avec un contenu de fichiers "
 "différents"
 
 #: src/server/aptrepo/views/repository.py:248
@@ -366,7 +370,8 @@ msgstr "L'instance de paquet inconnu: {0}"
 msgid ""
 "Package instance not found in section {section} matching criteria: ({name},"
 "{version},{architecture})"
-msgstr "L'instance de paquet inconnu dams section {section} avec critères: ({name},"
+msgstr ""
+"L'instance de paquet inconnu dams section {section} avec critères: ({name},"
 "{version},{architecture})"
 
 #: src/server/aptrepo/views/api/handlers.py:227
@@ -440,4 +445,3 @@ msgstr "Distributions"
 #: src/server/aptrepo/views/webpages/pages.py:289
 msgid "Recent History"
 msgstr "Activités Récentes"
-

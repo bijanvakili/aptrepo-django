@@ -7,10 +7,5 @@ div#nav_pages_pagelinks {
 	float: left;
 	width: 40%;
 	text-align: left;
-}
-
-div#nav_pages_countperpage {
-	float: left;
-	width: 20%;
-	text-align: center;
+	line-height: 1.5em;
 }

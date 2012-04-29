@@ -25,17 +25,12 @@
 			{% if page_navigate.has_next %}
 				<a href="{{ page_navigate.next_page_link }}">{% trans "Next >>" %}</a>
 			{% endif %}
-			
+			<br/>
 			{# (page_min-page_max/total) for items #}
-			<span>{{ page_navigate.position_summary }}</span>
-		
-	</div>
-	
-	<div id="nav_pages_countperpage">
-		{% trans "Per page:" %}
-		{% for item in urls.change_pagination_links %}
-			<a href="{{ item.url }}">{{ item.limit }}</a><span> </span>
-		{% endfor %}
+			{{ page_navigate.position_summary }} | {% trans "Per page:" %}
+			{% for item in urls.change_pagination_links %}
+				<a href="{{ item.url }}">{{ item.limit }}</a><span> </span>
+			{% endfor %}
 	</div>
 {% endif %}
 
