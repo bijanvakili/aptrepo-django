@@ -41,10 +41,11 @@ class BaseRepositoryFeed(Feed):
         """
         Extract query limit parameters
         """
+        self.offset = request.GET.get('offset', 0)
         self.limit = request.GET.get('limit', settings.APTREPO_PAGINATION_LIMITS[0])
         
     def _constrain_result(self, result):
-        return result.reverse()[:self.limit]
+        return result[self.offset:].reverse()[:self.limit]
             
 
 # TODO Try and collapse the Repository, Distribution and Feed classes into one class which behaves based
