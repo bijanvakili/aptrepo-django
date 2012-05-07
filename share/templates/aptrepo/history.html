@@ -80,14 +80,10 @@
 		// set the callbacks for the view type radio buttons
 		var viewTypeForm = $('div#history_header > form')
 		viewTypeForm.find('input[name="view_type"][value="simple"]').click( function() {
-			{% autoescape off %}
-			window.location.href = '{{ urls.view_simple }}';
-			{% endautoescape %}
+			window.location.href = '{{ urls.view_simple|safe }}';
 		});
 		viewTypeForm.find('input[name="view_type"][value="table"]').click( function() {
-			{% autoescape off %}
-			window.location.href = '{{ urls.view_table }}';
-			{% endautoescape %} 
+			window.location.href = '{{ urls.view_table|safe }}';
 		});
 		
 		// set the current view type radio button

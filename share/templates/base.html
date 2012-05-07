@@ -58,7 +58,7 @@
 	    		<a href="/aptrepo">{% trans "Home" %}</a>
 	    		
 	    		{% for crumb in breadcrumbs %}
-	    			<span>&nbsp;&gt;&nbsp;</span>{% autoescape off %}{{ crumb.get_html_tag }}{% endautoescape %}
+	    			<span>&nbsp;&gt;&nbsp;</span>{{ crumb.get_html_tag|safe }}
 	    		{% endfor %}
 	    		
 	    	</div>

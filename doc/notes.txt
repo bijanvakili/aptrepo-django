@@ -28,6 +28,7 @@ Next -> 0.02
 	> memcached
 - consider denormalizing (package,version,arch) at the instance level instead of the package level
 	> this may help reduce the number of SQL joins
+- .csv export for wherever there is an syndication feed
 - proper UI images & polished layout
 - load settings from etc directory
 - testing
