@@ -9,7 +9,8 @@ Current -> 0.01
 	> copy package
 	> top level search
 	> UI history
-- restrict admin access	
+- restrict admin access
+- centralize URL generation	
 - consider renaming 'prune' admin command to 'cleanup' (subclass the django.core command)
 - packaging/distribution
 	> Debian packages
@@ -135,6 +136,7 @@ URL DESIGN:
 		/packages
 			/<id>												(GET,DELETE)
 			/deb822/<name>/<version>/<architecture>				(GET,DELETE)
+				/deb
 			
 		/package-instances
 				/<id>			(GET, DELETE)

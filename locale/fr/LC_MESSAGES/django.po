@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-05-21 12:17-0400\n"
+"POT-Creation-Date: 2012-05-21 16:46-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,7 +25,7 @@ msgstr "Cette page n'a pas été trouvée"
 msgid "We're sorry, but the requested page could not be found."
 msgstr "Nous sommes désolés, mais la page demandée est introuvable."
 
-#: share/templates/500.html:4 share/templates/base.html:58
+#: share/templates/500.html:4 share/templates/base.html:59
 msgid "Home"
 msgstr "Accueil"
 
@@ -50,24 +50,24 @@ msgstr ""
 "administrateurs du site et sera corrigée dans les meilleurs délais. Merci "
 "pour votre patience."
 
-#: share/templates/base.html:32
+#: share/templates/base.html:33
 msgid "Logged in as "
 msgstr "Connecté en tant que "
 
-#: share/templates/base.html:39 share/templates/aptrepo/logout.html:4
+#: share/templates/base.html:40 share/templates/aptrepo/logout.html:4
 #: src/server/aptrepo/views/webpages/pages.py:167
 msgid "Logout"
 msgstr "Déconnexion"
 
-#: share/templates/base.html:41
+#: share/templates/base.html:42
 msgid "Login"
 msgstr "Connexion"
 
-#: share/templates/base.html:50
+#: share/templates/base.html:51
 msgid "Search"
 msgstr "Cherche"
 
-#: share/templates/base.html:79
+#: share/templates/base.html:80
 msgid "Contact: "
 msgstr "Contacter:"
 
@@ -75,51 +75,51 @@ msgstr "Contacter:"
 msgid "History"
 msgstr "Histoire"
 
-#: share/templates/aptrepo/history.html:19
+#: share/templates/aptrepo/history.html:21
 msgid "Recent history for"
 msgstr "Historique récente pour"
 
-#: share/templates/aptrepo/history.html:20
+#: share/templates/aptrepo/history.html:22
 msgid "Simple"
 msgstr "Simple"
 
-#: share/templates/aptrepo/history.html:21
+#: share/templates/aptrepo/history.html:23
 msgid "Table"
 msgstr "Table"
 
-#: share/templates/aptrepo/history.html:54
+#: share/templates/aptrepo/history.html:56
 msgid "Time"
 msgstr "Temps"
 
-#: share/templates/aptrepo/history.html:55
+#: share/templates/aptrepo/history.html:57
 msgid "User"
 msgstr "Utilisateur"
 
-#: share/templates/aptrepo/history.html:56
+#: share/templates/aptrepo/history.html:58
 msgid "Package"
 msgstr "Paquet"
 
-#: share/templates/aptrepo/history.html:57
+#: share/templates/aptrepo/history.html:59
 #: share/templates/aptrepo/packages_index.html:8
 #: share/templates/aptrepo/section_contents.html:7
 msgid "Version"
 msgstr "Version"
 
-#: share/templates/aptrepo/history.html:58
+#: share/templates/aptrepo/history.html:60
 #: share/templates/aptrepo/packages_index.html:9
 #: share/templates/aptrepo/section_contents.html:8
 msgid "Architecture"
 msgstr "Architecture"
 
-#: share/templates/aptrepo/history.html:59
+#: share/templates/aptrepo/history.html:61
 msgid "Links"
 msgstr "Liens"
 
-#: share/templates/aptrepo/history.html:60
+#: share/templates/aptrepo/history.html:62
 msgid "Comment"
 msgstr "Commentaire"
 
-#: share/templates/aptrepo/history.html:108
+#: share/templates/aptrepo/history.html:113
 msgid "Also available in:"
 msgstr "Aussi disponible en:"
 

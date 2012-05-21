@@ -1,12 +1,17 @@
+{% load i18n %}
 {% load url_extras %}
 
 <!-- TODO make image links work -->
 {# {% if action.package %} #}
-	<a href="" class="history_icon">
+	<a class="history_icon">
 		<img src="{% raster_image_url '16x16/info.png' %}" />
 	</a>
 	
-	<a href="" class="history_icon">
+	<a href="" class="history_icon"
+		package_name="{{ action.package_name }}" version="{{ action.version }}"
+		architecture="{{ action.architecture }}"
+		link_type="download"
+	>
 		<img src="{% raster_image_url '16x16/download.png' %}" />
 	</a>
 {# {% endif %} #}

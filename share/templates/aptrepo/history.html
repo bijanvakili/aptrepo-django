@@ -7,6 +7,8 @@
 
 {% block head %}
 <link rel="stylesheet" type="text/css" href="{% static_media_url 'css/history.css' %}" />
+<script type="text/javascript" src="{% static_media_url "js/aptrepo.js" %}">
+</script>
 {% endblock %}
 
 {% block body %}
@@ -95,6 +97,9 @@
 		viewTypeForm.find(
 			'input[name="view_type"][value="{{ view_type }}"]'
 		).attr('checked', true);
+		
+		// set the download links
+		$('a.history_icon[link_type="download"]').click( download_package );
 	});
 	
 </script>

@@ -30,7 +30,8 @@ L10N_MESSAGES=$(shell find locale/ -name \*.po -print)
 L10N_BINARIES=$(patsubst %.po, %.mo, $(L10N_MESSAGES)) 
 
 $(L10N_BINARIES): $(L10N_SOURCES) $(L10N_MESSAGES)
-	$(DJANGO_ADMINCMD) makemessages -a 
+	$(DJANGO_ADMINCMD) makemessages -a -d django 
+	$(DJANGO_ADMINCMD) makemessages -a -d djangojs
 	$(DJANGO_ADMINCMD) compilemessages
 
 localize: $(L10N_BINARIES)
