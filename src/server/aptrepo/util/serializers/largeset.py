@@ -38,8 +38,8 @@ class LargeDatasetGenerator(object):
         control_map['Priority'] = package_defaults['priority']
         control_map['Architecture'] = self.default_architecture
         control_map['Maintainer'] = 'Bijan Vakili <bvakili@oanda.com>'
-        control_map['Package'] = package_defaults['name-prefix'] + str(self.curr_package)
-        control_map['Version'] = '1.{0:03d}'.format(self.curr_package)
+        control_map['Package'] = self._get_package_name(self.curr_package)
+        control_map['Version'] = self._get_package_version(self.curr_package)
         control_map['Description'] = str(self.curr_package)
         
         data = {'pk' : self.curr_package}
@@ -82,16 +82,25 @@ class LargeDatasetGenerator(object):
         upload_defaults = self.params['defaults']['upload']
         data = {'pk': self.curr_action }
         data['model'] = 'aptrepo.action'
-        fields = {'section': upload_defaults['section'] }
-        fields['action'] = models.Action.UPLOAD
-        fields['package'] = self.curr_action
+        fields = {'target_section': upload_defaults['section'] }
+        fields['action_type'] = models.Action.UPLOAD
+        
         fields['user'] = upload_defaults['creator']
         fields['comment'] = upload_defaults['comment']
-        fields['summary'] = "TODO Replace this summary text!"
+        
+        fields['package_name'] = self._get_package_name(self.curr_action)
+        fields['version'] = self._get_package_version(self.curr_action)
+        fields['architecture'] = self.default_architecture
         data['fields'] = fields
         
         self.curr_action += 1
         return data
+    
+    def _get_package_name(self, index):
+        return self.params['defaults']['package']['name-prefix'] + str(index)
+    
+    def _get_package_version(self, index):
+        return '1.{0:03d}'.format(index)
         
     def __iter__(self):
         return self

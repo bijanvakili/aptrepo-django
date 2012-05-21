@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% load action_tags %}
 {% load url_extras %}
 
 {% block title %}{% trans 'History' %} | {{ current_area.description }}{% endblock %}
@@ -15,7 +16,7 @@
 	{# Select between view types #}
 	<form method="get">
 		{% csrf_token %}
-		{% trans "Recent history for "%}<a href="{{ current_area.link }}">{{ current_area.description }}</a>
+		{% trans "Recent history for"%} <a href="{{ current_area.link }}">{{ current_area.description }}</a>
 		<input type="radio" name="view_type" value="simple">{% trans "Simple" %} </input>  
 		<input type="radio" name="view_type" value="table">{% trans "Table" %} </input>
 	</form>
@@ -29,17 +30,18 @@
 	{# simple view #}
 	{% if view_type == "simple" %}
 		{% for action in actions %}
-			<div class="history_item_timestamp">{{ action.timestamp }}</div>
+			<div>{{ action.timestamp }}</div>
 			
-			<div class="history_item_description">
-				<!-- TODO Find out how to HTML format the action.summary -->
-				<span class="history_item_summary">{{ action.summary }}</span>
+			<div>
+				{% summarize_action action %}
 				{% include "aptrepo/history_item_links.html" %}
 			</div>
-			
-			<div class="history_item_comment">
-				{{ action.comment }}
-			</div>
+
+			{% if action.comment %}
+				<div class="history_item_comment_line">
+					<span class="history_item_comment">{{ action.comment }}</span>
+				</div>
+			{% endif %}
 			<br/>
 		{% endfor %}
 	
@@ -47,8 +49,7 @@
 	
 	{# table view #}
 	{% if view_type == "table" %}
-	
-		<table class="history_table">
+		<table id="history_table">
 			<tr>
 				<th>{% trans "Time" %}</th>
 				<th>{% trans "User" %}</th>
@@ -62,11 +63,15 @@
 				<tr>
 					<td>{{ action.timestamp }}</td>
 					<td>{{ action.user }}</td>
-					<td>{{ action.package.package_name }}</td>
-					<td>{{ action.package.version }}</td>
-					<td>{{ action.package.architecture }}</td>
+					<td>{{ action.package_name }}</td>
+					<td>{{ action.version }}</td>
+					<td>{{ action.architecture }}</td>
 					<td>{% include "aptrepo/history_item_links.html" %}</td>
-					<td>{{ action.summary }}<br/>{{ action.comment }}</td>
+					<td>{% summarize_sections_for_action action %}
+						{% if action.comment %}
+						<br/><span class="history_item_comment">{{ action.comment }}</span>
+						{% endif %}
+					</td>
 				</tr>
 			{% endfor %}
 		</table>

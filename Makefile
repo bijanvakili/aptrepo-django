@@ -64,7 +64,7 @@ testserver: build dbinit
 	
 # Output TODO items from source code
 todos:
-	@grep -R TODO src/* share/* test/*
+	@grep -R TODO src/* share/* test/* | grep -v ^share/media/js/jquery
 
 
 .PHONY: clean unittest testserver build images localize dbinit todos

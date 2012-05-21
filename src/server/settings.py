@@ -133,16 +133,19 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "aptrepo.views.common_template_variables",
 )
 
-MIDDLEWARE_CLASSES = (
+middleware_list = [
     'django.contrib.sessions.middleware.SessionMiddleware',
-
-#    (disabling LocaleMiddleware for development purposes)
-#    'django.middleware.locale.LocaleMiddleware',
-
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',    
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-)
+]
+
+# remove LocaleMiddleware if APTREPO_LANGUAGE is specified for debugging purposes
+if 'APTREPO_LANGUAGE' in os.environ:
+    middleware_list.remove('django.middleware.locale.LocaleMiddleware')
+
+MIDDLEWARE_CLASSES = tuple(middleware_list)
 
 ROOT_URLCONF = 'server.urls'
 

@@ -5,6 +5,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.utils.translation import ugettext as _
+from server.aptrepo.util import AptRepoException
 
 def nowhitespace(value):
     """
@@ -160,29 +161,31 @@ class PackageInstance(models.Model):
 class Action(models.Model):
     """
     Loggable actions on the apt repo
+    (contains denormalized data to avoid joins and broken references upon delete)
     """
     UPLOAD, DELETE, PRUNE, COPY = range(4)
     MAX_COMMENT_LENGTH = 1024
     
     _ACTION_TYPE_CHOICES = (
-        (UPLOAD, 'upload'),
-        (DELETE, 'delete'),
-        (PRUNE, 'prune'),
-        (COPY, 'copy')
+        (UPLOAD, 'uploaded'),
+        (DELETE, 'deleted'),
+        (PRUNE, 'pruned'),
+        (COPY, 'copied')
     )
 
-    section = models.ForeignKey('Section', db_index=True)
     timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
-    action = models.IntegerField(choices=_ACTION_TYPE_CHOICES)
+    action_type = models.IntegerField(choices=_ACTION_TYPE_CHOICES)
     user = models.CharField(max_length=255)
     comment = models.TextField(null=True, max_length=MAX_COMMENT_LENGTH)
+    target_section = models.ForeignKey(Section, related_name='+', db_index=True)
+    source_section = models.ForeignKey(Section, related_name='+', null=True)
     
-    # if the package instance still exists, use the 'instance' weak reference 
-    # to retrieve all data and links.  Otherwise, use the summary field
-    # which contains denormalized data
-    package = models.ForeignKey(Package, blank=True, null=True, default=None,
-                                on_delete=models.SET_NULL)
-    summary = models.TextField()
+    # denormalized fields
+    package_name = models.CharField(max_length=255)
+    architecture = models.CharField(max_length=255)
+    version = models.CharField(max_length=255)
     
     def __unicode__(self):
-        return '({0}) {1}:{2}'.format(self.timestamp, self.user, self.action)
+        return '({0}) {1}:{2}'.format(self.timestamp, 
+                                      self.user, 
+                                      Action._ACTION_TYPE_CHOICES(self.action_type))

@@ -98,7 +98,7 @@ class PruningTest(BaseAptRepoTest):
         # ensure the number of actions for the section meets the limit
         section = models.Section.objects.get(id=self.section_id)
         if section.action_prune_limit > 0:
-            num_actions = models.Action.objects.filter(section=section).count()
+            num_actions = models.Action.objects.filter(target_section=section).count()
             self.assertTrue(num_actions <= section.action_prune_limit, "Too many actions")
     
     def _make_tuple_list(self, architecture, version_list):

@@ -36,9 +36,9 @@ class Breadcrumb():
         
     def get_html_tag(self):
         if self.link:
-            return '<a href="{link}">{description}</a>'.format(description=self.description, link=self.link)
+            return u'<a href="{link}">{description}</a>'.format(description=self.description, link=self.link)
         else:
-            return '<span>{0}</span>'.format(self.description)
+            return u'<span>{0}</span>'.format(self.description)
 
 class PageNavigation():
     """

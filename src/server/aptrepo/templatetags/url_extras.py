@@ -1,6 +1,5 @@
 from django.conf import settings
 from django import template 
-import HTMLParser
 
 register = template.Library()
 

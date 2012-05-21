@@ -1,15 +1,10 @@
 /* History header */
-div#history_header>form>* {
+#history_header>form>* {
 	vertical-align: bottom;
 	margin-top: 0px;
 }
 
 /* History content styles */
-
-/* TODO Forcing alignment to middle isn't exactly working here */
-div.history_item_description,div.history_item_description>* {
-	vertical-align: middle;
-}
 a.history_icon {
 	text-decoration: none;
 }
@@ -17,14 +12,29 @@ a.history_icon>img {
 	vertical-align: top;	
 }
 
-div.history_item_comment {
-	padding-left: 5em;
+div.history_item_comment_line {
+	padding-left: 2em;	
+}
+
+.history_item_comment {
 	font-style: italic;
 	color: #3f3f3f;
 }
 
+.history_item_user {
+	font-weight: bold;	
+}
+
+.history_item_package_name,.history_item_version {
+	color: #00007f;	
+}
+
+.history_item_architecture {
+	font-style: italic;	
+}
+
 /* Table styles */
-table.history_table {
+#history_table {
     border-width: 2px;
     border-style: solid;
     border-color: black;
@@ -33,12 +43,12 @@ table.history_table {
     padding: 0;
 }
 
-table.history_table th {
+#history_table th {
     color: #ffffff;
     background-color: #7f7f7f;
 }
 
-table.history_table td,th {
+#history_table td,th {
 	border-width: 1px;
     border-style: solid;
     border-color: black;
@@ -46,12 +56,21 @@ table.history_table td,th {
     padding: 5px;
 }
 
-table.history_table tr:nth-child(odd) {
+#history_table tr:nth-child(odd) {
 	background-color: #2fafaf;
 }
 
+/* Adjust alignment for (4th) version and (5th) architecture columns */
+#history_table td:nth-child(4) {
+	text-align: right;
+}
+
+#history_table td:nth-child(5) {
+	text-align: center;
+}
+
 /* Syndication link group */
-div#feed_links {
+#feed_links {
 	float: right;
 	text-align: right;
 	padding-bottom: 0.5em;

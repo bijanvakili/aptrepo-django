@@ -245,11 +245,8 @@ class Repository():
             package=package, section=section, creator=self._get_username())[0]
         
         # record an upload action
-        summary = _('{creator} added package {package}').format(creator=package_instance.creator,
-                                                                package=package)
         self._record_action(models.Action.UPLOAD, 
                             section,
-                            summary,
                             package=package,
                             comment=kwargs.get('comment'))
         
@@ -332,17 +329,11 @@ class Repository():
                                                                  creator=self._get_username())
         
         # insert action for clone
-        summary = _('{creator} cloned package {package} ').format(
-            creator=package_instance.creator, package=src_package)
-        if src_section:
-            summary = summary + _(' from {src_section} to {dest_section}').format(src_section, dest_section)
-        else:
-            summary = summary + _(' into {0}').format(dest_section)
-        self._record_action(models.Action.COPY,
-                            dest_section, 
-                            summary,
+        self._record_action(action_type=models.Action.COPY,
+                            target_section=dest_section, 
                             package=src_package,
-                            comment=comment)
+                            comment=comment,
+                            source_section=src_section)
         
         self._clear_cache(dest_section.distribution.name)
         return package_instance.id
@@ -376,9 +367,7 @@ class Repository():
         self._clear_cache(section.distribution.name)
         
         # insert action for removal
-        summary = _('{user} removed package {package} from {section}').format(
-            user=self._get_username(), package=package, section=section) 
-        self._record_action(models.Action.DELETE, section, summary, comment=comment)
+        self._record_action(models.Action.DELETE, section, package, comment=comment)
         
         
     def remove_all_package_instances(self, package_id, comment=None):
@@ -411,9 +400,9 @@ class Repository():
         # construct query based on restrictions
         query_args = []
         if 'section_id' in args:
-            query_args.append(Q(section__id=args['section_id']))
+            query_args.append(Q(target_section__id=args['section_id']))
         elif 'distribution_id' in args:
-            query_args.append(Q(section__distribution__id=args['distribution_id']))
+            query_args.append(Q(target_section__distribution__id=args['distribution_id']))
             
         if 'min_ts' in args:
             query_args.append(Q(timestamp__gte=args['min_ts']))
@@ -432,9 +421,9 @@ class Repository():
         # construct the query based on the restrictions
         query_args = []
         if distribution_name:
-            query_args.append(Q(section__distribution__name=distribution_name))
+            query_args.append(Q(target_section__distribution__name=distribution_name))
             if section_name:
-                query_args.append(Q(section__name=section_name))
+                query_args.append(Q(target_section__name=section_name))
                 self.logger.debug(' for section {0}:{1}'.format(distribution_name, section_name))
             else:
                 self.logger.debug(' for distribution {0}'.format(distribution_name))
@@ -537,22 +526,22 @@ class Repository():
                                      section.name)
                     if not dry_run:
                         instance.delete()
+                        self._record_action(models.Action.PRUNE, section, instance.package)
                         
             
-            # if pruning occurred, record an action and marked distributions caches to be refresh and update
+            # if pruning occurred, log a summary and marked distributions caches to be refresh and update
             # any aggregate measures
-            summary = '{0} instances pruned from section {1}'.format(num_instances_pruned, section) 
             if num_instances_pruned > 0:
                 pruned_distribution_names.add(section.distribution.name)
                 total_instances_pruned += num_instances_pruned
-                self._record_action(models.Action.PRUNE, section, summary)
 
+            summary = '{0} instances pruned from section {1}'.format(num_instances_pruned, section)
             self.logger.info(summary)
 
                 
             # prune actions for the section            
             if section.action_prune_limit > 0:
-                actions_to_prune = models.Action.objects.filter(section=section)
+                actions_to_prune = models.Action.objects.filter(target_section=section)
                 actions_to_prune = actions_to_prune.order_by('-timestamp')[section.action_prune_limit:]
                 
                 num_actions_pruned = 0
@@ -876,28 +865,32 @@ class Repository():
         else:
             return self.user.username
 
-    def _record_action(self, action_type, section, summary,
-                       package=None, comment=None):
+    def _record_action(self, action_type, target_section, package, 
+                       comment=None, source_section=None):
         """
         Common internal method to record repository actions
         
-        package_instance -- instance for which the action is applied
         action_type -- the action type (see models.Action constants)
-        package -- optional package object to reference
+        package -- package for which the action is applied
         comment -- optional user-defined comment
+        
         """
         action = models.Action()
-        action.section = section
+        action.action_type = action_type
         action.user = self._get_username()
-        action.action = action_type
-        action.package = package
-        action.summary = summary
+        action.target_section = target_section
+
+        action.package_name = package.package_name
+        action.architecture = package.architecture
+        action.version = package.version
 
         if comment:
             action.comment = comment
+        if source_section:
+            action.source_section = source_section
         self.logger.debug(
             'Recording action {0} for section {1}'.format(
-                str(action), str(section)
+                str(action_type), str(target_section)
             )
         )
         action.save()

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-04-30 20:26-0400\n"
+"POT-Creation-Date: 2012-05-21 12:17-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -71,55 +71,55 @@ msgstr "Cherche"
 msgid "Contact: "
 msgstr "Contacter:"
 
-#: share/templates/aptrepo/history.html:5
+#: share/templates/aptrepo/history.html:6
 msgid "History"
 msgstr "Histoire"
 
-#: share/templates/aptrepo/history.html:18
-msgid "Recent history for "
+#: share/templates/aptrepo/history.html:19
+msgid "Recent history for"
 msgstr "Historique récente pour"
 
-#: share/templates/aptrepo/history.html:19
+#: share/templates/aptrepo/history.html:20
 msgid "Simple"
 msgstr "Simple"
 
-#: share/templates/aptrepo/history.html:20
+#: share/templates/aptrepo/history.html:21
 msgid "Table"
 msgstr "Table"
 
-#: share/templates/aptrepo/history.html:53
+#: share/templates/aptrepo/history.html:54
 msgid "Time"
 msgstr "Temps"
 
-#: share/templates/aptrepo/history.html:54
+#: share/templates/aptrepo/history.html:55
 msgid "User"
 msgstr "Utilisateur"
 
-#: share/templates/aptrepo/history.html:55
+#: share/templates/aptrepo/history.html:56
 msgid "Package"
 msgstr "Paquet"
 
-#: share/templates/aptrepo/history.html:56
+#: share/templates/aptrepo/history.html:57
 #: share/templates/aptrepo/packages_index.html:8
 #: share/templates/aptrepo/section_contents.html:7
 msgid "Version"
 msgstr "Version"
 
-#: share/templates/aptrepo/history.html:57
+#: share/templates/aptrepo/history.html:58
 #: share/templates/aptrepo/packages_index.html:9
 #: share/templates/aptrepo/section_contents.html:8
 msgid "Architecture"
 msgstr "Architecture"
 
-#: share/templates/aptrepo/history.html:58
+#: share/templates/aptrepo/history.html:59
 msgid "Links"
 msgstr "Liens"
 
-#: share/templates/aptrepo/history.html:59
+#: share/templates/aptrepo/history.html:60
 msgid "Comment"
 msgstr "Commentaire"
 
-#: share/templates/aptrepo/history.html:103
+#: share/templates/aptrepo/history.html:108
 msgid "Also available in:"
 msgstr "Aussi disponible en:"
 
@@ -210,19 +210,19 @@ msgstr "'settings.py' est introuvable ou non valide"
 msgid "Prune"
 msgstr "Tailler"
 
-#: src/server/aptrepo/models.py:14
+#: src/server/aptrepo/models.py:15
 msgid "'{0}' contains whitespace"
 msgstr "'{0}' contient des espaces blancs"
 
-#: src/server/aptrepo/models.py:130
+#: src/server/aptrepo/models.py:131
 msgid "Maximum package versions to keep"
 msgstr "Nombre de paquets à garder"
 
-#: src/server/aptrepo/models.py:132
+#: src/server/aptrepo/models.py:133
 msgid "Maximum actions to keep"
 msgstr "Nombre d'actions à garder"
 
-#: src/server/aptrepo/models.py:136
+#: src/server/aptrepo/models.py:137
 msgid ""
 "Check this box and click 'Save' to restrict write access for this section to "
 "the selected users and groups below<br/> Uncheck this box and click 'Save' "
@@ -287,6 +287,50 @@ msgid "Ignore packages whose architecture is invalid for the distribution"
 msgstr ""
 "Ignorer les paquets dont l'architecture n'est pas valide pour la distribution"
 
+#: src/server/aptrepo/templatetags/action_tags.py:28
+msgid ""
+"{user} uploaded {package_name} version {version}             "
+"({architecture}) to {target_section}"
+msgstr ""
+"{user} a téléchargé {package_name} avec version {version}             "
+"({architecture}) à {target_section}"
+
+#: src/server/aptrepo/templatetags/action_tags.py:31
+msgid ""
+"{user} deleted {package_name} version {version}             ({architecture}) "
+"from {target_section}"
+msgstr ""
+"{user} a supprimé {package_name} avec version {version}             "
+"({architecture}) de {target_section}"
+
+#: src/server/aptrepo/templatetags/action_tags.py:34
+msgid ""
+"{user} cloned {package_name} version {version}             ({architecture}) "
+"from {source_section} to {target_section}"
+msgstr ""
+"{user} a copié {package_name} avec version {version} ({architecture}) de "
+"{source_section} à {target_section}"
+
+#: src/server/aptrepo/templatetags/action_tags.py:37
+msgid ""
+"{package_name} version {version} ({architecture}) pruned             from "
+"{target_section}"
+msgstr ""
+"{package_name} avec version {version} ({architecture}) été taillé de "
+"{target_section}"
+
+#: src/server/aptrepo/templatetags/action_tags.py:52
+msgid "To {target_section}"
+msgstr "À {target_section}"
+
+#: src/server/aptrepo/templatetags/action_tags.py:54
+msgid "From {target_section}"
+msgstr "De {target_section}"
+
+#: src/server/aptrepo/templatetags/action_tags.py:56
+msgid "From {source_section} to {target_section}"
+msgstr " De {source_section} à {target_section}"
+
 #: src/server/aptrepo/util/__init__.py:9
 msgid "Unknown error"
 msgstr "Erreur inconnue"
@@ -314,31 +358,11 @@ msgstr ""
 "({name}, {version}, {arch}) existe déjà avec un contenu de fichiers "
 "différents"
 
-#: src/server/aptrepo/views/repository.py:248
-msgid "{creator} added package {package}"
-msgstr "{creator} a  ajouté le paquet {package}"
-
-#: src/server/aptrepo/views/repository.py:324
+#: src/server/aptrepo/views/repository.py:321
 msgid "Cannot clone into the same section"
 msgstr "Impossible de cloner dans la même section"
 
-#: src/server/aptrepo/views/repository.py:335
-msgid "{creator} cloned package {package} "
-msgstr "{creator} a  cloné le paquet {package}"
-
-#: src/server/aptrepo/views/repository.py:338
-msgid " from {src_section} to {dest_section}"
-msgstr " de {src_section} à {dest_section}"
-
-#: src/server/aptrepo/views/repository.py:340
-msgid " into {0}"
-msgstr "en {0}"
-
-#: src/server/aptrepo/views/repository.py:379
-msgid "{user} removed package {package} from {section}"
-msgstr "{user} a supprimé le paquet {package} de {section}"
-
-#: src/server/aptrepo/views/repository.py:843
+#: src/server/aptrepo/views/repository.py:832
 msgid "Unauthorized action: {action}"
 msgstr "Action non autorisée: {action}"
 
