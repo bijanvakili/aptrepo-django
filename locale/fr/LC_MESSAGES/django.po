@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-05-21 16:46-0400\n"
+"POT-Creation-Date: 2012-05-25 00:30-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -75,51 +75,51 @@ msgstr "Contacter:"
 msgid "History"
 msgstr "Histoire"
 
-#: share/templates/aptrepo/history.html:21
+#: share/templates/aptrepo/history.html:23
 msgid "Recent history for"
 msgstr "Historique récente pour"
 
-#: share/templates/aptrepo/history.html:22
+#: share/templates/aptrepo/history.html:24
 msgid "Simple"
 msgstr "Simple"
 
-#: share/templates/aptrepo/history.html:23
+#: share/templates/aptrepo/history.html:25
 msgid "Table"
 msgstr "Table"
 
-#: share/templates/aptrepo/history.html:56
+#: share/templates/aptrepo/history.html:58
 msgid "Time"
 msgstr "Temps"
 
-#: share/templates/aptrepo/history.html:57
+#: share/templates/aptrepo/history.html:59
 msgid "User"
 msgstr "Utilisateur"
 
-#: share/templates/aptrepo/history.html:58
+#: share/templates/aptrepo/history.html:60
 msgid "Package"
 msgstr "Paquet"
 
-#: share/templates/aptrepo/history.html:59
+#: share/templates/aptrepo/history.html:61
 #: share/templates/aptrepo/packages_index.html:8
 #: share/templates/aptrepo/section_contents.html:7
 msgid "Version"
 msgstr "Version"
 
-#: share/templates/aptrepo/history.html:60
+#: share/templates/aptrepo/history.html:62
 #: share/templates/aptrepo/packages_index.html:9
 #: share/templates/aptrepo/section_contents.html:8
 msgid "Architecture"
 msgstr "Architecture"
 
-#: share/templates/aptrepo/history.html:61
+#: share/templates/aptrepo/history.html:63
 msgid "Links"
 msgstr "Liens"
 
-#: share/templates/aptrepo/history.html:62
+#: share/templates/aptrepo/history.html:64
 msgid "Comment"
 msgstr "Commentaire"
 
-#: share/templates/aptrepo/history.html:113
+#: share/templates/aptrepo/history.html:122
 msgid "Also available in:"
 msgstr "Aussi disponible en:"
 

@@ -1,17 +1,23 @@
 {% load i18n %}
 {% load url_extras %}
 
-<!-- TODO make image links work -->
-{# {% if action.package %} #}
-	<a class="history_icon">
-		<img src="{% raster_image_url '16x16/info.png' %}" />
-	</a>
-	
-	<a href="" class="history_icon"
-		package_name="{{ action.package_name }}" version="{{ action.version }}"
-		architecture="{{ action.architecture }}"
-		link_type="download"
-	>
-		<img src="{% raster_image_url '16x16/download.png' %}" />
-	</a>
-{# {% endif %} #}
+<!-- TODO Consolidate repeated anchor elements into a new django template tag -->
+<a href="#" class="history_icon"
+	target_section_id="{{ action.target_section.id }}"	
+	target_section_name="{{ action.target_section }}"
+	package_name="{{ action.package_name }}" version="{{ action.version }}"
+	architecture="{{ action.architecture }}"
+	link_type="info"
+>
+	<img src="{% raster_image_url '16x16/info.png' %}" />
+</a>
+
+<a href="#" class="history_icon"
+	target_section_id="{{ action.target_section.id }}"
+	target_section_name="{{ action.target_section }}"
+	package_name="{{ action.package_name }}" version="{{ action.version }}"
+	architecture="{{ action.architecture }}"
+	link_type="download"
+>
+	<img src="{% raster_image_url '16x16/download.png' %}" />
+</a>

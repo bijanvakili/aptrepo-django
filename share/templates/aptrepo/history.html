@@ -7,8 +7,10 @@
 
 {% block head %}
 <link rel="stylesheet" type="text/css" href="{% static_media_url 'css/history.css' %}" />
-<script type="text/javascript" src="{% static_media_url "js/aptrepo.js" %}">
-</script>
+<link rel="stylesheet" type="text/css" href="{% static_media_url 'css/smoothness/jquery-ui-1.8.20.custom.css' %}" />
+<script type="text/javascript" src="{% static_media_url "js/jquery-ui-1.8.20.custom.min.js" 1 %}"></script>
+<script type="text/javascript" src="{% static_media_url "js/sprintf.js" %}"></script>
+<script type="text/javascript" src="{% static_media_url "js/aptrepo.js" %}"></script>
 {% endblock %}
 
 {% block body %}
@@ -99,7 +101,14 @@
 		).attr('checked', true);
 		
 		// set the download links
-		$('a.history_icon[link_type="download"]').click( download_package );
+		$('a.history_icon[link_type="download"]').click(
+			{'package_callback': download_package}, 
+			on_click_package_anchor 
+		); 
+		$('a.history_icon[link_type="info"]').click( 
+			{'package_callback': show_package_info_dialog}, 
+			on_click_package_anchor 
+		);
 	});
 	
 </script>

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-05-21 16:46-0400\n"
+"POT-Creation-Date: 2012-05-25 00:30-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,6 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
 
-#: share/media/js/aptrepo.js:17
+#: share/media/js/aptrepo.js:21
 msgid "Package no longer exists."
 msgstr "Le paquet n'existe plus."
+
+#: share/media/js/aptrepo.js:52
+#, perl-format
+msgid "%s in %s"
+msgstr "%s dans %s"

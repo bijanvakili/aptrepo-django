@@ -136,7 +136,6 @@ URL DESIGN:
 		/packages
 			/<id>												(GET,DELETE)
 			/deb822/<name>/<version>/<architecture>				(GET,DELETE)
-				/deb
 			
 		/package-instances
 				/<id>			(GET, DELETE)
