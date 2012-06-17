@@ -25,7 +25,7 @@ $(OUTPUT_IMAGES): $(SOURCE_IMAGES) $(IMAGE_MANIFEST)
 images: $(OUTPUT_IMAGES)
 
 # Localize strings using django gettext
-L10N_SOURCES=$(shell find src/server/ share/ \( -name \*.py -o -name \*.html \) -print)
+L10N_SOURCES=$(shell find src/server/ share/ \( -name \*.py -o -name \*.html -o -name \*.js \) -print)
 L10N_MESSAGES=$(shell find locale/ -name \*.po -print)
 L10N_BINARIES=$(patsubst %.po, %.mo, $(L10N_MESSAGES)) 
 
@@ -65,7 +65,7 @@ testserver: build dbinit
 	
 # Output TODO items from source code
 todos:
-	@grep -R TODO src/* share/* test/* | grep -v ^share/media/js/jquery
+	@grep -R TODO src/* share/* test/* | grep -v ^share/media/js/jquery | grep -v ^share/media/js/lib
 
 
 .PHONY: clean unittest testserver build images localize dbinit todos

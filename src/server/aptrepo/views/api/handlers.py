@@ -118,6 +118,8 @@ class PackageHandler(BaseAptRepoHandler):
         elif package_name and version and architecture:
             return self.model.objects.get(package_name=package_name, version=version, 
                                            architecture=architecture)
+        elif package_name and version:
+            return self.model.objects.filter(package_name=package_name, version=version)
         
 class DistributionHandler(BaseAptRepoHandler):
     """
@@ -180,10 +182,14 @@ class PackageInstanceHandler(BaseAptRepoHandler):
              package_name=None, version=None, architecture=None):
         
         # search for a specific instance
-        if instance_id or (section_id and package_name and version and architecture):
+        if instance_id or (section_id and package_name and version):
             try:
-                return self._find_package_instance(instance_id, section_id, 
-                                                   package_name, version, architecture)
+                if instance_id or architecture:
+                    return self._find_package_instance(instance_id, section_id, 
+                                                       package_name, version, architecture)
+                else:
+                    return self._find_all_instances_by_architecture(section_id, 
+                                                                    package_name, version)
             except ObjectDoesNotExist:
                 resp = rc.NOT_FOUND
                 if instance_id:
@@ -262,6 +268,16 @@ class PackageInstanceHandler(BaseAptRepoHandler):
                                           package__package_name=package_name,
                                           package__version=version,
                                           package__architecture=architecture)
+            
+    def _find_all_instances_by_architecture(self, section_id, package_name, 
+                                            version):
+        """
+        Retrieve all instances (differing by architecture) given a package name
+        and version in a section
+        """
+        return self.model.objects.filter(section__id=section_id,
+                                         package__package_name=package_name,
+                                         package__version=version)
 
 
 class ActionHandler(BaseAptRepoHandler):

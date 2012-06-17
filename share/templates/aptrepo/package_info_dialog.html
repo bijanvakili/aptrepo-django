@@ -1,0 +1,27 @@
+{% load i18n %}
+
+<div id="package_info_dialog">
+	<div id="package_info_architectures_container">
+		<span id="package_info_architectures_label">{% trans "Available architectures:" %}</span>
+		<select id="package_info_architectures_dropdown"></select>
+	</div>
+
+	<div id="package_info_dialog_control_container">
+		<div id="package_info_dialog_control_label">{% trans "Debian control information:" %}</div>
+		<pre id="package_info_dialog_control_data"></pre>
+	</div>
+	
+	<div id="package_info_dialog_misc_container">	
+		<div id="package_info_dialog_misc_label">{% trans "Miscellaneous information:" %}</div>
+		<table id="package_info_dialog_misc_data">
+			<tr><td>{% trans 'Uploaded by:' %}</td><td/></tr>
+			<tr><td>{% trans 'Uploaded on:' %}</td><td/></tr>
+			<tr><td>{% trans 'Size:' %}</td><td/></tr>
+			<tr><td>{% trans 'MD5:' %}</td><td/></tr>
+			<tr><td>{% trans 'SHA1:' %}</td><td/></tr>
+			<tr><td>{% trans 'SHA256:' %}</td><td/></tr>
+		</table>
+	</div>
+		
+</div>
+

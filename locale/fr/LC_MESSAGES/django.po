@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-05-25 00:30-0400\n"
+"POT-Creation-Date: 2012-06-16 23:16-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,7 +25,7 @@ msgstr "Cette page n'a pas été trouvée"
 msgid "We're sorry, but the requested page could not be found."
 msgstr "Nous sommes désolés, mais la page demandée est introuvable."
 
-#: share/templates/500.html:4 share/templates/base.html:59
+#: share/templates/500.html:4 share/templates/base.html:64
 msgid "Home"
 msgstr "Accueil"
 
@@ -50,24 +50,24 @@ msgstr ""
 "administrateurs du site et sera corrigée dans les meilleurs délais. Merci "
 "pour votre patience."
 
-#: share/templates/base.html:33
+#: share/templates/base.html:38
 msgid "Logged in as "
 msgstr "Connecté en tant que "
 
-#: share/templates/base.html:40 share/templates/aptrepo/logout.html:4
+#: share/templates/base.html:45 share/templates/aptrepo/logout.html:4
 #: src/server/aptrepo/views/webpages/pages.py:167
 msgid "Logout"
 msgstr "Déconnexion"
 
-#: share/templates/base.html:42
+#: share/templates/base.html:47
 msgid "Login"
 msgstr "Connexion"
 
-#: share/templates/base.html:51
+#: share/templates/base.html:56
 msgid "Search"
 msgstr "Cherche"
 
-#: share/templates/base.html:80
+#: share/templates/base.html:85
 msgid "Contact: "
 msgstr "Contacter:"
 
@@ -75,51 +75,51 @@ msgstr "Contacter:"
 msgid "History"
 msgstr "Histoire"
 
-#: share/templates/aptrepo/history.html:23
+#: share/templates/aptrepo/history.html:21
 msgid "Recent history for"
 msgstr "Historique récente pour"
 
-#: share/templates/aptrepo/history.html:24
+#: share/templates/aptrepo/history.html:22
 msgid "Simple"
 msgstr "Simple"
 
-#: share/templates/aptrepo/history.html:25
+#: share/templates/aptrepo/history.html:23
 msgid "Table"
 msgstr "Table"
 
-#: share/templates/aptrepo/history.html:58
+#: share/templates/aptrepo/history.html:56
 msgid "Time"
 msgstr "Temps"
 
-#: share/templates/aptrepo/history.html:59
+#: share/templates/aptrepo/history.html:57
 msgid "User"
 msgstr "Utilisateur"
 
-#: share/templates/aptrepo/history.html:60
+#: share/templates/aptrepo/history.html:58
 msgid "Package"
 msgstr "Paquet"
 
-#: share/templates/aptrepo/history.html:61
+#: share/templates/aptrepo/history.html:59
 #: share/templates/aptrepo/packages_index.html:8
 #: share/templates/aptrepo/section_contents.html:7
 msgid "Version"
 msgstr "Version"
 
-#: share/templates/aptrepo/history.html:62
+#: share/templates/aptrepo/history.html:60
 #: share/templates/aptrepo/packages_index.html:9
 #: share/templates/aptrepo/section_contents.html:8
 msgid "Architecture"
 msgstr "Architecture"
 
-#: share/templates/aptrepo/history.html:63
+#: share/templates/aptrepo/history.html:61
 msgid "Links"
 msgstr "Liens"
 
-#: share/templates/aptrepo/history.html:64
+#: share/templates/aptrepo/history.html:62
 msgid "Comment"
 msgstr "Commentaire"
 
-#: share/templates/aptrepo/history.html:122
+#: share/templates/aptrepo/history.html:120
 msgid "Also available in:"
 msgstr "Aussi disponible en:"
 
@@ -147,6 +147,42 @@ msgstr "Vous êtes maintenant deconnecté du dépôt."
 #: share/templates/aptrepo/logout.html:10
 msgid "Click here to login again."
 msgstr "Cliquez ici pour pour vous connecter à nouveau"
+
+#: share/templates/aptrepo/package_info_dialog.html:5
+msgid "Available architectures:"
+msgstr "Architectures disponible:"
+
+#: share/templates/aptrepo/package_info_dialog.html:10
+msgid "Debian control information:"
+msgstr "Information du fichier control:"
+
+#: share/templates/aptrepo/package_info_dialog.html:15
+msgid "Miscellaneous information:"
+msgstr "Information divers:"
+
+#: share/templates/aptrepo/package_info_dialog.html:17
+msgid "Uploaded by:"
+msgstr "Transféré par:"
+
+#: share/templates/aptrepo/package_info_dialog.html:18
+msgid "Uploaded on:"
+msgstr "Transféré le: "
+
+#: share/templates/aptrepo/package_info_dialog.html:19
+msgid "Size:"
+msgstr "Taille:"
+
+#: share/templates/aptrepo/package_info_dialog.html:20
+msgid "MD5:"
+msgstr ""
+
+#: share/templates/aptrepo/package_info_dialog.html:21
+msgid "SHA1:"
+msgstr ""
+
+#: share/templates/aptrepo/package_info_dialog.html:22
+msgid "SHA256:"
+msgstr ""
 
 #: share/templates/aptrepo/packages_index.html:2
 msgid "Current package list"
@@ -378,19 +414,19 @@ msgstr "'username' et 'password' doit être spécifiée"
 msgid "Invalid username or password"
 msgstr "Nom d'utilisateur ou mot de passe n'est pas valide"
 
-#: src/server/aptrepo/views/api/handlers.py:153
+#: src/server/aptrepo/views/api/handlers.py:155
 msgid "Section not found: {0}"
 msgstr "Section inconnu: {0}"
 
-#: src/server/aptrepo/views/api/handlers.py:162
+#: src/server/aptrepo/views/api/handlers.py:164
 msgid "Distribution not found: {0}"
 msgstr "Distribution inconnu: {0}"
 
-#: src/server/aptrepo/views/api/handlers.py:190
+#: src/server/aptrepo/views/api/handlers.py:196
 msgid "Package instance not found: {0}"
 msgstr "L'instance de paquet inconnu: {0}"
 
-#: src/server/aptrepo/views/api/handlers.py:193
+#: src/server/aptrepo/views/api/handlers.py:199
 msgid ""
 "Package instance not found in section {section} matching criteria: ({name},"
 "{version},{architecture})"
@@ -398,7 +434,7 @@ msgstr ""
 "L'instance de paquet inconnu dams section {section} avec critères: ({name},"
 "{version},{architecture})"
 
-#: src/server/aptrepo/views/api/handlers.py:227
+#: src/server/aptrepo/views/api/handlers.py:233
 msgid "No repository section specified"
 msgstr "Aucune section de dépôt spécifiée"
 

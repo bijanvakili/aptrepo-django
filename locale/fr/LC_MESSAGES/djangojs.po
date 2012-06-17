@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-05-25 00:30-0400\n"
+"POT-Creation-Date: 2012-06-16 23:16-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,47 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
 
-#: share/media/js/aptrepo.js:21
-msgid "Package no longer exists."
-msgstr "Le paquet n'existe plus."
+#: share/media/js/aptrepo.js:49
+msgid "Package instance no longer exists."
+msgstr "L'instance du paquet n'existe plus."
 
-#: share/media/js/aptrepo.js:52
+#: share/media/js/aptrepo.js:76
+msgid "Are you sure you want to delete the package?"
+msgstr "Etes-vous sûr de vouloir supprimer le paquet?"
+
+#: share/media/js/aptrepo.js:82
+msgid "Package instance succsessfully deleted."
+msgstr "L'instance du paquet était supprimé."
+
+#: share/media/js/aptrepo.js:85
+msgid "Unable to delete package instance."
+msgstr "Le paquet n'était pas supprimé."
+
+#: share/media/js/aptrepo.js:102
 #, perl-format
 msgid "%s in %s"
 msgstr "%s dans %s"
+
+#: share/media/js/aptrepo.js:171
+msgid "Download"
+msgstr "Télécharger"
+
+#: share/media/js/aptrepo.js:175
+msgid "Copy"
+msgstr "Copier"
+
+#: share/media/js/aptrepo.js:179
+msgid "Delete"
+msgstr "Supprimer"
+
+#: share/media/js/aptrepo.js:183
+msgid "Close"
+msgstr "Fermer"
+
+#: share/media/js/aptrepo.js:223
+msgid "Unable to retrieve package instance metadata."
+msgstr "Impossible de récupérer l'information de l'instance du paquet."
+
+#: share/media/js/aptrepo.js:228
+msgid "Unable to retrieve architecture list."
+msgstr "Impossible de récupérer la liste des architectures."

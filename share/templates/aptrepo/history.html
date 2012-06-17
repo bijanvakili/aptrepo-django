@@ -7,16 +7,14 @@
 
 {% block head %}
 <link rel="stylesheet" type="text/css" href="{% static_media_url 'css/history.css' %}" />
-<link rel="stylesheet" type="text/css" href="{% static_media_url 'css/smoothness/jquery-ui-1.8.20.custom.css' %}" />
-<script type="text/javascript" src="{% static_media_url "js/jquery-ui-1.8.20.custom.min.js" 1 %}"></script>
-<script type="text/javascript" src="{% static_media_url "js/sprintf.js" %}"></script>
-<script type="text/javascript" src="{% static_media_url "js/aptrepo.js" %}"></script>
+<script type="text/javascript" src="{% static_media_url 'js/aptrepo.js' %}"></script>
 {% endblock %}
 
 {% block body %}
 
-<div id="history_header">
+{% include "aptrepo/package_info_dialog.html" %}
 
+<div id="history_header">
 	{# Select between view types #}
 	<form method="get">
 		{% csrf_token %}
@@ -102,7 +100,7 @@
 		
 		// set the download links
 		$('a.history_icon[link_type="download"]').click(
-			{'package_callback': download_package}, 
+			{'package_callback': download_package_callback}, 
 			on_click_package_anchor 
 		); 
 		$('a.history_icon[link_type="info"]').click( 

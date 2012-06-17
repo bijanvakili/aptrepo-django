@@ -144,3 +144,30 @@ p#logout_message,a#logout_relogin_link {
 a#logout_relogin_link {
 	font-size: 0.90em;	
 }
+
+
+/* Modal dialog defaults */
+div#package_info_dialog {
+	display: none;
+	width: 600px;
+}
+
+pre#package_info_dialog_control_data,table#package_info_dialog_misc_data {
+	border: 1px solid black;
+	border-collapse: collapse;
+	font-family: monospace;
+	font-size: 1.1em;
+	margin: 0px 0px 5px 0px;
+	padding: 1px;
+	overflow: auto;
+}
+
+table#package_info_dialog_misc_data th,td:nth-child(1) {
+	text-align: left;
+	width: auto; 
+}
+
+#package_info_architectures_label,#package_info_dialog_control_label,#package_info_dialog_misc_label {
+	font-size: 0.9em;
+	font-weight: bold;
+}
