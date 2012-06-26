@@ -189,3 +189,6 @@ class Action(models.Model):
         return '({0}) {1}:{2}'.format(self.timestamp, 
                                       self.user, 
                                       Action._ACTION_TYPE_CHOICES(self.action_type))
+
+    def show_package_links(self):
+        return self.action_type != Action.DELETE

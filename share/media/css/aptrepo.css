@@ -171,3 +171,15 @@ table#package_info_dialog_misc_data th,td:nth-child(1) {
 	font-size: 0.9em;
 	font-weight: bold;
 }
+
+/*
+ * Ensures buttons with icons and text are not multiline
+ * (NOTE: this can be removed after jQuery UI bug #6830 is resolved)
+ */
+span.ui-button-icon-primary {
+	float: left;
+}
+
+#package_info_dialog_buttons button#close {
+	float: right;
+}

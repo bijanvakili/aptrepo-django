@@ -67,13 +67,13 @@ function download_package_for_instance( instance_metadata ) {
 
 
 function setup_download_button( button, instance_metadata ) {
-	button.click = function() {
+	button.off('click').click( function() {
 		download_package_for_instance( instance_metadata );
-	}
+	});
 }
 
 function setup_delete_button( button, instance_metadata ) {
-	button.click = function() {
+	button.off('click').click( function() {
 		if ( confirm(gettext('Are you sure you want to delete the package?')) ) {
 			// delete a package instance
 			$.ajax( {
@@ -86,7 +86,7 @@ function setup_delete_button( button, instance_metadata ) {
 				alert( gettext('Unable to delete package instance.'));
 			});
 		}
-	}
+	});
 }
 
 
@@ -132,32 +132,9 @@ function populate_package_info_dialog( instance_metadata, section_name )
 	fn_set_table_entry( PACKAGE_MISC_INFO_ROWS.sha256, instance_metadata['package']['hash_sha256'] );
 	
 	// update the button links
-	var dialaog_buttons = package_info_dialog.dialog('option', 'buttons');
-	$.each( dialaog_buttons, function (i, button )  {
-		if ( button.id == 'download' ) {
-			setup_download_button( button, instance_metadata );
-		}
-		else if ( button.id == 'delete' ) {
-			setup_delete_button( button, instance_metadata );
-		}
-		// TODO implement copy button
-	});
-
-	package_info_dialog.dialog('option', 'buttons', dialaog_buttons);
-}
-
-/*
- * Adds an icon to an existing button
- * (NOTE: this can be removed after jQuery UI bug #6830 is resolved)
- */
-function add_icon_to_button( button_id, icon_class )
-{
-	var button = $('.ui-dialog-buttonpane button#' + button_id);
-	button
-		.removeClass('ui-button-text-only')
-		.addClass('ui-button-text-icon-primary')
-		.prepend(
-			'<span style="float:left;" class="ui-button-icon-primary ui-icon ' + icon_class + '"/>');
+	setup_download_button( $('#package_info_dialog_buttons button#download'), instance_metadata );
+	setup_delete_button( $('#package_info_dialog_buttons button#delete'), instance_metadata );
+	// TODO implement copy button
 }
 
 /*
@@ -168,29 +145,25 @@ function show_package_info_dialog(ev, instance_metadata, section_name, section_i
 	// setup the package info dialog
 	var package_info_dialog = $('div#package_info_dialog');
 	package_info_dialog.dialog({
-			autoOpen: false,
-			modal: true,
-			minWidth: package_info_dialog.width(),
-			buttons: [
-	          {
-	        	  id: "download",
-	        	  text: gettext("Download")
-	          },
-	          {
-	        	  id: "copy",
-	        	  text: gettext("Copy")
-	          },
-	          {
-	        	  id: "delete",
-	        	  text: gettext("Delete")
-	          },
-	          {
-	        	  id: "close",
-	        	  text: gettext("Close"),
-	        	  click: function() { $(this).dialog("close"); }
-	          }
-			]
-		});
+		autoOpen: false,
+		modal: true,
+		minWidth: package_info_dialog.width(),
+	});
+	$('#package_info_dialog_buttons button#download').button({
+		icons : {primary: 'ui-icon-arrowthick-1-s'}
+	});
+	$('#package_info_dialog_buttons button#copy').button({
+		icons : {primary: 'ui-icon-copy'}
+	});
+	$('#package_info_dialog_buttons button#delete').button({
+		icons : {primary: 'ui-icon-trash'}
+	});
+	
+	$('#package_info_dialog_buttons button#close').button({
+		icons : {primary: 'ui-icon-close'}
+	}).click( function() { 
+		package_info_dialog.dialog("close"); 
+	});
 	
 	// retrieve and add a radio button for all architecture choices
 	var instance_url_for_architectures = get_instance_url(
@@ -238,10 +211,6 @@ function show_package_info_dialog(ev, instance_metadata, section_name, section_i
 	.then( function() {
 		// initialize the rest of the dialog and open it 
 		populate_package_info_dialog( instance_metadata, section_name );
-		add_icon_to_button('download', 'ui-icon-arrowthick-1-s');
-		add_icon_to_button('copy', 'ui-icon-copy');
-		add_icon_to_button('delete', 'ui-icon-trash');
-		add_icon_to_button('close', 'ui-icon-close');
 		package_info_dialog.dialog("open");
 	});
 

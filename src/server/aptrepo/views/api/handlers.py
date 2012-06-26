@@ -175,7 +175,7 @@ class PackageInstanceHandler(BaseAptRepoHandler):
     """
     allowed_methods=('GET', 'DELETE', 'POST')
     model = server.aptrepo.models.PackageInstance
-    fields = ('id', 'package', 'creator', 'creation_date')
+    fields = ('id', 'package', 'creator', 'creation_date', ('section', ('id',)) )
     
     @handle_exception
     def read(self, request, instance_id=None, section_id=None, 
