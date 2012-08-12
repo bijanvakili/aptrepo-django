@@ -20,7 +20,7 @@
         <control controlID="0" controlTypeID="com.balsamiq.mockups::Tree" x="0" y="0" w="-1" h="-1" measuredW="300" measuredH="225" zOrder="0" locked="false" isInGroup="17">
           <controlProperties>
             <borderStyle>none</borderStyle>
-            <text>F%20Browse%20Repository%0A_%20Recent%20Activity%0A_%20Upload%20Package%0A_%20Download%20Public%20Key%0A_%20Adminstration%0A_%20Help</text>
+            <text>F%20Browse%20Repository%0A_%20Recent%20Activity%0A_%20Download%20Public%20Key%0A_%20Adminstration%0A_%20Help</text>
           </controlProperties>
         </control>
         <control controlID="1" controlTypeID="com.balsamiq.mockups::Tooltip" x="98" y="72" w="373" h="32" measuredW="369" measuredH="32" zOrder="1" locked="false" isInGroup="17">
