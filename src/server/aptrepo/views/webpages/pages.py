@@ -16,15 +16,30 @@ from django.views.decorators.http import require_http_methods
 from server.aptrepo import models
 from server.aptrepo.util import AuthorizationException, constants, constrain_queryset
 from server.aptrepo.views import get_repository_controller
-
+from server.aptrepo.views.webpages import widgets
 
 class UploadPackageForm(forms.Form):
     """
     Form class for package uploads
     """
-    file = forms.FileField()
-    section = forms.ModelChoiceField(queryset=models.Section.objects.all())
-    comment = forms.CharField(required=False, max_length=models.Action.MAX_COMMENT_LENGTH)
+    
+    # TODO Reintroduce constructor later.  
+    # Disabling a basic <select> element would prevent it from POSTing its data
+    """
+    def __init__(self, *args, **kwargs):
+        super(UploadPackageForm, self).__init__(*args, **kwargs)
+        if 'initial' in kwargs and kwargs['initial']['section']:
+            self.fields['section'].widget.attrs['disabled'] = 'disabled'
+    """
+    
+    file = forms.FileField(label=_('Package'), 
+                           widget=widgets.AdvancedFileInput)
+    comment = forms.CharField(label=_('Optional comment'),
+                              required=False, 
+                              max_length=models.Action.MAX_COMMENT_LENGTH)
+    
+    section = forms.ModelChoiceField(label=_('Section'),
+                                     queryset=models.Section.objects.all())
     
 class Breadcrumb():
     """
@@ -218,10 +233,17 @@ def remove_success(request):
 @require_http_methods(["GET", "POST"])
 @login_required
 @csrf_protect
-def upload_file(request):
+def upload(request, distribution_name=None, section_name=None):
     """ 
     Provides a form to upload packages
     """
+    
+    # load the section if it was part of the URL
+    section = None
+    if distribution_name and section_name:
+        section = models.Section.objects.get(name=section_name, 
+                                             distribution__name=distribution_name)
+    
     if request.method == 'POST':
         form = UploadPackageForm(request.POST, request.FILES)
         if form.is_valid():
@@ -234,9 +256,22 @@ def upload_file(request):
                                          comment)
 
     elif request.method == 'GET':
-        form = UploadPackageForm()
+        form = UploadPackageForm(initial={'section': section})
         
-    return render_to_response('aptrepo/upload_package.html', {'form':form}, 
+    if section:
+        breadcrumbs = [
+                       Breadcrumb(_('Distributions'), '/aptrepo/dists'),
+                       Breadcrumb(distribution_name, '/aptrepo/dists/' + distribution_name),
+                       Breadcrumb(section_name, '/aptrepo/dists/{0}/{1}'.format(distribution_name, section_name)),
+                       Breadcrumb(_('Upload'), None)]
+    else:
+        breadcrumbs = [
+                       Breadcrumb(_('Packages'), None),
+                       Breadcrumb(_('Upload'), None) ]
+        
+    return render_to_response('aptrepo/upload_package.html', 
+                              {'form':form, 'breadcrumbs': breadcrumbs,
+                               'upload_target': section }, 
                               context_instance=RequestContext(request))
     
     

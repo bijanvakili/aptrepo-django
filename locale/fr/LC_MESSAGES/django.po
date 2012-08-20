@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-06-25 22:47-0400\n"
+"POT-Creation-Date: 2012-08-19 20:45-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -27,7 +27,7 @@ msgid "We're sorry, but the requested page could not be found."
 msgstr "Nous sommes désolés, mais la page demandée est introuvable."
 
 #: share/templates/500.html:4
-#: share/templates/base.html:64
+#: share/templates/base.html:66
 msgid "Home"
 msgstr "Accueil"
 
@@ -51,25 +51,25 @@ msgstr "Une erreur est survenue. Elle a été transmise par courriel aux "
 "administrateurs du site et sera corrigée dans les meilleurs délais. Merci "
 "pour votre patience."
 
-#: share/templates/base.html:38
+#: share/templates/base.html:40
 msgid "Logged in as "
 msgstr "Connecté en tant que "
 
-#: share/templates/base.html:45
+#: share/templates/base.html:47
 #: share/templates/aptrepo/logout.html:4
-#: src/server/aptrepo/views/webpages/pages.py:167
+#: src/server/aptrepo/views/webpages/pages.py:177
 msgid "Logout"
 msgstr "Déconnexion"
 
-#: share/templates/base.html:47
+#: share/templates/base.html:49
 msgid "Login"
 msgstr "Connexion"
 
-#: share/templates/base.html:56
+#: share/templates/base.html:58
 msgid "Search"
 msgstr "Cherche"
 
-#: share/templates/base.html:85
+#: share/templates/base.html:87
 msgid "Contact: "
 msgstr "Contacter:"
 
@@ -77,51 +77,52 @@ msgstr "Contacter:"
 msgid "History"
 msgstr "Histoire"
 
-#: share/templates/aptrepo/history.html:21
+#: share/templates/aptrepo/history.html:20
 msgid "Recent history for"
 msgstr "Historique récente pour"
 
-#: share/templates/aptrepo/history.html:22
+#: share/templates/aptrepo/history.html:21
 msgid "Simple"
 msgstr "Simple"
 
-#: share/templates/aptrepo/history.html:23
+#: share/templates/aptrepo/history.html:22
 msgid "Table"
 msgstr "Table"
 
-#: share/templates/aptrepo/history.html:56
+#: share/templates/aptrepo/history.html:55
 msgid "Time"
 msgstr "Temps"
 
-#: share/templates/aptrepo/history.html:57
+#: share/templates/aptrepo/history.html:56
 msgid "User"
 msgstr "Utilisateur"
 
-#: share/templates/aptrepo/history.html:58
+#: share/templates/aptrepo/history.html:57
+#: src/server/aptrepo/views/webpages/pages.py:30
 msgid "Package"
 msgstr "Paquet"
 
-#: share/templates/aptrepo/history.html:59
+#: share/templates/aptrepo/history.html:58
 #: share/templates/aptrepo/packages_index.html:8
 #: share/templates/aptrepo/section_contents.html:7
 msgid "Version"
 msgstr "Version"
 
-#: share/templates/aptrepo/history.html:60
+#: share/templates/aptrepo/history.html:59
 #: share/templates/aptrepo/packages_index.html:9
 #: share/templates/aptrepo/section_contents.html:8
 msgid "Architecture"
 msgstr "Architecture"
 
-#: share/templates/aptrepo/history.html:61
+#: share/templates/aptrepo/history.html:60
 msgid "Links"
 msgstr "Liens"
 
-#: share/templates/aptrepo/history.html:62
+#: share/templates/aptrepo/history.html:61
 msgid "Comment"
 msgstr "Commentaire"
 
-#: share/templates/aptrepo/history.html:120
+#: share/templates/aptrepo/history.html:119
 msgid "Also available in:"
 msgstr "Aussi disponible en:"
 
@@ -130,7 +131,7 @@ msgid "Welcome"
 msgstr "Bienvenue"
 
 #: share/templates/aptrepo/login.html:5
-#: src/server/aptrepo/views/webpages/pages.py:159
+#: src/server/aptrepo/views/webpages/pages.py:169
 msgid "Logon"
 msgstr "Connexion"
 
@@ -242,9 +243,20 @@ msgstr "ID"
 msgid "Operations"
 msgstr "Opérations"
 
-#: share/templates/aptrepo/upload_package.html:4
+#: share/templates/aptrepo/upload_package.html:5
+#: share/templates/aptrepo/upload_package.html:16
+#: src/server/aptrepo/views/webpages/pages.py:261
+#: src/server/aptrepo/views/webpages/pages.py:265
 msgid "Upload"
 msgstr "Télécharge"
+
+#: share/templates/aptrepo/widgets/advanced_file_input.html:5
+msgid "No file chosen"
+msgstr "Aucun fichier choisi"
+
+#: share/templates/aptrepo/widgets/advanced_file_input.html:6
+msgid "Choose File"
+msgstr "Choisir un Fichier"
 
 #: src/server/manage.py:9
 msgid "APTREPO_ROOT must be specified"
@@ -451,59 +463,72 @@ msgstr "Activités pour la distribution {0}"
 msgid "Activity for section {0}"
 msgstr "Activités pour la section {0}"
 
-#: src/server/aptrepo/views/webpages/pages.py:143
+#: src/server/aptrepo/views/webpages/pages.py:32
+msgid "Optional comment"
+msgstr "Commentaire optionnel"
+
+#: src/server/aptrepo/views/webpages/pages.py:36
+msgid "Section"
+msgstr "Section"
+
+#: src/server/aptrepo/views/webpages/pages.py:153
 msgid "Browse Repository"
 msgstr "Explorer le Dépôt"
 
-#: src/server/aptrepo/views/webpages/pages.py:143
+#: src/server/aptrepo/views/webpages/pages.py:153
 msgid "Browse the packages in the repository"
 msgstr "Explorer les paquets dans le dépôt"
 
-#: src/server/aptrepo/views/webpages/pages.py:144
+#: src/server/aptrepo/views/webpages/pages.py:154
 msgid "Recent Activity"
 msgstr "Activités Récentes"
 
-#: src/server/aptrepo/views/webpages/pages.py:144
+#: src/server/aptrepo/views/webpages/pages.py:154
 msgid "Review the change history in the repository"
 msgstr "Revoir l'historique des changements dans le dépôt"
 
-#: src/server/aptrepo/views/webpages/pages.py:145
+#: src/server/aptrepo/views/webpages/pages.py:155
 msgid "Download Public Key"
 msgstr "Télécharge la Clé Publique"
 
-#: src/server/aptrepo/views/webpages/pages.py:145
+#: src/server/aptrepo/views/webpages/pages.py:155
 msgid "Download the GPG public key used for signing metadata"
 msgstr "Télécharge la clé publique utilisé pour la signature des fichiers"
 
-#: src/server/aptrepo/views/webpages/pages.py:146
+#: src/server/aptrepo/views/webpages/pages.py:156
 msgid "Administration"
 msgstr "Administration"
 
-#: src/server/aptrepo/views/webpages/pages.py:146
+#: src/server/aptrepo/views/webpages/pages.py:156
 msgid "Manage your repository (requires administrative privileges)"
 msgstr "Gérer votre dépôt (nécessite des privilèges administratifs)"
 
-#: src/server/aptrepo/views/webpages/pages.py:147
+#: src/server/aptrepo/views/webpages/pages.py:157
 msgid "Help"
 msgstr "Aide"
 
-#: src/server/aptrepo/views/webpages/pages.py:147
+#: src/server/aptrepo/views/webpages/pages.py:157
 msgid "Documentation for using the repository"
 msgstr "Documentation pour l'utilisation du dépôt"
 
-#: src/server/aptrepo/views/webpages/pages.py:207
+#: src/server/aptrepo/views/webpages/pages.py:217
 msgid "Package successfully uploaded."
 msgstr "Paquet téléchargé avec succès"
 
-#: src/server/aptrepo/views/webpages/pages.py:214
+#: src/server/aptrepo/views/webpages/pages.py:224
 msgid "Package successfully removed."
 msgstr "Paquet supprimé avec succès"
 
-#: src/server/aptrepo/views/webpages/pages.py:283
+#: src/server/aptrepo/views/webpages/pages.py:258
+#: src/server/aptrepo/views/webpages/pages.py:313
 msgid "Distributions"
 msgstr "Distributions"
 
-#: src/server/aptrepo/views/webpages/pages.py:289
+#: src/server/aptrepo/views/webpages/pages.py:264
+msgid "Packages"
+msgstr "Paquets"
+
+#: src/server/aptrepo/views/webpages/pages.py:319
 msgid "Recent History"
 msgstr "Activités Récentes"
 

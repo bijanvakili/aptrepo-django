@@ -1,5 +1,27 @@
+{% extends "base.html" %}
 {% load i18n %}
-<form action="/aptrepo/packages/upload/" enctype="multipart/form-data" method="post">{% csrf_token %}
-{{ form.as_p }}
-<input type="submit" value="{% trans 'Upload' %}" />
+
+{% block title %}
+	{% trans 'Upload' %}
+	{% if upload_target %} | {{ upload_target }}{% endif %}
+{% endblock %}
+	
+{% block body %}
+
+<form id="upload_form" action="/aptrepo/packages/upload/" enctype="multipart/form-data" method="post">
+	{% csrf_token %}
+
+	{{ form.as_p }}
+	
+	<input type="submit" value="{% trans 'Upload' %}" />
 </form>
+
+<script type="text/javascript">
+	$(document).ready(function() {
+		$('.adv_file_custom_container').each ( function() {
+			initialize_advanced_fileinput($(this));
+		});
+	});
+</script>
+
+{% endblock %}

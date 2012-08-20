@@ -1,0 +1,7 @@
+{% load i18n %}
+
+<span class="adv_file_custom_container" id="id_{{name}}">​
+	<input type="file" name="{{name}}" />
+	<input type="text" readonly="readonly" value="{% trans 'No file chosen' %}"/>
+	<input type="button" value="{% trans 'Choose File' %}" />
+</span>

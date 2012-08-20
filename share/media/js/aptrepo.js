@@ -216,3 +216,42 @@ function show_package_info_dialog(ev, instance_metadata, section_name, section_i
 
 	return false;
 }
+
+/*
+ * Initializes an advanced file input widget
+ */
+function initialize_advanced_fileinput(elem_fileinput) {
+	var hidden_file_input = elem_fileinput.find('input[type="file"]');
+	var visible_filepath_text_control = elem_fileinput.find('input[type="text"][readonly="readonly"]');
+	var initial_path_text = visible_filepath_text_control.val();
+	
+	// resize visible text to match invisible file control
+	visible_filepath_text_control
+		.width( hidden_file_input.width() )
+		.css({
+			"top": hidden_file_input.position().top,
+			"left": hidden_file_input.position().left
+		});
+	
+	// reroute visible button clicks to hidden file control click callback
+	elem_fileinput.find('input[type="button"]').click( function() {
+		hidden_file_input.click();
+	});
+	
+	// setup additional callback for updating file path
+	hidden_file_input.bind('change focus click', function() {
+		// update the filename text
+		var filename = $(this).val();
+		if ( filename == '' ) {
+			filename = initial_path_text;
+		}
+		else {
+			// remove fakepath prefix
+			filename = filename.split('\\').pop();
+		}
+		visible_filepath_text_control.val( filename );
+	});
+	
+	// do an initial update
+	hidden_file_input.change();
+}

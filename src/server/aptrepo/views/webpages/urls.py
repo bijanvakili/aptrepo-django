@@ -5,14 +5,14 @@ from feeds import *
 # Web forms/pages for packages
 package_urls = patterns('aptrepo.views.webpages.pages',
     (r'^$', 'packages'),
-    (r'^upload_success', 'upload_success'),    
-    (r'^upload', 'upload_file'),
+    (r'^upload', 'upload'),
     (r'^delete_success', 'remove_success'),
     (r'^delete', 'delete_package_instance'),
 ) 
 
-# Apt repo metadata
-aptrepo_metadata_urls = patterns('aptrepo.views.webpages.pages',
+
+# /dists/ URLs
+aptrepo_dists_urls = patterns('aptrepo.views.webpages.pages',
     (r'^{0}'.format(settings.APTREPO_FILESTORE['gpg_publickey']), 
         'gpg_public_key'),
     (r'^(?P<distribution>\w+)/(?P<section>\w+)/binary-(?P<architecture>\w+)/Packages(?P<extension>.*)',
@@ -21,6 +21,8 @@ aptrepo_metadata_urls = patterns('aptrepo.views.webpages.pages',
         'release_list'),
     (r'^(?P<distribution>\w+)/(?P<section>\w+)/{0,1}$',
         'section_contents_list'),
+    (r'^(?P<distribution_name>\w+)/(?P<section_name>\w+)/upload/{0,1}$',
+        'upload'),
 )
 
 urlpatterns = patterns('',
@@ -29,7 +31,7 @@ urlpatterns = patterns('',
     url(r'^login/$', 'aptrepo.views.webpages.pages.login'),
     url(r'^logout/$', 'aptrepo.views.webpages.pages.logout'),
     url(r'^packages/', include(package_urls)),
-    url(r'^dists/', include(aptrepo_metadata_urls)),
+    url(r'^dists/', include(aptrepo_dists_urls)),
     url(r'^rss/{0,1}$', RepositoryRSSFeed()),
     url(r'^rss/(?P<distribution>\w+)/{0,1}$', DistributionRSSFeed()),
     url(r'^rss/(?P<distribution>\w+)/(?P<section>\w+)/{0,1}$', SectionRSSFeed()),
@@ -39,6 +41,8 @@ urlpatterns = patterns('',
     url(r'^history/{0,1}$', 'aptrepo.views.webpages.pages.history'),
     url(r'^history/(?P<distribution>\w+)/{0,1}$', 'aptrepo.views.webpages.pages.history'),
     url(r'^history/(?P<distribution>\w+)/(?P<section>\w+)/{0,1}$', 'aptrepo.views.webpages.pages.history'),
+    url(r'^upload_success', 'aptrepo.views.webpages.pages.upload_success'),    
+    
         
     # Debian package files (can include 'public' prefix or not)
     url(r'^(public/){0,1}packages/(?P<path>.*)$', 'django.views.static.serve', 

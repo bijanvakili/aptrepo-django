@@ -145,6 +145,28 @@ a#logout_relogin_link {
 	font-size: 0.90em;	
 }
 
+/* Package Upload Screen sytles */
+#upload_form p {
+	margin-left: 40px;
+}
+
+.adv_file_custom_container {
+	position: relative;
+}
+
+.adv_file_custom_container input[type="file"] {
+	position: relative;
+	z-index: 10;
+	
+	-moz-opacity: 0;
+	opacity: 0;
+	filter: alpha(opacity=0); /* For IE8 and earlier */
+}
+
+.adv_file_custom_container input[type="text"][readonly="readonly"] {
+	position: absolute;
+	z-index: 1;
+}
 
 /* Modal dialog defaults */
 div#package_info_dialog {
