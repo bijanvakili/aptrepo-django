@@ -239,7 +239,7 @@ class PackageInstanceHandler(BaseAptRepoHandler):
         comment = request.POST.get('comment')
         if 'file' in request.FILES:
             uploaded_file = request.FILES['file']
-            new_instance_id = repository.add_package(section=section, 
+            [new_instance_id] = repository.add_package(sections=[section], 
                                                      uploaded_package_file=uploaded_file,
                                                      comment=comment)
         # otherwise, clone based of the source package or instance ID

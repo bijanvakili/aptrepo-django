@@ -1,0 +1,41 @@
+
+/* Custom file control */
+div.adv_file_group_container {
+	position: relative;
+}
+
+div.adv_file_group_container input {
+	margin: 0;
+}
+
+div.adv_file_custom_input_group {
+	position: relative; /* must not be 'static' to ensure containing elements are the full width */
+	margin-right: 90px;
+}
+
+div.adv_file_custom_input_group input.adv_file_custom_input {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	margin: 0px;
+	width: 100%;	/* containing block must not be 'static' */
+}
+
+div.adv_file_group_container input.adv_file_custom_input[type="file"] {
+	z-index: 10;
+	-moz-opacity: 0;
+	opacity: 0;
+	filter: alpha(opacity=0); /* For IE8 and earlier */
+}
+
+div.adv_file_custom_button_group {
+	width: 86px;
+	float: right;
+	margin-left: -86px;
+	text-align: center;
+}
+
+div.adv_file_group_container input.adv_file_custom_button {
+	margin: 0px;
+	display: block;
+}

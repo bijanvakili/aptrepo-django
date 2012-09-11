@@ -121,15 +121,11 @@ class Repository():
         
 
     def add_package(self, **kwargs):
+        
         """
         Add a package to the repository
 
-        section    - section model object 
-        OR        
-        section_id - unique ID of the section (optional)
-        OR
-        distribution_name - distribution to add package (if section_id is not specified)
-        section_name - section within distribution to add package (if section_id is not specified)
+        sections    - list of sections 
         
         uploaded_package_file - instance of Django TemporaryUploadedFile
         OR
@@ -137,26 +133,18 @@ class Repository():
         package_path - pathname to package
         package_size - size of package file
         
-        Returns the new instance id
+        Returns an array of new instance IDs
         """
-        # parse the arguments
-        distribution = None
-        if 'section' in kwargs:
-            section = kwargs['section']
-        elif 'section_id' in kwargs:
-            section = models.Section.objects.get(pk=kwargs['section_id'])
-        elif 'distribution_name' in kwargs and 'section_name' in kwargs:
-            distribution = models.Distribution.objects.get(name=kwargs['distribution_name'])            
-            section = models.Section.objects.get(name=kwargs['section_name'], 
-                                                 distribution=distribution)
-        else:
-            raise AptRepoException(_('No section argument specified'))
         
-        self._enforce_write_access(section, 'Add package')
+        # parse and do security checks for all sections
+        if 'sections' not in kwargs or len(kwargs['sections']) == 0:
+            raise AptRepoException(_('No sections specified'))
+        sections = kwargs['sections']
+        for section in sections:
+            self._enforce_write_access(section, 'Add package')
         
-        if not distribution:
-            distribution = section.distribution
-
+        
+        # parse package parameters
         if 'uploaded_package_file' in kwargs:
             package_fh = kwargs['uploaded_package_file']
             package_path = kwargs['uploaded_package_file'].temporary_file_path()
@@ -168,13 +156,9 @@ class Repository():
             package_name = os.path.split(package_path)[1]
             package_size = kwargs['package_size']
         
-        self.logger.info(
-            'Adding package file {0} to {1}:{2} (file size={3})'.format(
-                package_path, distribution.name, section.name, package_size
-            )
-        )
+
         
-        # check preconditions
+        # check package filename preconditions
         ext = os.path.splitext(package_name)[1]
         if ext != self._DEBIAN_EXTENSION:
             raise AptRepoException(_('Invalid extension: {ext}'.format(ext=ext)))        
@@ -186,10 +170,12 @@ class Repository():
             self.logger.debug('Package file ' + package_name + ' has control info:\n' + 
                               control.dump())
         
-        if not distribution.allowed_architecture(control['Architecture']):
-            raise AptRepoException(
-                _('Invalid architecture for distribution ({dist}) : {arch}').format(
-                    dist=distribution.name, arch=control['Architecture']))
+        # check all distributions to ensure the package is supported
+        for section in sections:
+            if not section.distribution.allowed_architecture(control['Architecture']):
+                raise AptRepoException(
+                    _('Invalid architecture for distribution ({dist}) : {arch}').format(
+                        dist=section.distribution.name, arch=control['Architecture']))
 
         # compute hashes
         hashes = {}
@@ -230,8 +216,12 @@ class Repository():
                                             control['Version'], 
                                             control['Architecture'],
                                             self._DEBIAN_EXTENSION))
+                self.logger.info(
+                    'Adding package file {0} (file size={1})'.format(
+                        package_path, package_size
+                    )
+                )
                 package.path.save(stored_file_path, package_fh) 
-                
                 package.save()
 
             except Exception:
@@ -239,20 +229,23 @@ class Repository():
                     package.path.delete(package.path.name)
                 raise
 
-        # create a package instance
-        self.logger.debug('Creating new package instance for ' + str(package))        
-        package_instance = models.PackageInstance.objects.get_or_create(
-            package=package, section=section, creator=self._get_username())[0]
+        # create all package instances and record actions on each section
+        package_instance_ids = []
+        for section in sections:
+            self.logger.debug('Creating new package instance for ' + str(package))
+            new_instance = models.PackageInstance.objects.get_or_create(
+                    package=package, section=section, creator=self._get_username())[0]
+            package_instance_ids.append( new_instance.id ) 
+            self._record_action(models.Action.UPLOAD, 
+                                section,
+                                package=package,
+                                comment=kwargs.get('comment'))
         
-        # record an upload action
-        self._record_action(models.Action.UPLOAD, 
-                            section,
-                            package=package,
-                            comment=kwargs.get('comment'))
-        
-        # invalidate the cache and return the new instance ID
-        self._clear_cache(distribution.name)
-        return package_instance.id
+            # invalidate the cache
+            self._clear_cache(section.distribution.name)
+            
+        # return the instance IDs
+        return package_instance_ids
 
         
     def import_dir(self, section_id, dir_path, 
@@ -267,8 +260,8 @@ class Repository():
         ignore_errors - (optional) if true, continues importing packages even if any fail
         """
 
-        self._enforce_write_access(models.Section.objects.get(id=section_id), 
-                                   'Import package directory')
+        section = models.Section.objects.get(id=section_id)
+        self._enforce_write_access(section, 'Import package directory')
 
         for root, dirs, files in os.walk(dir_path):
             for filename in files:
@@ -279,7 +272,7 @@ class Repository():
                          
                         if not dry_run:
                             with open(package_path, 'r') as package_file:
-                                self.add_package(section_id=section_id, package_fh=package_file,
+                                self.add_package(sections=[section], package_fh=package_file,
                                                  package_path=package_path, 
                                                  package_size=os.path.getsize(package_path))
                         
@@ -829,7 +822,8 @@ class Repository():
         section -- section model object to check
         """
         if not self._has_write_access(section):
-            message = _('Unauthorized action: {action}').format(action=action)
+            message = _('Unauthorized action for {section}: {action}').format(action=action, 
+                                                                                      section=section)
             if self.user:
                 message = message + " (for user " + self.user.username + ")"
             raise AuthorizationException(message)

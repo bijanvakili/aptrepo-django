@@ -145,27 +145,47 @@ a#logout_relogin_link {
 	font-size: 0.90em;	
 }
 
-/* Package Upload Screen sytles */
-#upload_form p {
+/* Package Upload Screen styles */
+.upload_form {
 	margin-left: 40px;
+	width: 70%;
 }
 
-.adv_file_custom_container {
-	position: relative;
+.upload_form th {
+	text-align: left;
+	width: 15%;
 }
 
-.adv_file_custom_container input[type="file"] {
-	position: relative;
-	z-index: 10;
-	
-	-moz-opacity: 0;
-	opacity: 0;
-	filter: alpha(opacity=0); /* For IE8 and earlier */
+.upload_form td:nth-of-type(1) {
+	width: 85%;
 }
 
-.adv_file_custom_container input[type="text"][readonly="readonly"] {
-	position: absolute;
-	z-index: 1;
+.upload_form #id_sections, #id_comment {
+	width: 100%;
+}
+
+.upload_form #id_comment {
+	/* CSS3 styling required to avoid overflow */
+ 	box-sizing: border-box;
+     -webkit-box-sizing:border-box;
+     -moz-box-sizing: border-box;	
+}
+
+.upload_form label {
+	font-weight: bold;
+}
+
+.upload_form label[for="id_comment"] {
+	font-style: italic;
+}
+
+#upload_button_container {
+	text-align: right;
+}
+
+.upload_form input[type='submit'].upload_form_upload_button {
+	width: auto;
+	margin: 0px;
 }
 
 /* Modal dialog defaults */

@@ -33,13 +33,13 @@ class UploadPackageForm(forms.Form):
     """
     
     file = forms.FileField(label=_('Package'), 
-                           widget=widgets.AdvancedFileInput)
+                           widget=widgets.AdvancedFileInputWidget)
     comment = forms.CharField(label=_('Optional comment'),
                               required=False, 
                               max_length=models.Action.MAX_COMMENT_LENGTH)
     
-    section = forms.ModelChoiceField(label=_('Section'),
-                                     queryset=models.Section.objects.all())
+    sections = forms.ModelMultipleChoiceField(label=_('Sections'),
+                                              queryset=models.Section.objects.all())
     
 class Breadcrumb():
     """
@@ -173,7 +173,7 @@ def login(request):
     """
     breadcrumbs = [ Breadcrumb(_('Logon'), None) ]
     return django.contrib.auth.views.login(request=request, template_name='aptrepo/login.html', 
-                                           extra_context={ 'breadcrumbs': breadcrumbs, 'next': '/aptrepo/' })
+                                           extra_context={ 'breadcrumbs': breadcrumbs })
 
 def logout(request):
     """
@@ -239,26 +239,25 @@ def upload(request, distribution_name=None, section_name=None):
     """
     
     # load the section if it was part of the URL
-    section = None
+    target_section = None
     if distribution_name and section_name:
-        section = models.Section.objects.get(name=section_name, 
-                                             distribution__name=distribution_name)
-    
+        target_section = _find_section( distribution_name, section_name )
+
+    sections = []    
     if request.method == 'POST':
         form = UploadPackageForm(request.POST, request.FILES)
         if form.is_valid():
-            section = form.cleaned_data['section']
+            sections = form.cleaned_data['sections']
             comment = form.cleaned_data['comment']
             return _handle_uploaded_file(request,
-                                         section.distribution.name,
-                                         section.name, 
+                                         sections, 
                                          request.FILES['file'],
                                          comment)
 
     elif request.method == 'GET':
-        form = UploadPackageForm(initial={'section': section})
+        form = UploadPackageForm(initial={'sections': [target_section]})
         
-    if section:
+    if target_section:
         breadcrumbs = [
                        Breadcrumb(_('Distributions'), '/aptrepo/dists'),
                        Breadcrumb(distribution_name, '/aptrepo/dists/' + distribution_name),
@@ -271,7 +270,7 @@ def upload(request, distribution_name=None, section_name=None):
         
     return render_to_response('aptrepo/upload_package.html', 
                               {'form':form, 'breadcrumbs': breadcrumbs,
-                               'upload_target': section }, 
+                               'upload_target': target_section }, 
                               context_instance=RequestContext(request))
     
     
@@ -405,21 +404,21 @@ def _packages_post(request):
     (separate internal method to enforce authentication only for POST, not GET)
     """
     uploaded_file = request.FILES['file']
-    distribution = request.POST['distribution']
-    section = request.POST['section']
+    sections = [ _find_section( request.POST['distribution'], request.POST['section'] ) ]
     comment = request.POST['comment']
 
     # store result and redirect to success page
-    return _handle_uploaded_file(request, distribution, section, uploaded_file, comment)
+    return _handle_uploaded_file(request, sections, uploaded_file, comment)
 
-def _handle_uploaded_file(request, distribution_name, section_name, uploaded_file, comment):
+def _handle_uploaded_file(request, sections, uploaded_file, comment):
     """ 
     Handles a successfully uploaded files 
     """
     # add the package
     repository = get_repository_controller(request=request)
-    repository.add_package(distribution_name=distribution_name, section_name=section_name, 
-                           uploaded_package_file=uploaded_file, comment=comment)
+    repository.add_package(sections=sections, 
+                           uploaded_package_file=uploaded_file, 
+                           comment=comment)
     return HttpResponseRedirect(reverse(upload_success))
     
 def _handle_remove_package(request, package_instance_id):
@@ -440,3 +439,11 @@ def _url_replace_get_param(request, param_name, param_value):
     elif param_name in modified_params:
         del modified_params[param_name]
     return '{0}?{1}'.format(request.path, modified_params.urlencode())
+
+def _find_section(distribution_name, section_name):
+    """
+    Macro method for finding a section
+    """
+    return models.Section.objects.get(distribution__name=distribution_name,
+                                      name=section_name)
+    

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-08-19 20:45-0400\n"
+"POT-Creation-Date: 2012-09-11 11:13-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,8 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
 
-#: share/templates/404.html:4
-#: share/templates/404.html.py:8
+#: share/templates/404.html:4 share/templates/404.html.py:8
 msgid "Page not found"
 msgstr "Cette page n'a pas été trouvée"
 
@@ -26,8 +25,7 @@ msgstr "Cette page n'a pas été trouvée"
 msgid "We're sorry, but the requested page could not be found."
 msgstr "Nous sommes désolés, mais la page demandée est introuvable."
 
-#: share/templates/500.html:4
-#: share/templates/base.html:66
+#: share/templates/500.html:4 share/templates/base.html:66
 msgid "Home"
 msgstr "Accueil"
 
@@ -47,7 +45,8 @@ msgstr "Erreur du serveur <em>(500)</em>"
 msgid ""
 "There's been an error. It's been reported to the site administrators via e-"
 "mail and should be fixed shortly. Thanks for your patience."
-msgstr "Une erreur est survenue. Elle a été transmise par courriel aux "
+msgstr ""
+"Une erreur est survenue. Elle a été transmise par courriel aux "
 "administrateurs du site et sera corrigée dans les meilleurs délais. Merci "
 "pour votre patience."
 
@@ -55,9 +54,8 @@ msgstr "Une erreur est survenue. Elle a été transmise par courriel aux "
 msgid "Logged in as "
 msgstr "Connecté en tant que "
 
-#: share/templates/base.html:47
-#: share/templates/aptrepo/logout.html:4
-#: src/server/aptrepo/views/webpages/pages.py:177
+#: share/templates/base.html:47 share/templates/aptrepo/logout.html:4
+#: src/server/aptrepo/views/webpages/pages.py:182
 msgid "Logout"
 msgstr "Déconnexion"
 
@@ -98,7 +96,7 @@ msgid "User"
 msgstr "Utilisateur"
 
 #: share/templates/aptrepo/history.html:57
-#: src/server/aptrepo/views/webpages/pages.py:30
+#: src/server/aptrepo/views/webpages/pages.py:35
 msgid "Package"
 msgstr "Paquet"
 
@@ -131,7 +129,7 @@ msgid "Welcome"
 msgstr "Bienvenue"
 
 #: share/templates/aptrepo/login.html:5
-#: src/server/aptrepo/views/webpages/pages.py:169
+#: src/server/aptrepo/views/webpages/pages.py:174
 msgid "Logon"
 msgstr "Connexion"
 
@@ -244,17 +242,17 @@ msgid "Operations"
 msgstr "Opérations"
 
 #: share/templates/aptrepo/upload_package.html:5
-#: share/templates/aptrepo/upload_package.html:16
-#: src/server/aptrepo/views/webpages/pages.py:261
+#: share/templates/aptrepo/upload_package.html:22
 #: src/server/aptrepo/views/webpages/pages.py:265
+#: src/server/aptrepo/views/webpages/pages.py:269
 msgid "Upload"
 msgstr "Télécharge"
 
-#: share/templates/aptrepo/widgets/advanced_file_input.html:5
+#: share/templates/aptrepo/widgets/advanced_file_input.html:6
 msgid "No file chosen"
 msgstr "Aucun fichier choisi"
 
-#: share/templates/aptrepo/widgets/advanced_file_input.html:6
+#: share/templates/aptrepo/widgets/advanced_file_input.html:9
 msgid "Choose File"
 msgstr "Choisir un Fichier"
 
@@ -287,7 +285,8 @@ msgid ""
 "Check this box and click 'Save' to restrict write access for this section to "
 "the selected users and groups below<br/> Uncheck this box and click 'Save' "
 "to provide write access for this section to anyone (default)"
-msgstr "Cochez cette case et cliquez 'Enregistrer' pour limiter l'écriture  à cette "
+msgstr ""
+"Cochez cette case et cliquez 'Enregistrer' pour limiter l'écriture  à cette "
 "sectionpour les utilisateurs et les groupes sélectionnés ci-dessous<br/"
 ">Décochez cette case et cliquez 'Enregistrer' pour fournir l'écriture  à "
 "cette section à n'importe qui (le défaut)"
@@ -306,7 +305,8 @@ msgstr ""
 
 #: src/server/aptrepo/management/commands/import.py:13
 msgid "Imports package files from a local directory into the repository"
-msgstr "Importera des fichiers de paquet à partir d'un répertoire local dans le dépôt"
+msgstr ""
+"Importera des fichiers de paquet à partir d'un répertoire local dans le dépôt"
 
 #: src/server/aptrepo/management/commands/import.py:19
 msgid "Check all subdirectories for packages"
@@ -336,39 +336,45 @@ msgstr ""
 #: src/server/aptrepo/management/commands/prune.py:13
 msgid ""
 "Removes old package versions from the specific sections in the repository"
-msgstr "Supprime les paquets avec les anciennes versions des sections spécifiées "
+msgstr ""
+"Supprime les paquets avec les anciennes versions des sections spécifiées "
 "dans le dépot"
 
 #: src/server/aptrepo/management/commands/prune.py:24
 msgid "Ignore packages whose architecture is invalid for the distribution"
-msgstr "Ignorer les paquets dont l'architecture n'est pas valide pour la distribution"
+msgstr ""
+"Ignorer les paquets dont l'architecture n'est pas valide pour la distribution"
 
 #: src/server/aptrepo/templatetags/action_tags.py:28
 msgid ""
 "{user} uploaded {package_name} version {version}             "
 "({architecture}) to {target_section}"
-msgstr "{user} a téléchargé {package_name} avec version {version}             "
+msgstr ""
+"{user} a téléchargé {package_name} avec version {version}             "
 "({architecture}) à {target_section}"
 
 #: src/server/aptrepo/templatetags/action_tags.py:31
 msgid ""
 "{user} deleted {package_name} version {version}             ({architecture}) "
 "from {target_section}"
-msgstr "{user} a supprimé {package_name} avec version {version}             "
+msgstr ""
+"{user} a supprimé {package_name} avec version {version}             "
 "({architecture}) de {target_section}"
 
 #: src/server/aptrepo/templatetags/action_tags.py:34
 msgid ""
 "{user} cloned {package_name} version {version}             ({architecture}) "
 "from {source_section} to {target_section}"
-msgstr "{user} a copié {package_name} avec version {version} ({architecture}) de "
+msgstr ""
+"{user} a copié {package_name} avec version {version} ({architecture}) de "
 "{source_section} à {target_section}"
 
 #: src/server/aptrepo/templatetags/action_tags.py:37
 msgid ""
 "{package_name} version {version} ({architecture}) pruned             from "
 "{target_section}"
-msgstr "{package_name} avec version {version} ({architecture}) été taillé de "
+msgstr ""
+"{package_name} avec version {version} ({architecture}) été taillé de "
 "{target_section}"
 
 #: src/server/aptrepo/templatetags/action_tags.py:52
@@ -391,30 +397,32 @@ msgstr "Erreur inconnue"
 msgid "Not authorized"
 msgstr "Non autorisé"
 
-#: src/server/aptrepo/views/repository.py:153
-msgid "No section argument specified"
+#: src/server/aptrepo/views/repository.py:141
+msgid "No sections specified"
 msgstr "Aucune section spécifiée"
 
-#: src/server/aptrepo/views/repository.py:180
+#: src/server/aptrepo/views/repository.py:164
 msgid "Invalid extension: {ext}"
 msgstr "Extension non valide: {ext}"
 
-#: src/server/aptrepo/views/repository.py:191
+#: src/server/aptrepo/views/repository.py:177
 msgid "Invalid architecture for distribution ({dist}) : {arch}"
-msgstr "L'architecture n'était pas valide pour la distribution ({dist}) : {arch}"
+msgstr ""
+"L'architecture n'était pas valide pour la distribution ({dist}) : {arch}"
 
-#: src/server/aptrepo/views/repository.py:210
+#: src/server/aptrepo/views/repository.py:196
 msgid "({name}, {version}, {arch}) already exist with different file contents"
-msgstr "({name}, {version}, {arch}) existe déjà avec un contenu de fichiers "
+msgstr ""
+"({name}, {version}, {arch}) existe déjà avec un contenu de fichiers "
 "différents"
 
-#: src/server/aptrepo/views/repository.py:321
+#: src/server/aptrepo/views/repository.py:314
 msgid "Cannot clone into the same section"
 msgstr "Impossible de cloner dans la même section"
 
-#: src/server/aptrepo/views/repository.py:832
-msgid "Unauthorized action: {action}"
-msgstr "Action non autorisée: {action}"
+#: src/server/aptrepo/views/repository.py:825
+msgid "Unauthorized action for {section}: {action}"
+msgstr "Action non autorisée pour {section} : {action}"
 
 #: src/server/aptrepo/views/api/auth.py:25
 msgid "Authentication Required"
@@ -444,7 +452,8 @@ msgstr "L'instance de paquet inconnu: {0}"
 msgid ""
 "Package instance not found in section {section} matching criteria: ({name},"
 "{version},{architecture})"
-msgstr "L'instance de paquet inconnu dams section {section} avec critères: ({name},"
+msgstr ""
+"L'instance de paquet inconnu dams section {section} avec critères: ({name},"
 "{version},{architecture})"
 
 #: src/server/aptrepo/views/api/handlers.py:233
@@ -463,72 +472,71 @@ msgstr "Activités pour la distribution {0}"
 msgid "Activity for section {0}"
 msgstr "Activités pour la section {0}"
 
-#: src/server/aptrepo/views/webpages/pages.py:32
+#: src/server/aptrepo/views/webpages/pages.py:37
 msgid "Optional comment"
 msgstr "Commentaire optionnel"
 
-#: src/server/aptrepo/views/webpages/pages.py:36
-msgid "Section"
-msgstr "Section"
+#: src/server/aptrepo/views/webpages/pages.py:41
+msgid "Sections"
+msgstr "Sections"
 
-#: src/server/aptrepo/views/webpages/pages.py:153
+#: src/server/aptrepo/views/webpages/pages.py:158
 msgid "Browse Repository"
 msgstr "Explorer le Dépôt"
 
-#: src/server/aptrepo/views/webpages/pages.py:153
+#: src/server/aptrepo/views/webpages/pages.py:158
 msgid "Browse the packages in the repository"
 msgstr "Explorer les paquets dans le dépôt"
 
-#: src/server/aptrepo/views/webpages/pages.py:154
+#: src/server/aptrepo/views/webpages/pages.py:159
 msgid "Recent Activity"
 msgstr "Activités Récentes"
 
-#: src/server/aptrepo/views/webpages/pages.py:154
+#: src/server/aptrepo/views/webpages/pages.py:159
 msgid "Review the change history in the repository"
 msgstr "Revoir l'historique des changements dans le dépôt"
 
-#: src/server/aptrepo/views/webpages/pages.py:155
+#: src/server/aptrepo/views/webpages/pages.py:160
 msgid "Download Public Key"
 msgstr "Télécharge la Clé Publique"
 
-#: src/server/aptrepo/views/webpages/pages.py:155
+#: src/server/aptrepo/views/webpages/pages.py:160
 msgid "Download the GPG public key used for signing metadata"
 msgstr "Télécharge la clé publique utilisé pour la signature des fichiers"
 
-#: src/server/aptrepo/views/webpages/pages.py:156
+#: src/server/aptrepo/views/webpages/pages.py:161
 msgid "Administration"
 msgstr "Administration"
 
-#: src/server/aptrepo/views/webpages/pages.py:156
+#: src/server/aptrepo/views/webpages/pages.py:161
 msgid "Manage your repository (requires administrative privileges)"
 msgstr "Gérer votre dépôt (nécessite des privilèges administratifs)"
 
-#: src/server/aptrepo/views/webpages/pages.py:157
+#: src/server/aptrepo/views/webpages/pages.py:162
 msgid "Help"
 msgstr "Aide"
 
-#: src/server/aptrepo/views/webpages/pages.py:157
+#: src/server/aptrepo/views/webpages/pages.py:162
 msgid "Documentation for using the repository"
 msgstr "Documentation pour l'utilisation du dépôt"
 
-#: src/server/aptrepo/views/webpages/pages.py:217
+#: src/server/aptrepo/views/webpages/pages.py:222
 msgid "Package successfully uploaded."
 msgstr "Paquet téléchargé avec succès"
 
-#: src/server/aptrepo/views/webpages/pages.py:224
+#: src/server/aptrepo/views/webpages/pages.py:229
 msgid "Package successfully removed."
 msgstr "Paquet supprimé avec succès"
 
-#: src/server/aptrepo/views/webpages/pages.py:258
-#: src/server/aptrepo/views/webpages/pages.py:313
+#: src/server/aptrepo/views/webpages/pages.py:262
+#: src/server/aptrepo/views/webpages/pages.py:317
 msgid "Distributions"
 msgstr "Distributions"
 
-#: src/server/aptrepo/views/webpages/pages.py:264
+#: src/server/aptrepo/views/webpages/pages.py:268
 msgid "Packages"
 msgstr "Paquets"
 
-#: src/server/aptrepo/views/webpages/pages.py:319
+#: src/server/aptrepo/views/webpages/pages.py:323
 msgid "Recent History"
 msgstr "Activités Récentes"
-

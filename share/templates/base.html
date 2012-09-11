@@ -44,9 +44,9 @@
 								{{ user.username }}
 							{% endif %}
 							&nbsp;|&nbsp;
-							<a href="/aptrepo/logout/">{% trans 'Logout' %}</a>
+							<a href="/aptrepo/logout/?next={{ request.get_full_path }}">{% trans 'Logout' %}</a>
 						{% else %}
-							<a href="/aptrepo/login/">{% trans 'Login' %}</a>
+							<a href="/aptrepo/login/?next={{ request.get_full_path }}">{% trans 'Login' %}</a>
 						{% endif %}
 					</div>
 					

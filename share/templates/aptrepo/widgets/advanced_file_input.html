@@ -1,7 +1,11 @@
 {% load i18n %}
 
-<span class="adv_file_custom_container" id="id_{{name}}">​
-	<input type="file" name="{{name}}" />
-	<input type="text" readonly="readonly" value="{% trans 'No file chosen' %}"/>
-	<input type="button" value="{% trans 'Choose File' %}" />
-</span>
+<div class="adv_file_group_container" id="id_{{name}}">
+	<div class="adv_file_custom_input_group">
+		<input class="adv_file_custom_input" type="file" name="{{name}}" />
+		<input class="adv_file_custom_input" type="text" readonly="readonly" value="{% trans 'No file chosen' %}"/>
+	</div>
+	<div class="adv_file_custom_button_group">
+		<input type="button" value="{% trans 'Choose File' %}" />
+	</div>
+</div>
