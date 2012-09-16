@@ -113,7 +113,8 @@ img.homepage_menu_image  {
 }
 
 input#id_username,input#id_password {
-	width: 300px;
+	min-width: 300px;
+	width: 100%;
 }
 
 td.login_holder {
@@ -133,6 +134,11 @@ td.login_error_msg {
 .login_submit_container {
 	position: absolute;
 	right: 0px;
+	margin: 2px 0px;
+}
+
+.login_submit_container input {
+	margin: 2px 0px;
 }
 
 /* Logout screen styles */
@@ -180,12 +186,31 @@ a#logout_relogin_link {
 }
 
 #upload_button_container {
-	text-align: right;
+	text-align: left;
 }
 
 .upload_form input[type='submit'].upload_form_upload_button {
 	width: auto;
+	margin-top: 15px;
+}
+
+.upload_form ul {
+	padding-left: 0px;
 	margin: 0px;
+
+	/* Use CCS3 style if available to ensure the checkboxes for all the sections
+	 * can effectively use two columns */
+	-moz-column-count:2; /* Firefox */
+	-webkit-column-count:2; /* Safari and Chrome */
+	column-count:2;	
+}
+
+.upload_form li {
+	list-style-type: none 
+}
+
+.upload_form li label {
+	font-weight: normal 
 }
 
 /* Modal dialog defaults */

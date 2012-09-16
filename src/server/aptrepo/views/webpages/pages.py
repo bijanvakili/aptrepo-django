@@ -37,9 +37,9 @@ class UploadPackageForm(forms.Form):
     comment = forms.CharField(label=_('Optional comment'),
                               required=False, 
                               max_length=models.Action.MAX_COMMENT_LENGTH)
-    
     sections = forms.ModelMultipleChoiceField(label=_('Sections'),
-                                              queryset=models.Section.objects.all())
+                                              queryset=models.Section.objects.all(),
+                                              widget=forms.CheckboxSelectMultiple)
     
 class Breadcrumb():
     """

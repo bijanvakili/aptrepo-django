@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-09-11 11:13-0400\n"
+"POT-Creation-Date: 2012-09-12 20:46-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -476,7 +476,7 @@ msgstr "Activités pour la section {0}"
 msgid "Optional comment"
 msgstr "Commentaire optionnel"
 
-#: src/server/aptrepo/views/webpages/pages.py:41
+#: src/server/aptrepo/views/webpages/pages.py:40
 msgid "Sections"
 msgstr "Sections"
 
