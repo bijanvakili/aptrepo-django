@@ -43,5 +43,10 @@
 	{
 		"name": "help",
 		"sizes": ["64x64"]
+	},
+		{
+		"name": "upload",
+		"sizes": ["64x64"]
 	}
+
 ]

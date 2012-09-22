@@ -9,6 +9,7 @@ from django.utils.translation import ugettext as _
 import server.aptrepo.models
 from server.aptrepo.views import get_repository_controller
 from server.aptrepo.util import AptRepoException, AuthorizationException, constrain_queryset
+from server.aptrepo.util.download import TemporaryDownloadedFile, validate_download_url
 
 def handle_exception(request_handler_func):
     """
@@ -240,8 +241,24 @@ class PackageInstanceHandler(BaseAptRepoHandler):
         if 'file' in request.FILES:
             uploaded_file = request.FILES['file']
             [new_instance_id] = repository.add_package(sections=[section], 
-                                                     uploaded_package_file=uploaded_file,
-                                                     comment=comment)
+                                                       uploaded_package_file=uploaded_file,
+                                                       comment=comment)
+        # if an URL was specified, downlaod it to a temporary location and
+        # add it to the repository
+        elif 'url' in request.POST:
+            url = request.POST['url']
+            validate_download_url(url)
+            temporary_file = TemporaryDownloadedFile(url)
+            try:
+                temporary_file.download()
+                [new_instance_id] = repository.add_package(sections=[section], 
+                                                           package_fh=temporary_file.get_fh(),
+                                                           package_path=temporary_file.get_path(),
+                                                           package_size=temporary_file.get_size(),
+                                                           comment=comment)
+            finally:
+                temporary_file.close()
+
         # otherwise, clone based of the source package or instance ID
         else:
             clone_args = {'dest_section' : section, 'comment':comment }

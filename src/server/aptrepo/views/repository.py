@@ -221,7 +221,7 @@ class Repository():
                         package_path, package_size
                     )
                 )
-                package.path.save(stored_file_path, package_fh) 
+                package.path.save(stored_file_path, package_fh)
                 package.save()
 
             except Exception:

@@ -121,7 +121,7 @@ td.login_holder {
 	position: relative;
 }
 
-td.login_error_msg {
+td.login_error_msg,ul.errorlist {
 	color: red;
 }
 

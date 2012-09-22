@@ -22,10 +22,7 @@ div.adv_file_custom_input_group input.adv_file_custom_input {
 }
 
 div.adv_file_group_container input.adv_file_custom_input[type="file"] {
-	z-index: 10;
-	-moz-opacity: 0;
-	opacity: 0;
-	filter: alpha(opacity=0); /* For IE8 and earlier */
+	display: none;
 }
 
 div.adv_file_custom_button_group {

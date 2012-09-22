@@ -1,40 +1,54 @@
 Plan
 ====
-Current -> 0.01
+Current -> 0.01 (Core implementation)
 - proper web UI templates and interface
-	> upload from URL
-	> show client setup instructions
-	> logo and favicon
+	> browse distributions
 	> how to browse sections? (simple/advanced?)
+	> top level search UI and search in API
 	> copy package
-	> top level search
-	> UI history
+	> logo and favicon
+	> show API client setup instructions at an URL	
 - restrict admin access
 - centralize URL generation	
 - consider renaming 'prune' admin command to 'cleanup' (subclass the django.core command)
-- packaging/distribution
-	> Debian packages
-	> python egg?
+- text document for manual setup
 	NOTE:  --insecure is required to serve static files
 
-Next -> 0.02
+Next -> 0.02 (Deployment)
+============
+- load settings from etc directory
 - Apache and nginx deployment
 	> reuse django's templating engine for this?
 	> override handling of static files
+- packaging/distribution
+	> Debian packages
+	> python egg?
 - documentation
 	> user
 	> admin
 	> developer
+	
+0.03 (Optimization)
+====
 - caching
 	> memcached
 - consider denormalizing (package,version,arch) at the instance level instead of the package level
 	> this may help reduce the number of SQL joins
-- .csv export for wherever there is an syndication feed
+
+0.04 (UI improvements)
+======================
 - proper UI images & polished layout
-- load settings from etc directory
+- .csv export for wherever there is an syndication feed
 - testing
 	- code coverage
 	- regression tests that install packages from the repo
+	- performance testing
+	
+future
+======
+- support for FreeBSD packages (rearchitecture required)
+- plugin architecture?
+	
 
 Build dependencies
 ==================
@@ -138,7 +152,12 @@ URL DESIGN:
 			/deb822/<name>/<version>/<architecture>				(GET,DELETE)
 			
 		/package-instances
-				/<id>			(GET, DELETE)
+				/				(POST)
+					?file (file attachment)
+					?url=http://xxxx (download from URL)
+					?package_id=nnn (clone from existing package)
+					?instance_id=nnn (clone from existing package instance)
+  			/<id>			(GET, DELETE)
 				/deb822/<name>/<version>/<architecture>				(GET,DELETE)
 					
 		/distributions	(GET)

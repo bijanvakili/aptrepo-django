@@ -15,6 +15,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 from server.aptrepo import models
 from server.aptrepo.util import AuthorizationException, constants, constrain_queryset
+from server.aptrepo.util.download import TemporaryDownloadedFile
 from server.aptrepo.views import get_repository_controller
 from server.aptrepo.views.webpages import widgets
 
@@ -31,9 +32,7 @@ class UploadPackageForm(forms.Form):
         if 'initial' in kwargs and kwargs['initial']['section']:
             self.fields['section'].widget.attrs['disabled'] = 'disabled'
     """
-    
-    file = forms.FileField(label=_('Package'), 
-                           widget=widgets.AdvancedFileInputWidget)
+    file = widgets.AdvancedFileField(label=_('Package File or URL'))
     comment = forms.CharField(label=_('Optional comment'),
                               required=False, 
                               max_length=models.Action.MAX_COMMENT_LENGTH)
@@ -156,6 +155,7 @@ def repository_home(request):
     """
     menu_items_list = [ 
         (_('Browse Repository'), _('Browse the packages in the repository'), 'dists/', 'browse'),
+        (_('Upload package'), _('Upload a package to the repository'), 'packages/upload/', 'upload'),
         (_('Recent Activity'), _('Review the change history in the repository'), 'history/', 'scroll'),
         (_('Download Public Key'), _('Download the GPG public key used for signing metadata'), 'dists/publickey.gpg', 'key'),
         (_('Administration'), _('Manage your repository (requires administrative privileges)'), 'admin/', 'admin'),
@@ -246,13 +246,29 @@ def upload(request, distribution_name=None, section_name=None):
     sections = []    
     if request.method == 'POST':
         form = UploadPackageForm(request.POST, request.FILES)
+        
+        # TODO why is this explicit full_clean() call required?
+        form.full_clean()   
+        
         if form.is_valid():
-            sections = form.cleaned_data['sections']
-            comment = form.cleaned_data['comment']
-            return _handle_uploaded_file(request,
-                                         sections, 
-                                         request.FILES['file'],
-                                         comment)
+            try:
+                file_to_add = form.cleaned_data['file']
+                
+                # determine if this an URL (requiring a temporary download) or the file
+                # content was included with the POST request
+                if isinstance(file_to_add, unicode):
+                    file_to_add = TemporaryDownloadedFile(file_to_add)
+                    file_to_add.download()
+                else:
+                    file_to_add = request.FILES['file'] 
+                    
+                sections = form.cleaned_data['sections']
+                comment = form.cleaned_data['comment']
+                return _handle_add_file_to_repository(request, sections, 
+                                                      file_to_add, comment)
+            finally:
+                if isinstance(file_to_add, TemporaryDownloadedFile):
+                    file_to_add.close()
 
     elif request.method == 'GET':
         form = UploadPackageForm(initial={'sections': [target_section]})
@@ -408,17 +424,23 @@ def _packages_post(request):
     comment = request.POST['comment']
 
     # store result and redirect to success page
-    return _handle_uploaded_file(request, sections, uploaded_file, comment)
+    return _handle_add_file_to_repository(request, sections, uploaded_file, comment)
 
-def _handle_uploaded_file(request, sections, uploaded_file, comment):
+def _handle_add_file_to_repository(request, sections, file_to_add, comment):
     """ 
     Handles a successfully uploaded files 
     """
     # add the package
     repository = get_repository_controller(request=request)
-    repository.add_package(sections=sections, 
-                           uploaded_package_file=uploaded_file, 
-                           comment=comment)
+    args = {'sections':sections, 'comment':comment}
+    if isinstance(file_to_add, TemporaryDownloadedFile):
+        args['package_fh'] = file_to_add.get_fh()
+        args['package_path'] = file_to_add.get_path()
+        args['package_size'] = file_to_add.get_size()
+    else:
+        args['uploaded_package_file'] = file_to_add
+        
+    repository.add_package(**args)
     return HttpResponseRedirect(reverse(upload_success))
     
 def _handle_remove_package(request, package_instance_id):

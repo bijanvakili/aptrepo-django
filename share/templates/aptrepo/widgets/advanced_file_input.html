@@ -3,7 +3,7 @@
 <div class="adv_file_group_container" id="id_{{name}}">
 	<div class="adv_file_custom_input_group">
 		<input class="adv_file_custom_input" type="file" name="{{name}}" />
-		<input class="adv_file_custom_input" type="text" readonly="readonly" value="{% trans 'No file chosen' %}"/>
+		<input class="adv_file_custom_input" type="text" name="{{name}}_url"/>
 	</div>
 	<div class="adv_file_custom_button_group">
 		<input type="button" value="{% trans 'Choose File' %}" />

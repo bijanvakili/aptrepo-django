@@ -4,7 +4,7 @@
  */
 function initialize_advanced_fileinput(elem_fileinput_container) {
 	var hidden_file_input = elem_fileinput_container.find('input[type="file"]');
-	var visible_filepath_text_control = elem_fileinput_container.find('input[type="text"][readonly="readonly"]');
+	var visible_filepath_text_control = elem_fileinput_container.find('input[type="text"]');
 	var visible_choosefile_button = elem_fileinput_container.find('input[type="button"]');
 	var initial_path_text = visible_filepath_text_control.val();
 	
