@@ -23,15 +23,6 @@ class UploadPackageForm(forms.Form):
     """
     Form class for package uploads
     """
-    
-    # TODO Reintroduce constructor later.  
-    # Disabling a basic <select> element would prevent it from POSTing its data
-    """
-    def __init__(self, *args, **kwargs):
-        super(UploadPackageForm, self).__init__(*args, **kwargs)
-        if 'initial' in kwargs and kwargs['initial']['section']:
-            self.fields['section'].widget.attrs['disabled'] = 'disabled'
-    """
     file = widgets.AdvancedFileField(label=_('Package File or URL'))
     comment = forms.CharField(label=_('Optional comment'),
                               required=False, 
@@ -245,7 +236,12 @@ def upload(request, distribution_name=None, section_name=None):
 
     sections = []    
     if request.method == 'POST':
-        form = UploadPackageForm(request.POST, request.FILES)
+        initial_data = {}
+        if target_section:
+            initial_data['sections'] = [target_section]
+        form = UploadPackageForm(data=request.POST, 
+                                 files=request.FILES, 
+                                 initial=initial_data)
         
         # TODO why is this explicit full_clean() call required?
         form.full_clean()   
