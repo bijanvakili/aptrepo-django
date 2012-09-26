@@ -1,6 +1,6 @@
-<mockup version="1.0" skin="sketch" measuredW="688" measuredH="359" mockupW="572" mockupH="299">
+<mockup version="1.0" skin="sketch" fontFace="Balsamiq Sans" measuredW="536" measuredH="563" mockupW="420" mockupH="503">
   <controls>
-    <control controlID="58" controlTypeID="com.balsamiq.mockups::List" x="131" y="96" w="406" h="199" measuredW="100" measuredH="194" zOrder="2" locked="false" isInGroup="-1">
+    <control controlID="58" controlTypeID="com.balsamiq.mockups::List" x="124" y="145" w="406" h="199" measuredW="100" measuredH="194" zOrder="2" locked="false" isInGroup="-1">
       <controlProperties>
         <alternateRowColor>15134199</alternateRowColor>
         <rowHeight>16</rowHeight>
@@ -8,12 +8,12 @@
         <text>Package%3A%20gzip%0AVersion%3A%201.3.12-9ubuntu1.1%0AArchitecture%3A%20amd64%0AFilename%3A%20pool/main/g/gzip/gzip_1.3.12-9ubuntu1.1_amd64.deb%0APre-Depends%3A%20libc6%20%28%3E%3D%202.4%29%0ASuggests%3A%20less%0AMaintainer%3A%20Ubuntu%20Core%20Developers%20%3Cubuntu-devel-discuss@lists.ubuntu.com%3E%0ASize%3A%20107272%0AMD5sum%3A%200bd8f0142af87c72c18f9c8f5b5ef2c7%0ASHA1%3A%2040877ac35af571b5710d63426154ebcfa329bf80%0ADescription%3A%20GNU%20compression%20utilities%0A%20This%20package%20provides%20the%20standard%20GNU%20file%20compression%20utilities</text>
       </controlProperties>
     </control>
-    <control controlID="67" controlTypeID="com.balsamiq.mockups::TitleWindow" x="116" y="60" w="572" h="299" measuredW="450" measuredH="400" zOrder="0" locked="false" isInGroup="-1">
+    <control controlID="67" controlTypeID="com.balsamiq.mockups::TitleWindow" x="116" y="60" w="420" h="503" measuredW="450" measuredH="400" zOrder="0" locked="false" isInGroup="-1">
       <controlProperties>
         <text>gzip_1.4.0_i386.deb%20in%20lucid%3Amain</text>
       </controlProperties>
     </control>
-    <control controlID="68" controlTypeID="__group__" x="131" y="304" w="412" h="24" measuredW="412" measuredH="24" zOrder="1" locked="false" isInGroup="-1">
+    <control controlID="68" controlTypeID="__group__" x="124" y="508" w="404" h="24" measuredW="404" measuredH="24" zOrder="1" locked="false" isInGroup="-1">
       <groupChildrenDescriptors>
         <control controlID="0" controlTypeID="com.balsamiq.mockups::IconLabel" x="0" y="0" w="-1" h="-1" measuredW="86" measuredH="24" zOrder="0" locked="false" isInGroup="68">
           <controlProperties>
@@ -36,7 +36,7 @@
             <text>Delete</text>
           </controlProperties>
         </control>
-        <control controlID="3" controlTypeID="com.balsamiq.mockups::IconLabel" x="348" y="0" w="-1" h="-1" measuredW="64" measuredH="24" zOrder="3" locked="false" isInGroup="68">
+        <control controlID="3" controlTypeID="com.balsamiq.mockups::IconLabel" x="340" y="0" w="-1" h="-1" measuredW="64" measuredH="24" zOrder="3" locked="false" isInGroup="68">
           <controlProperties>
             <icon>XIcon%7Csmall</icon>
             <labelPosition>right</labelPosition>
@@ -45,9 +45,35 @@
         </control>
       </groupChildrenDescriptors>
     </control>
-    <control controlID="69" controlTypeID="com.balsamiq.mockups::RadioButtonGroup" x="543" y="96" w="143" h="119" measuredW="141" measuredH="84" zOrder="3" locked="false" isInGroup="-1">
+    <control controlID="70" controlTypeID="com.balsamiq.mockups::Label" x="124" y="124" w="-1" h="-1" measuredW="81" measuredH="20" zOrder="3" locked="false" isInGroup="-1">
       <controlProperties>
-        <text>Available%20architectures%3A%0A%28o%29%20i386%0A%28%20%29%20amd64%0A%28%20%29%20sparc</text>
+        <size>12</size>
+        <text>Debian%20control%3A</text>
+      </controlProperties>
+    </control>
+    <control controlID="71" controlTypeID="com.balsamiq.mockups::ComboBox" x="254" y="93" w="-1" h="-1" measuredW="58" measuredH="23" zOrder="4" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>i386</text>
+      </controlProperties>
+    </control>
+    <control controlID="72" controlTypeID="com.balsamiq.mockups::Label" x="124" y="94" w="-1" h="-1" measuredW="127" measuredH="20" zOrder="5" locked="false" isInGroup="-1">
+      <controlProperties>
+        <size>12</size>
+        <text>Available%20architectures%3A</text>
+      </controlProperties>
+    </control>
+    <control controlID="73" controlTypeID="com.balsamiq.mockups::List" x="124" y="380" w="406" h="113" measuredW="100" measuredH="128" zOrder="6" locked="false" isInGroup="-1">
+      <controlProperties>
+        <alternateRowColor>15134199</alternateRowColor>
+        <color>16777215</color>
+        <size>11</size>
+        <text>Uploaded%20by%3A%09testuser0%0AUploaded%20on%3A%092012-09-25%2020%3A17%3A34%0ASize%3A%0923311722%0AMD5%3A%092646fb69fe88b6d1bc7c128f7cd28fd7%0ASHA1%3A%09080141939765bcb5ce5ada8814479657e4490cf4%0ASHA256%3A%090ff676d718efc95a901669f336304c9d3a2233533518f873e102887d755e66bd</text>
+      </controlProperties>
+    </control>
+    <control controlID="74" controlTypeID="com.balsamiq.mockups::Label" x="124" y="359" w="-1" h="-1" measuredW="80" measuredH="20" zOrder="7" locked="false" isInGroup="-1">
+      <controlProperties>
+        <size>12</size>
+        <text>Miscellaneous%3A</text>
       </controlProperties>
     </control>
   </controls>

@@ -1,12 +1,12 @@
-<mockup version="1.0" skin="sketch" measuredW="836" measuredH="648" mockupW="801" mockupH="646">
+<mockup version="1.0" skin="sketch" fontFace="Balsamiq Sans" measuredW="836" measuredH="648" mockupW="801" mockupH="646">
   <controls>
     <control controlID="0" controlTypeID="com.balsamiq.mockups::BrowserWindow" x="35" y="2" w="801" h="646" measuredW="450" measuredH="400" zOrder="0" locked="false" isInGroup="-1">
       <controlProperties>
-        <text>apt%20repository%0Ahttp%3A//www.aptrepository.com/distributions/lucid/main/upload</text>
+        <text>Login%20%7C%20apt%20repository%0Ahttp%3A//www.aptrepository.com/login/%3Fnext%3D/aptrepo/</text>
         <verticalScrollbar>true</verticalScrollbar>
       </controlProperties>
     </control>
-    <control controlID="54" controlTypeID="__group__" x="46" y="184" w="463" h="100" measuredW="463" measuredH="100" zOrder="1" locked="false" isInGroup="-1">
+    <control controlID="54" controlTypeID="__group__" x="49" y="190" w="463" h="100" measuredW="463" measuredH="100" zOrder="1" locked="false" isInGroup="-1">
       <groupChildrenDescriptors>
         <control controlID="0" controlTypeID="com.balsamiq.mockups::Label" x="0" y="4" w="-1" h="-1" measuredW="65" measuredH="21" zOrder="0" locked="false" isInGroup="54">
           <controlProperties>
@@ -23,9 +23,9 @@
             <text>********</text>
           </controlProperties>
         </control>
-        <control controlID="3" controlTypeID="com.balsamiq.mockups::Button" x="404" y="71" w="59" h="29" measuredW="59" measuredH="28" zOrder="3" locked="false" isInGroup="54">
+        <control controlID="3" controlTypeID="com.balsamiq.mockups::Button" x="404" y="71" w="59" h="29" measuredW="54" measuredH="27" zOrder="3" locked="false" isInGroup="54">
           <controlProperties>
-            <text>Log%20In</text>
+            <text>Login</text>
           </controlProperties>
         </control>
         <control controlID="4" controlTypeID="com.balsamiq.mockups::Link" x="127" y="71" w="-1" h="-1" measuredW="194" measuredH="17" zOrder="4" locked="false" isInGroup="54">
@@ -41,8 +41,10 @@
         </control>
       </groupChildrenDescriptors>
     </control>
-    <control controlID="55" controlTypeID="com.balsamiq.mockups::Component" x="46" y="81" w="747" h="61" measuredW="747" measuredH="61" zOrder="2" locked="false" isInGroup="-1">
+    <control controlID="55" controlTypeID="com.balsamiq.mockups::Component" x="46" y="81" w="747" h="66" measuredW="747" measuredH="66" zOrder="2" locked="false" isInGroup="-1">
       <controlProperties>
+        <override controlID="13" x="0" y="0" w="747" h="66"/>
+        <override controlID="-1"/>
         <src>./assets/repo_header_nologin.bmml</src>
       </controlProperties>
     </control>
