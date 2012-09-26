@@ -7,7 +7,7 @@
 		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 		<title>{% block title %}{% endblock %} | apt repository</title>
 		
-		<link rel="stylesheet" type="text/css" href="{% static_media_url 'css/smoothness/jquery-ui-1.8.20.custom.css' %}" />
+		<link rel="stylesheet" type="text/css" href="{% static_media_url 'css/lib/smoothness/jquery-ui-1.8.20.custom.css' %}" />
 		<link rel="stylesheet" type="text/css" href="{% static_media_url 'css/aptrepo.css' %}" />
 		
 		<script type="text/javascript" src="{% url django.views.i18n.javascript_catalog %}"></script>
@@ -15,10 +15,10 @@
 			<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.2.js"></script>
 			<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.20/jquery-ui.js"></script>
 		{% else %}
-			<script type="text/javascript" src="{% static_media_url "js/jquery-1.7.2.min.js" 1 %}"></script>
-			<script type="text/javascript" src="{% static_media_url "js/jquery-ui-1.8.20.min.js" 1 %}"></script>
+			<script type="text/javascript" src="{% static_media_url "js/lib/jquery-1.7.2.min.js" 1 %}"></script>
+			<script type="text/javascript" src="{% static_media_url "js/lib/jquery-ui-1.8.20.min.js" 1 %}"></script>
 		{% endif %}
-		<script type="text/javascript" src="{% static_media_url 'js/sprintf.js' 1 %}"></script>
+		<script type="text/javascript" src="{% static_media_url 'js/lib/sprintf.js' 1 %}"></script>
 		
 		<script type="text/javascript" src="{% static_media_url 'js/aptrepo.js' %}"></script>
 		
