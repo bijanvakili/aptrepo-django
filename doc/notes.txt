@@ -2,14 +2,16 @@ Plan
 ====
 Current -> 0.01 (Core implementation)
 - proper web UI templates and interface
-	> browse distributions
 	> how to browse sections? (simple/advanced?)
 	> top level search UI and search in API
 	> copy package
+	> error pages (404 and 500)
+	> user help pages (initial simple version)
 	> logo and favicon
-	> show API client setup instructions at an URL	
+	> show API client setup instructions at a URL
 - restrict admin access
-- centralize URL generation	
+- centralize URL generation
+	> finalize URL hierarchy (based on UI mockups?)	
 - consider renaming 'prune' admin command to 'cleanup' (subclass the django.core command)
 - text document for manual setup
 	NOTE:  --insecure is required to serve static files
@@ -23,14 +25,15 @@ Next -> 0.02 (Deployment)
 - packaging/distribution
 	> Debian packages
 	> python egg?
-- documentation
+- full help documentation
 	> user
 	> admin
 	> developer
 	
 0.03 (Optimization)
 ====
-- caching
+- web media minification (JS and CSS)
+- HTTP request caching
 	> memcached
 - consider denormalizing (package,version,arch) at the instance level instead of the package level
 	> this may help reduce the number of SQL joins
@@ -57,6 +60,11 @@ python
 	django
 rsvg
 
+Optional build dependencies
+===========================
+rhino (for jslint)
+pylint
+
 Test dependencies
 =================
 SQLite
@@ -71,8 +79,8 @@ python >= 2.6
 	python-debian
 	python-pyme
 		
-Optional
-========
+Optional runtime dependencies
+=============================
 django-auth-ldap
 pycurl
 poster

@@ -1,3 +1,5 @@
+/*globals $, jQuery, sprintf, gettext */
+
 /*
  * Construct a REST API URL for a specific package instance
  */
@@ -23,20 +25,28 @@ function get_instance_url(
 
 
 /*
+ * Construct a REST API URL for a specific distribution
+ */
+function get_distribution_url( distribution_id ) {
+	return '/aptrepo/dists/' + distribution_id + '/';
+}
+
+
+/*
  * Common callback for anchor elements with package metadata attributes
  */
 function on_click_package_anchor(ev) {
 	ev.preventDefault();
 	
 	// retrieve the URL of the package by making an Ajax API call on its metadata
-	var section_name = $(this).attr('target_section_name');
-	var section_id = $(this).attr('target_section_id');
-	var instance_metadata_url =  get_instance_url(
-		section_id, 
-		$(this).attr('package_name'),
-		$(this).attr('version'),
-		$(this).attr('architecture')
-	);
+	var section_name = $(this).attr('target_section_name'),
+		section_id = $(this).attr('target_section_id'),
+		instance_metadata_url = get_instance_url(
+			section_id, 
+			$(this).attr('package_name'),
+			$(this).attr('version'),
+			$(this).attr('architecture')
+		);
 	$.getJSON( instance_metadata_url)
 	.success( function( instance_metadata ) {
 		ev.data.package_callback(
@@ -52,19 +62,18 @@ function on_click_package_anchor(ev) {
 }
 
 /*
- * Wrapper callback for a package's download link
- */
-function download_package_callback(ev, instance_metadata, section_name, section_id) {
-	download_package_for_instance( instance_metadata );
-}
-
-/*
  * Downloads the package based on the path in the metadata 
  */
 function download_package_for_instance( instance_metadata ) {
 	window.location.href = '/aptrepo/public/' + instance_metadata['package']['path'];
 }
 
+/*
+ * Wrapper callback for a package's download link
+ */
+function download_package_callback(ev, instance_metadata, section_name, section_id) {
+	download_package_for_instance( instance_metadata );
+}
 
 function setup_download_button( button, instance_metadata ) {
 	button.off('click').click( function() {
@@ -95,11 +104,19 @@ function setup_delete_button( button, instance_metadata ) {
  */
 function populate_package_info_dialog( instance_metadata, section_name )
 {
-	var package_info_dialog = $('div#package_info_dialog');
-	
 	// set the dialog title
-	var package_path = instance_metadata['package']['path'];
-	var filename = package_path.substr(package_path.lastIndexOf('/') + 1);
+	var package_info_dialog = $('div#package_info_dialog'),
+		package_path = instance_metadata['package']['path'],
+		filename = package_path.substr(package_path.lastIndexOf('/') + 1),
+		PACKAGE_MISC_INFO_ROWS = {
+			creator : 1,
+			creation_date : 2,
+			size : 3,
+			md5 : 4,
+			sha1 : 5,
+			sha256 : 6
+		};		
+
 	package_info_dialog.dialog( 
 		{title: gettext('%s in %s').printf(filename, section_name) } 
 	);
@@ -110,20 +127,12 @@ function populate_package_info_dialog( instance_metadata, section_name )
 	);
 	
 	// populate the miscellaneous info
-	var misc_info_table = package_info_dialog.find('table#package_info_dialog_misc_data');
-	var fn_set_table_entry = function( row_id, value ) {
-		misc_info_table.find(
-			'tr:nth-child(%d) :nth-child(2)'.printf( row_id )
-		).html( value );
-	};
-	var PACKAGE_MISC_INFO_ROWS = {
-		creator : 1,
-		creation_date : 2,
-		size : 3,
-		md5 : 4,
-		sha1 : 5,
-		sha256 : 6
-	};
+	var misc_info_table = package_info_dialog.find('table#package_info_dialog_misc_data'),
+		fn_set_table_entry = function( row_id, value ) {
+			misc_info_table.find(
+				'tr:nth-child(%d) :nth-child(2)'.printf( row_id )
+			).html( value );
+		};
 	fn_set_table_entry( PACKAGE_MISC_INFO_ROWS.creator, instance_metadata['creator'] );
 	fn_set_table_entry( PACKAGE_MISC_INFO_ROWS.creation_date, instance_metadata['creation_date'] );
 	fn_set_table_entry( PACKAGE_MISC_INFO_ROWS.size, instance_metadata['package']['size'] );
@@ -143,11 +152,16 @@ function populate_package_info_dialog( instance_metadata, section_name )
 function show_package_info_dialog(ev, instance_metadata, section_name, section_id) {
 	
 	// setup the package info dialog
-	var package_info_dialog = $('div#package_info_dialog');
+	var package_info_dialog = $('div#package_info_dialog'),
+		instance_url_for_architectures = get_instance_url(
+			section_id,
+			instance_metadata['package']['package_name'],
+			instance_metadata['package']['version']
+		);	
 	package_info_dialog.dialog({
 		autoOpen: false,
 		modal: true,
-		minWidth: package_info_dialog.width(),
+		minWidth: package_info_dialog.width()
 	});
 	$('#package_info_dialog_buttons button#download').button({
 		icons : {primary: 'ui-icon-arrowthick-1-s'}
@@ -166,17 +180,14 @@ function show_package_info_dialog(ev, instance_metadata, section_name, section_i
 	});
 	
 	// retrieve and add a radio button for all architecture choices
-	var instance_url_for_architectures = get_instance_url(
-		section_id,
-		instance_metadata['package']['package_name'],
-		instance_metadata['package']['version']
-	);
 	$.getJSON( instance_url_for_architectures )
 	.success( function( all_archs_data ) {
-		var architecture_dropdown = $('#package_info_architectures_dropdown');
-		architecture_dropdown.html('');
 
-		for (var idx in all_archs_data) {
+		var idx,
+			architecture_dropdown = $('#package_info_architectures_dropdown');
+		
+		architecture_dropdown.html('');
+		for (idx = 0; idx < all_archs_data.length; ++idx) {
 			architecture_dropdown.append( 
 				$('<option/>')
 				.val(all_archs_data[idx]['package']['architecture'])
@@ -215,4 +226,73 @@ function show_package_info_dialog(ev, instance_metadata, section_name, section_i
 	});
 
 	return false;
+}
+
+
+/*
+ * Initializes the tree control for browsing the repository distributions
+ */
+function initialize_distributions_treecontrol( elem_distributions_container ) {
+	
+	// setup tree control
+	// TODO Customize theme graphics and generate them from SVG
+	// TODO Avoid using absolute URL when specifying theme directory
+	elem_distributions_container
+		.bind('select_node.jstree', function( ev, data ) {
+			var href = data.rslt.obj.children("a").attr("href");
+			if (href && href !== '#') {
+				document.location.href = href;
+			}
+		})
+		.jstree({
+			plugins : [ "themes", "html_data", "ui"],
+			"core" : {
+				"initially_open": ["distribution_root"]
+			},
+			"themes" : {
+				"theme": "default",
+				"url": "/aptrepo/media/css/repository_tree/style.css",
+				"dots": true,
+				"icons": true
+			},
+			"ui" : {
+				"select_limit" : 2,
+				"initially_select" : ["distribution_root"]
+			}
+	});
+
+	// erase info window if clicking on the root distribution node
+	var info_table = $('#distributions_section_info_table>tbody');
+	elem_distributions_container.on('click', 'li#distribution_root>a', function() {
+		info_table.html('');
+	});
+	
+	// setup callback for clicking on a distribution
+	var append_data_to_table = function(data_dict) {
+		var i;
+		for (i in data_dict) {
+			if ( data_dict.hasOwnProperty(i) ) {
+				info_table.append( $('<tr>')
+					.append( 
+						$('<td>').text(data_dict[i][0])
+						.after( $('<td>').text(data_dict[i][1]) )
+					)
+				);
+			}
+		}
+	};
+	elem_distributions_container.on('click', 'a[distribution_id]', function() {
+		
+		// query and populate information on the distribution
+		var distribution_id = $(this).attr('distribution_id');
+		info_table.html('');
+
+		$.getJSON( get_distribution_url(distribution_id ) )
+		.success( function( distribution_data ) {
+			append_data_to_table( distribution_data );
+		})
+		.error( function() {
+			alert( gettext('Unable to retrieve distribution information') );
+		});
+	});
 }

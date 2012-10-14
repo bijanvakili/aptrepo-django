@@ -1,7 +1,6 @@
 """
 General unit tests for apt repo
 """
-
 import hashlib
 import json
 import os
@@ -10,6 +9,7 @@ import tempfile
 import zlib
 from debian_bundle import deb822, debfile
 from django.conf import settings
+from django.utils.translation import ugettext as _
 from server.aptrepo import models
 from server.aptrepo.util.hash import hash_file_by_fh
 from base import BaseAptRepoTest, skipRepoTestIfExcluded
@@ -252,6 +252,19 @@ class SmallRepositoryTest(BaseAptRepoTest):
         action_list = self._download_json_object(test_section_url + '/actions')
         self.assertEqual(len(action_list), 2)        
 
+    @skipRepoTestIfExcluded
+    def test_repository_home(self):
+        response = self.client.get(BaseAptRepoTest._ROOT_WEBDIR + '/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, _('Browse Repository'))
+
+    @skipRepoTestIfExcluded
+    def test_browse_distributions(self):
+        response = self.client.get(BaseAptRepoTest._ROOT_WEBDIR + '/dists/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, _('Distributions'))
+        self.assertContains(response, _('test_distribution'))
+        self.assertContains(response, _('test_section'))
 
 class LargeRepositoryTest(BaseAptRepoTest):
 

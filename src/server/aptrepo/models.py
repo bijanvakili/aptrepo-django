@@ -97,8 +97,8 @@ class Distribution(models.Model):
     suite = models.CharField(max_length=80, validators=[nowhitespace])
     origin = models.CharField(max_length=80, validators=[nowhitespace])
     creation_date = models.DateTimeField(auto_now_add=True)
-    suppported_architectures = models.ManyToManyField(Architecture, 
-                                                      db_table='aptrepo_dist_architectures')
+    supported_architectures = models.ManyToManyField(Architecture, 
+                                                     db_table='aptrepo_dist_architectures')
     
     def __unicode__(self):
         return self.name
@@ -108,7 +108,7 @@ class Distribution(models.Model):
 
     def get_architecture_list(self):
         architectures = []
-        for arch in self.suppported_architectures.all():
+        for arch in self.supported_architectures.all():
             architectures.append(arch.name)
         return architectures
 
@@ -116,7 +116,7 @@ class Distribution(models.Model):
         if architecture == Architecture.ARCHITECTURE_ALL:
             return True
         
-        return architecture in self.suppported_architectures.all().values_list('name', 
+        return architecture in self.supported_architectures.all().values_list('name', 
                                                                                flat=True)
         
 

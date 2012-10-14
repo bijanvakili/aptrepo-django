@@ -1,0 +1,76 @@
+[
+	{
+		"pk": 2,
+		"model": "aptrepo.distribution",
+		"fields" : {
+			"name" : "storm",
+			"description" : "Another Distribution",
+			"label" : "Anoter Distribution",
+			"suite" : "testing",
+			"origin" : "therepo",
+			"creation_date" : "2012-01-01 00:05:00",
+			"supported_architectures": [1,2]
+		}
+	},
+	{
+		"pk": 3,
+		"model": "aptrepo.distribution",
+		"fields" : {
+			"name" : "maelstrom",
+			"description" : "Yet Another Distribution",
+			"label" : "Yet Anoter Distribution",
+			"suite" : "testing",
+			"origin" : "therepo",
+			"creation_date" : "2012-01-01 00:05:00",
+			"supported_architectures": [1,2]
+		}
+	},
+	{
+		"pk": 6,
+		"model": "aptrepo.section",
+		"fields" : {
+			"name" : "test_subsection_1",
+			"distribution" : ["storm"],
+			"description" : "Test Section 1",
+			"package_prune_limit" : 5,
+			"action_prune_limit" : 10,
+			"enforce_authorization" : false
+		}
+	},
+	{
+		"pk": 7,
+		"model": "aptrepo.section",
+		"fields" : {
+			"name" : "test_subsection_2",
+			"distribution" : ["storm"],
+			"description" : "Test Section 2",
+			"package_prune_limit" : 5,
+			"action_prune_limit" : 10,
+			"enforce_authorization" : false
+		}
+	},
+	{
+		"pk": 8,
+		"model": "aptrepo.section",
+		"fields" : {
+			"name" : "test_subsection_1",
+			"distribution" : ["maelstrom"],
+			"description" : "Test Section 1",
+			"package_prune_limit" : 5,
+			"action_prune_limit" : 10,
+			"enforce_authorization" : false
+		}
+	},
+	{
+		"pk": 9,
+		"model": "aptrepo.section",
+		"fields" : {
+			"name" : "test_subsection_2",
+			"distribution" : ["maelstrom"],
+			"description" : "Test Section 2",
+			"package_prune_limit" : 5,
+			"action_prune_limit" : 10,
+			"enforce_authorization" : false
+		}
+	}
+]

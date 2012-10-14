@@ -1,6 +1,7 @@
 from functools import wraps
 import httplib
 import logging
+import json
 from django import forms
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -158,11 +159,67 @@ def repository_home(request):
                               context_instance=RequestContext(request))
     
 
+@handle_exception
+@require_http_methods(["GET"])
+def browse_distributions(request):
+    """
+    Outputs page to browse the repository distributions and sections
+    """
+    breadcrumbs = [ Breadcrumb(_('Distributions'), None) ]
+    distributions_tree = {}
+    all_sections = models.Section.objects.all().values(
+        'id', 'name', 'distribution__name', 'distribution__id').order_by('name')
+    for section in all_sections:
+        distribution_name = section['distribution__name']
+        if not distribution_name in distributions_tree:
+            distributions_tree[distribution_name] = {
+                'id': section['distribution__id'],
+                'name': distribution_name,
+                'sections': []
+            }
+        distributions_tree[distribution_name]['sections'].append( 
+            dict((k, section[k]) for k in ('id','name') if k in section )
+        ) 
+         
+    return render_to_response('aptrepo/browse_distributions.html', 
+                              { 
+                                'breadcrumbs': breadcrumbs, 
+                                'distributions_tree': sorted(distributions_tree.iteritems()) 
+                              }, 
+                              context_instance=RequestContext(request))
+
+@handle_exception
+@require_http_methods(["GET"])
+def get_distribution_info(request, distribution_id):
+    """
+    Returns JSON data on the distribution including other metadata metrics
+    for the browse distribution page
+    """
+    distribution = models.Distribution.objects.get(id=distribution_id)
+    f_entry = lambda header,value: (header, value)
+    distribution_data = []
+    distribution_data.append( f_entry( _('Name'), distribution.name ) )
+    distribution_data.append( f_entry( _('Description'), distribution.description ) )
+    distribution_data.append( f_entry( _('Label'), distribution.label ) )
+    distribution_data.append( f_entry( _('Suite'), distribution.suite ) )
+    distribution_data.append( f_entry( _('Origin'), distribution.origin ) )
+    distribution_data.append( f_entry( _('Created'), 
+        distribution.creation_date.strftime( _('%a %b %d %Y, %H:%M:%S') ) ) )
+    distribution_data.append( f_entry( _('Supported Architectures'), ', '.join(distribution.get_architecture_list()) ) )
+    distribution_data.append( f_entry( _('Number of Packages'), models.PackageInstance.objects.filter(
+        section__distribution_id=distribution_id).count() ) )
+    distribution_data.append( f_entry( _('Sections'), ', '.join(
+        models.Section.objects.filter(
+            distribution_id=distribution_id).order_by('name').values_list('name', flat=True)) ) )
+
+    return HttpResponse(json.dumps(distribution_data))
+
+
 def login(request):
     """
     Performs user login
     """
-    breadcrumbs = [ Breadcrumb(_('Logon'), None) ]
+    breadcrumbs = [ Breadcrumb(_('Login'), None) ]
     return django.contrib.auth.views.login(request=request, template_name='aptrepo/login.html', 
                                            extra_context={ 'breadcrumbs': breadcrumbs })
 

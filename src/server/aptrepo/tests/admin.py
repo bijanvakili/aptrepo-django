@@ -117,7 +117,7 @@ class PruningTest(BaseAptRepoTest):
             """
             temparch = models.Architecture.objects.create(name='temparch')
             models.Distribution.objects.get(
-                name=self.distribution_name).suppported_architectures.add(temparch)
+                name=self.distribution_name).supported_architectures.add(temparch)
             
             """
             setup set of packages to be pruned as follows

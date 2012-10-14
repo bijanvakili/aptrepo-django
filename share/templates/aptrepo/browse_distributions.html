@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load url_extras %}
+
+{% block title %}{% trans 'Distributions' %}{% endblock %}
+
+{% block head %}
+		{% if debug %}
+			<script type="text/javascript" src="http://static.jstree.com/v.1.0pre/jquery.jstree.js"></script>
+		{% else %}
+			<script type="text/javascript" src="{% static_media_url "js/lib/jquery.jstree.min-1.0-rc3.js" 1 %}"></script>
+		{% endif %}
+{% endblock %}
+
+
+{% block body %}
+
+<div id="distributions_header_container">
+	<span class="aptrepo_subtitle">{% trans "Browse Repository" %}</span>
+</div>
+
+<div id="distributions_recent_activity_container">
+	<a href="history/" class="common_command_link">
+		{# TODO Create clock icon for 'recent history' #}
+		<img src="{% raster_image_url '16x16/scroll.png'%}" />{% trans "Recent History" %}
+	</a>
+	<a href="history/rss/" class="common_command_link">
+		<img src="{% raster_image_url '16x16/rss_feed.png'%}" />RSS
+	</a>
+	<a href="history/atom/" class="common_command_link">
+		<img src="{% raster_image_url '16x16/atom_feed.png' %}" />Atom
+	</a>
+</div>
+
+<div id="distributions_main_container">
+	<div id="distribution_controls_container">
+		<a href="../packages/upload/" class="common_command_link">
+			<img src="{% raster_image_url '16x16/upload.png'%}" />{% trans "Upload" %}
+		</a>
+		<a href="help/" class="common_command_link">
+			<img src="{% raster_image_url '16x16/help.png'%}" />{% trans "Help" %}
+		</a>
+	</div>
+	
+	<div id="distributions_tree_container">
+		<div id="distributions_tree">
+			<ul>
+				<li id="distribution_root">
+					<a href="#">{% trans "Distributions" %}</a>
+					<ul>
+						{% for distribution_name, distribution in distributions_tree %}
+						<li>
+							<a href="#" distribution_id="{{ distribution.id }}">{{ distribution_name }}</a>
+							<ul>
+								{% for section in distribution.sections %}
+								<li>
+									<a href="{{distribution_name}}/{{section.name}}/">{{ section.name }}</a>
+								</li>
+								{% endfor %}
+							</ul>
+						</li>
+						{% endfor %}
+					</ul>
+				</li>
+			</ul>
+		</div>			
+	</div>
+	
+	<div id="distributions_section_info_container">	
+		<table id="distributions_section_info_table">
+			<tbody />
+		</table>
+	</div>
+</div>
+
+<script type="text/javascript">
+
+	$(document).ready(function() {
+		// initialize the tree control
+		$('div#distributions_tree').each ( function() {
+			initialize_distributions_treecontrol($(this));
+		});
+	});
+</script>
+
+{% endblock %}

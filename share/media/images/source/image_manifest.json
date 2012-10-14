@@ -22,7 +22,7 @@
 	},
 	{
 		"name": "scroll",
-		"sizes": ["64x64"]
+		"sizes": ["16x16", "64x64"]
 	},
 	{
 		"name": "key",
@@ -42,11 +42,11 @@
 	},
 	{
 		"name": "help",
-		"sizes": ["64x64"]
+		"sizes": ["16x16","64x64"]
 	},
 		{
 		"name": "upload",
-		"sizes": ["64x64"]
+		"sizes": ["16x16","64x64"]
 	}
 
 ]

@@ -13,8 +13,11 @@ package_urls = patterns('aptrepo.views.webpages.pages',
 
 # /dists/ URLs
 aptrepo_dists_urls = patterns('aptrepo.views.webpages.pages',
+    (r'^$', 'browse_distributions'),
     (r'^{0}'.format(settings.APTREPO_FILESTORE['gpg_publickey']), 
         'gpg_public_key'),
+    (r'^(?P<distribution_id>\d+)/$',
+        'get_distribution_info'),
     (r'^(?P<distribution>\w+)/(?P<section>\w+)/binary-(?P<architecture>\w+)/Packages(?P<extension>.*)',
         'package_list'),
     (r'^(?P<distribution>\w+)/Release(?P<extension>.*)', 

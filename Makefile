@@ -6,6 +6,8 @@ DJANGO_ADMINCMD=\
 	APTREPO_ROOT=`pwd` python src/server/manage.py
 DJANGO_TESTSERVER_ADDRESS=0.0.0.0:8000
 BUILD_DIR=.build
+TOOLS_ROOT_DIR=tools
+TOOLS_BIN_DIR=$(TOOLS_ROOT_DIR)/bin
 
 SRC_IMAGES_DIR=share/media/images/source
 DEST_IMAGES_DIR=share/media/images/raster
@@ -35,7 +37,19 @@ $(L10N_BINARIES): $(L10N_SOURCES) $(L10N_MESSAGES)
 	$(DJANGO_ADMINCMD) compilemessages
 
 localize: $(L10N_BINARIES)
-	
+
+SRC_JAVASCRIPT_DIR=share/media/js
+JAVASRIPT_SOURCES=$(shell find $(SRC_JAVASCRIPT_DIR) -maxdepth 1 -name \*.js -print)
+
+analyze-js: $(JAVASRIPT_SOURCES)
+	$(TOOLS_BIN_DIR)/jslint --jslint-home=$(TOOLS_ROOT_DIR) $(JAVASRIPT_SOURCES)
+
+SRC_PYTHON_MODULES=`ls src`
+analyze-py:
+	PYTHONPATH=src pylint --rcfile=tools/etc/pylint.rc $(SRC_PYTHON_MODULES)  
+
+analyze: analyze-js analyze-py
+
 build: images localize
 
 clean:
@@ -65,7 +79,8 @@ testserver: build dbinit
 	
 # Output TODO items from source code
 todos:
-	@grep -R TODO src/* share/* test/* | grep -v ^share/media/js/jquery | grep -v ^share/media/js/lib
+	@grep -nR TODO src/* share/* test/* | grep -v ^$(SRC_JAVASCRIPT_DIR)/lib
 
 
 .PHONY: clean unittest testserver build images localize dbinit todos
+.PHONY: analyze analyze-js analyze-py
