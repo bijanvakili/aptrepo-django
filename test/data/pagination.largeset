@@ -3,7 +3,7 @@
 		"package": {
 			"name-prefix": "test-package",
 			"subdir": "XX",
-			"section": "oanda",
+			"section": "test",
 			"priority": "optional",
             "priority": "optional",
             "architecture": 1,

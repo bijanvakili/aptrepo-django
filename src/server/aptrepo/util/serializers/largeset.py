@@ -37,7 +37,7 @@ class LargeDatasetGenerator(object):
         control_map['Section'] = package_defaults['section']
         control_map['Priority'] = package_defaults['priority']
         control_map['Architecture'] = self.default_architecture
-        control_map['Maintainer'] = 'Bijan Vakili <bvakili@oanda.com>'
+        control_map['Maintainer'] = 'Test User <test@test.com>'
         control_map['Package'] = self._get_package_name(self.curr_package)
         control_map['Version'] = self._get_package_version(self.curr_package)
         control_map['Description'] = str(self.curr_package)

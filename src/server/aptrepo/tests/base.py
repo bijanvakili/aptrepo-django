@@ -68,10 +68,10 @@ class BaseAptRepoTest(TestCase):
         control_map = deb822.Deb822()
         control_map['Package'] = 'test-package'
         control_map['Version'] = '1.00'
-        control_map['Section'] = 'oanda'
+        control_map['Section'] = 'test'
         control_map['Priority'] = 'optional'
         control_map['Architecture'] = self._DEFAULT_ARCHITECTURE
-        control_map['Maintainer'] = 'Bijan Vakili <bvakili@oanda.com>'
+        control_map['Maintainer'] = 'Test User <test@test.com>'
         control_map['Description'] = 'Test package for apt repo test suite'
         
         return control_map

@@ -182,11 +182,11 @@ if APTREPO_USELDAP:
     import ldap
     from django_auth_ldap.config import LDAPSearch, PosixGroupType
     
-    AUTH_LDAP_SERVER_URI = 'ldap://ldap01.dev.oanda.com' 
+    AUTH_LDAP_SERVER_URI = 'ldap://ldap.test.com' 
     #AUTH_LDAP_BIND_DN = ''
     #AUTH_LDAP_BIND_PASSWORD = ''
     AUTH_LDAP_USER_SEARCH = LDAPSearch(
-        'ou=People,dc=toronto,dc=oanda,dc=com',
+        'ou=People,dc=toronto,dc=test,dc=com',
         ldap.SCOPE_SUBTREE, 
         '(uid=%(user)s)'
     )
@@ -196,14 +196,14 @@ if APTREPO_USELDAP:
         "email": "mail"
     }
     AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
-        'ou=Group,dc=toronto,dc=oanda,dc=com',
+        'ou=Group,dc=toronto,dc=test,dc=com',
         ldap.SCOPE_SUBTREE,
         '(objectClass=posixGroup)'
     )
     AUTH_LDAP_GROUP_TYPE = PosixGroupType()
     AUTH_LDAP_MIRROR_GROUPS = True
     #AUTH_LDAP_USER_FLAGS_BY_GROUP = {
-    #    'is_superuser': 'cn=systems,ou=Group,dc=toronto,dc=oanda,dc=com'
+    #    'is_superuser': 'cn=systems,ou=Group,dc=toronto,dc=test,dc=com'
     #}
     AUTH_LDAP_CACHE_GROUPS = True
     AUTH_LDAP_GROUP_CACHE_TIMEOUT = 300

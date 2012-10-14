@@ -44,6 +44,7 @@ JAVASRIPT_SOURCES=$(shell find $(SRC_JAVASCRIPT_DIR) -maxdepth 1 -name \*.js -pr
 analyze-js: $(JAVASRIPT_SOURCES)
 	$(TOOLS_BIN_DIR)/jslint --jslint-home=$(TOOLS_ROOT_DIR) $(JAVASRIPT_SOURCES)
 
+SRC_PYTHON_DIR=./src
 SRC_PYTHON_MODULES=`ls src`
 analyze-py:
 	PYTHONPATH=src pylint --rcfile=tools/etc/pylint.rc $(SRC_PYTHON_MODULES)  
@@ -55,6 +56,8 @@ build: images localize
 clean:
 	@echo "Removing test files..."
 	rm -rf $(TEST_DATABASE) var/cache/* $(DEST_IMAGES_DIR)
+	@echo "Removing all compiled python modules from the source hierarchy..."
+	find "$(SRC_PYTHON_DIR)" -name \*.pyc -exec rm -rf '{}' \;
 	@echo "Removing all binary l10n catalogs from the locale hierarchy..."
 	find . -name \*.mo -exec rm -rf '{}' \;
 	@echo "Done"

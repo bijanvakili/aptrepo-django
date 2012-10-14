@@ -59,7 +59,7 @@
 			"description" : "Test Distribution",
 			"label" : "Test Distribution",
 			"suite" : "testing",
-			"origin" : "OANDA",
+			"origin" : "TEST",
 			"creation_date" : "2011-01-01 00:05:00",
 			"supported_architectures": [1,2]
 		}
