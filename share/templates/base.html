@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 {% load i18n %}
+{% load url from future %}
 {% load url_extras %}
 
 <html>
@@ -10,7 +11,7 @@
 		<link rel="stylesheet" type="text/css" href="{% static_media_url 'css/lib/smoothness/jquery-ui-1.8.20.custom.css' %}" />
 		<link rel="stylesheet" type="text/css" href="{% static_media_url 'css/aptrepo.css' %}" />
 		
-		<script type="text/javascript" src="{% url django.views.i18n.javascript_catalog %}"></script>
+		<script type="text/javascript" src="{% url 'django.views.i18n.javascript_catalog' %}"></script>
 		{% if debug %}
 			<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.2.js"></script>
 			<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.20/jquery-ui.js"></script>

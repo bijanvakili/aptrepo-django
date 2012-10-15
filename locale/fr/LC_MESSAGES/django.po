@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-10-14 14:30-0400\n"
+"POT-Creation-Date: 2012-10-14 19:59-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,7 +25,7 @@ msgstr "Cette page n'a pas été trouvée"
 msgid "We're sorry, but the requested page could not be found."
 msgstr "Nous sommes désolés, mais la page demandée est introuvable."
 
-#: share/templates/500.html:4 share/templates/base.html:66
+#: share/templates/500.html:4 share/templates/base.html:67
 msgid "Home"
 msgstr "Accueil"
 
@@ -50,26 +50,26 @@ msgstr ""
 "administrateurs du site et sera corrigée dans les meilleurs délais. Merci "
 "pour votre patience."
 
-#: share/templates/base.html:40
+#: share/templates/base.html:41
 msgid "Logged in as "
 msgstr "Connecté en tant que "
 
-#: share/templates/base.html:47 share/templates/aptrepo/logout.html:4
+#: share/templates/base.html:48 share/templates/aptrepo/logout.html:4
 #: src/server/aptrepo/views/webpages/pages.py:230
 msgid "Logout"
 msgstr "Déconnexion"
 
-#: share/templates/base.html:49 share/templates/aptrepo/login.html:5
+#: share/templates/base.html:50 share/templates/aptrepo/login.html:5
 #: share/templates/aptrepo/login.html:43
 #: src/server/aptrepo/views/webpages/pages.py:222
 msgid "Login"
 msgstr "Connexion"
 
-#: share/templates/base.html:58
+#: share/templates/base.html:59
 msgid "Search"
 msgstr "Cherche"
 
-#: share/templates/base.html:87
+#: share/templates/base.html:88
 msgid "Contact: "
 msgstr "Contacter:"
 
