@@ -99,23 +99,52 @@ div#content {
 
 /* Home page menu styles */
 .homepage_menu_item {
-	margin-top: 20px;
-	margin-bottom: 30px;
+	clear: both;
+	width: 100%;
+	height: 64px;
+	margin-bottom: 25px;
 }
 
-img.homepage_menu_image  {
-	height: 64px;
+.homepage_link_column, .homepage_description_column {
+	float: left;
+	height: inherit;	
+} 
+
+.homepage_link_column {
+	width: 10%;
+}
+
+.homepage_description_column {
+	width: 90%;
+}
+
+.homepage_menu_link, .homepage_menu_image {
+	position: absolute;
+	left: 20px;
+	height: inherit;
 	width: 64px;
-	margin-left: 40px;	
 }
 
-.homepage_menu_link {
-	font-size: 1.5em;
-	height: 64px;
-	text-align: left;
-	padding-left: 15px;
-	vertical-align: middle;
+.homepage_menu_item_title_container, .homepage_menu_item_subtitle {
+	position: relative;
+	width: 100%;
 }
+
+.homepage_menu_item_title_link {
+	text-decoration: none;
+	color: blue;
+	font-weight: bold;
+	font-size: 1.5em;
+}
+
+.homepage_menu_item_subtitle {
+	font-style: italic;
+	font-size: 1.1em;
+	padding-top: 0.5em;
+	padding-left: 1.5em;
+	width: auto;
+}
+
 
 /* Login screen styles */
 .login_form {

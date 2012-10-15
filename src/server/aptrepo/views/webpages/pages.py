@@ -235,10 +235,12 @@ def logout(request):
 @require_http_methods(["GET"])
 def gpg_public_key(request):
     """
-    Retrieves the GPG public key
+    Retrieves the GPG public key (as a file download)
     """
     repository = get_repository_controller(request=request)
-    return HttpResponse(repository.get_gpg_public_key())
+    response = HttpResponse(repository.get_gpg_public_key())
+    response['Content-Disposition'] = "attachment" 
+    return response
 
 @handle_exception
 @require_http_methods(["GET", "POST"])

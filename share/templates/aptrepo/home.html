@@ -6,19 +6,25 @@
 
 {% block body %}
 
-<table id="home_page_menu">
-	
-	{# Output the main menu items #}
-	{% for item in menu_items %}
-	
-	<tr class="homepage_menu_item" title="{{ item.1 }}">
-		{# Don't use media_file tag here.  Use STATIC_URL instead #}
-		<td><img class="homepage_menu_image" src="{{ STATIC_URL }}images/raster/64x64/{{ item.3 }}.png" /></td>
-		<td><a class="homepage_menu_link" href="{{ item.2 }}">{{ item.0 }}</a></td>
-	</tr>
-	
-	{% endfor %}
-	
-</table>
+{% for item in menu_items %}
+	<div class="homepage_menu_item">
+		<div class="homepage_link_column">
+			<a class="homepage_menu_link" href="{{ item.2 }}">
+				<img 
+					class="homepage_menu_image" 
+					src="{{ STATIC_URL }}images/raster/64x64/{{ item.3 }}.png" 
+					alt="{{ item.3 }}"
+				/>
+			</a>
+		</div>
+		<div class="homepage_description_column">
+			<div class="homepage_menu_item_title_container">
+				<a href="{{ item.2 }}" class="homepage_menu_item_title_link">{{ item.0 }}</a>
+			</div>
+			<div class="homepage_menu_item_subtitle">{{ item.1 }}</div>			
+		</div>
+	</div>
+
+{% endfor %}
 
 {% endblock %}
