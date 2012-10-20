@@ -14,14 +14,8 @@ package_urls = patterns('aptrepo.views.webpages.pages',
 # /dists/ URLs
 aptrepo_dists_urls = patterns('aptrepo.views.webpages.pages',
     (r'^$', 'browse_distributions'),
-    (r'^{0}'.format(settings.APTREPO_FILESTORE['gpg_publickey']), 
-        'gpg_public_key'),
     (r'^(?P<distribution_id>\d+)/$',
         'get_distribution_info'),
-    (r'^(?P<distribution>\w+)/(?P<section>\w+)/binary-(?P<architecture>\w+)/Packages(?P<extension>.*)',
-        'package_list'),
-    (r'^(?P<distribution>\w+)/Release(?P<extension>.*)', 
-        'release_list'),
     (r'^(?P<distribution>\w+)/(?P<section>\w+)/{0,1}$',
         'section_contents_list'),
     (r'^(?P<distribution_name>\w+)/(?P<section_name>\w+)/upload/{0,1}$',
@@ -45,12 +39,4 @@ urlpatterns = patterns('',
     url(r'^history/(?P<distribution>\w+)/{0,1}$', 'aptrepo.views.webpages.pages.history'),
     url(r'^history/(?P<distribution>\w+)/(?P<section>\w+)/{0,1}$', 'aptrepo.views.webpages.pages.history'),
     url(r'^upload_success', 'aptrepo.views.webpages.pages.upload_success'),    
-    
-        
-    # Debian package files (can include 'public' prefix or not)
-    url(r'^(public/){0,1}packages/(?P<path>.*)$', 'django.views.static.serve', 
-        {
-            'document_root': settings.MEDIA_ROOT + '/' + settings.APTREPO_FILESTORE['packages_subdir'],
-        }
-    ),    
 )

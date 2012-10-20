@@ -2,13 +2,14 @@ Plan
 ====
 Current -> 0.01 (Core implementation)
 - proper web UI templates and interface
+	> fix history URLs
 	> how to browse sections? (simple/advanced?)
 	> top level search UI and search in API
 	> copy package
 	> error pages (404 and 500)
 	> user help pages (initial simple version)
-	> logo and favicon
 	> show API client setup instructions at a URL
+	> logo and favicon
 - restrict admin access
 - centralize URL generation
 	> finalize URL hierarchy (based on UI mockups?)	
@@ -117,69 +118,79 @@ Representations:
 	
 
 URL DESIGN:
-/aptrepo
-	(standard content)
-	/keys				(GET)
-		/publickey.gpg	(GET)
-	/package
-		/<hashprefix>/<name>_<version>_<architecture>.deb	(GET) 
-
-	/rss/
-	/atom/
-	/history/
-	/dists/<distribution>/	(GET)
-		/rss/
-		/atom/
-		/history/
-		Release(.gpg)		(GET)
-		/<section>			(GET)
-			/rss/
-			/atom/
-			/history/
-			Packages(.gz)	(GET)
-			<.deb>			(POST) does an upload
-			/upload			(GET, POST)
-			/delete			(GET, POST)
-			/copy			(GET, POST)
-			/result			(GET, depends on parameters passed in)
-			
 	Restriction params:
 		offset, limit, descending=?
-		
 
-	(REST API)
-	/api/
-		/sessions		(POST) <-- used for logins
-			/<token>	(DELETE)
-			
-		/actions	(GET)
-			?min_timestamp=XX&max_timestamp=XX	(GET)		*query
-			/<id>								(GET)
-		/packages
-			/<id>												(GET,DELETE)
-			/deb822/<name>/<version>/<architecture>				(GET,DELETE)
-			
-		/package-instances
+
+	/aptrepo					(redirect to web/)
+	
+		(Debian apt repository)
+		/repository/
+			/keys/				
+				/publickey.gpg	(GET)
+			/packages/
+				/<hashprefix>/<name>_<version>_<architecture>.deb	(GET) 
+			/dists/<distribution>/	
+				Release(.gpg)		(GET)
+				/<section>			
+					Packages(.gz)	(GET)
+	
+		(Web UI)
+		/web/				(GET) -- Home page
+			/login/			(GET, POST) -- Login page
+			/upload/		(GET, POST) -- Upload (to any section)
+			/search/		(GET) -- Search entire repository
+			/history/		(GET)
+				/rss/			(GET)
+				/atom/			(GET)
+			/distributions/
+				/<distribution/
+					/history/
+						...
+					/search/		-- Search only specific distribution
+					/sections/
+						/<section>/		-- Show package list in section
+							/upload/	-- Upload (to specific section)
+							/search/	-- Search only specific section
+							/history/	-- History of particular section
+								...
+							/delete			(GET, POST)
+							/copy			(GET, POST)
+							#<package_name> -- Expand at specific package name
+							
+		(REST API)
+		/api/
+			/sessions		(POST) <-- used for logins
+				/<token>	(DELETE)
+				
+			/actions	(GET)
+				?min_timestamp=XX&max_timestamp=XX	(GET)		*query
+				/<id>								(GET)
+			/packages
+				/<id>												(GET,DELETE)
+				/deb822/<name>/<version>/<architecture>				(GET,DELETE)
+				
+			/package-instances
 				/				(POST)
 					?file (file attachment)
 					?url=http://xxxx (download from URL)
 					?package_id=nnn (clone from existing package)
 					?instance_id=nnn (clone from existing package instance)
-  			/<id>			(GET, DELETE)
-				/deb822/<name>/<version>/<architecture>				(GET,DELETE)
+	  			/<id>			(GET, DELETE)
+					/deb822/<name>/<version>/<architecture>				(GET,DELETE)
+						
+			/distributions	(GET)
+				/<id>					(GET)
+					/actions		(GET)
+						<id>		(GET)
+						*query
+					/sections				(GET)
 					
-		/distributions	(GET)
-			/<id>					(GET)
-				/actions		(GET)
-					<id>		(GET)
-					*query
-				/sections				(GET)
-				
-		/sections 		(GET)
-			/<id>		(GET)
-			/package-instances	(GET, POST(upload or copy another instance))
-				/deb822/<name>/<version>/<architecture>				(GET,DELETE)
-			/actions	(GET)
+			/sections 		(GET)
+				/<id>		(GET)
+				/package-instances	(GET, POST(upload or copy another instance))
+					/deb822/<name>/<version>/<architecture>				(GET,DELETE)
+				/actions	(GET)
 
 VISUAL ASSETS REQUIRED
 ======================

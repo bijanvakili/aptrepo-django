@@ -34,6 +34,7 @@ def skipRepoTestIfExcluded(test_case):
 
 class BaseAptRepoTest(TestCase):
 
+    _ROOT_REPODIR = '/aptrepo/repository'
     _ROOT_WEBDIR = '/aptrepo'
     _ROOT_APIDIR = '/aptrepo/api'
     _DEFAULT_ARCHITECTURE = 'i386'
@@ -154,9 +155,10 @@ class BaseAptRepoTest(TestCase):
         """
         Inspects a section to determine whether a package exists
         """
-        packages_url = '/aptrepo/dists/{0}/{1}/binary-{2}/Packages'.format(self.distribution_name, 
-                                                                           self.section_name, 
-                                                                           architecture)
+        packages_url = '{0}/dists/{1}/{2}/binary-{3}/Packages'.format(self._ROOT_REPODIR,
+                                                                      self.distribution_name, 
+                                                                      self.section_name, 
+                                                                      architecture)
         packages_content = self._download_content(packages_url)
 
         # do a linear search for the target package        
@@ -173,7 +175,7 @@ class BaseAptRepoTest(TestCase):
         
         # download the public key
         public_key_content = self._download_content(
-            '{0}/dists/{1}'.format(self._ROOT_WEBDIR, settings.APTREPO_FILESTORE['gpg_publickey']))
+            '{0}/keys/publickey.gpg'.format(self._ROOT_REPODIR))
         self.gpg_context.op_import(pyme.core.Data(string=public_key_content))
         
         # verify the signature
@@ -191,7 +193,7 @@ class BaseAptRepoTest(TestCase):
         Verifies all the metafiles of the repository
         """
         # retrieve and verify the Release file and signature
-        root_distribution_url = self._ROOT_WEBDIR + '/dists/' + self.distribution_name
+        root_distribution_url = self._ROOT_REPODIR + '/dists/' + self.distribution_name
         release_content = self._download_content(root_distribution_url + '/Release')
         release_signature = self._download_content(root_distribution_url + '/Release.gpg')
         self._verify_gpg_signature(release_content, release_signature)

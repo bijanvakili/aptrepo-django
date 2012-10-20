@@ -39,7 +39,7 @@ class SmallRepositoryTest(BaseAptRepoTest):
         """
         
         # retrieve the Release file
-        root_distribution_url = self._ROOT_WEBDIR + '/dists/{0}/'.format(distribution)
+        root_distribution_url = self._ROOT_REPODIR + '/dists/{0}/'.format(distribution)
         release_content = self._download_content(root_distribution_url + 'Release')
         packages_path = '{0}/binary-{1}/Packages'.format(section, architecture)
         
@@ -68,7 +68,7 @@ class SmallRepositoryTest(BaseAptRepoTest):
         self.assertTrue(package_metadata is not None)
         
         # download the package and inspect it
-        debfile_content = self._download_content(self._ROOT_WEBDIR + '/' + package_metadata['Filename'])
+        debfile_content = self._download_content(self._ROOT_REPODIR + '/' + package_metadata['Filename'])
         pkg_fd, pkg_filename = tempfile.mkstemp(suffix='.deb', prefix='downloaded')
         pkg_fh = os.fdopen(pkg_fd, 'wb')
         try:
@@ -374,6 +374,7 @@ class LargeRepositoryTest(BaseAptRepoTest):
                 self.assertEqual(action_list[j]['user'], 'testuser')
                 self.assertEqual(action_list[j]['action_type'], models.Action.UPLOAD)
 
+    @skipRepoTestIfExcluded
     def test_constraints_after_deletion(self):
         """
         Remove and test ranges        

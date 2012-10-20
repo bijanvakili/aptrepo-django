@@ -37,7 +37,7 @@ class AuthenticationTest(BaseAptRepoTest):
         """
         
         # test retrieving the GPG public key
-        response = self.client.get(self._ROOT_WEBDIR + '/dists/' + settings.APTREPO_FILESTORE['gpg_publickey'])
+        response = self.client.get(self._ROOT_REPODIR + '/keys/publickey.gpg')
         self.assertContains(response, '-----BEGIN PGP PUBLIC KEY BLOCK-----')
         
         # test listing distributions
@@ -46,7 +46,7 @@ class AuthenticationTest(BaseAptRepoTest):
         
         # test listing sections in distribution
         response = self.client.get(
-            self._ROOT_WEBDIR + '/dists/{0}/Release'.format(self.distribution_name)
+            self._ROOT_REPODIR + '/dists/{0}/Release'.format(self.distribution_name)
         )
         self.assertContains(response, self.distribution_name)
         distribution = models.Distribution.objects.get(name=self.distribution_name)
@@ -60,7 +60,7 @@ class AuthenticationTest(BaseAptRepoTest):
         response = self.client.get(self._ROOT_APIDIR + '/sections/{0}'.format(section.id))
         self.assertEqual(response.status_code, 200)
         response = self.client.get(
-            self._ROOT_WEBDIR + '/dists/{0}/{1}/binary-i386/Packages'.format(
+            self._ROOT_REPODIR + '/dists/{0}/{1}/binary-i386/Packages'.format(
                 self.distribution_name, self.section_name
             )
         )

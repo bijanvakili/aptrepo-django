@@ -19,6 +19,7 @@ urlpatterns = patterns('',
 
     (r'^aptrepo/admin/', include(admin.site.urls)),
     (r'^aptrepo/api/', include('aptrepo.views.api.urls')),
+    (r'^aptrepo/repository/', include('aptrepo.views.repo.urls')),
     (r'^aptrepo/', include('aptrepo.views.webpages.urls')),
     
     # static files
