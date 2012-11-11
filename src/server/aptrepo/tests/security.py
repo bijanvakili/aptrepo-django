@@ -139,7 +139,7 @@ class AuthenticationTest(BaseAptRepoTest):
     @skipRepoTestIfExcluded
     def test_login_page(self):
 
-        landing_page_url = self._ROOT_WEBDIR + '/packages/' 
+        landing_page_url = self._ROOT_WEBDIR + '/' 
 
         # do an invalid username
         response = self.client.post(

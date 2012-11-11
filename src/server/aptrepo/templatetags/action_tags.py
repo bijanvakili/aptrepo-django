@@ -1,4 +1,5 @@
 from django import template
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from server.aptrepo.models import Action
 from server.aptrepo.util import AptRepoException
@@ -10,10 +11,11 @@ def _span_element(css_type_suffix, value):
                                                                 value)
 
 def _section_link(section):
-    return '<a href="/aptrepo/dists/{1}/{0}">{0}</a>'.format(section.name, section.distribution.name)
+    return '<a href="{1}">{0}</a>'.format(section.name, reverse('aptrepo:section_contents',kwargs={
+        'distribution':section.distribution.name, 'section':section.name}))
 
 @register.simple_tag
-def summarize_action(action):
+def summarize_action(action, include_html_formatting=True):
     """
     Provides an HTML formatted summary of an action
     """    

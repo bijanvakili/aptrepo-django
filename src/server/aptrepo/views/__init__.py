@@ -18,7 +18,8 @@ def common_template_variables(request):
     webmaster['name'], webmaster['email'] = settings.ADMINS[0]
     
     return {
-        'repository_version': '.'.join(get_repository_version()),             
+        'repository_version': '.'.join(get_repository_version()),
+        'repository_project_url' : settings.APTREPO_PROJECT_URL,             
         'webmaster': webmaster,
         'pagination_limits': settings.APTREPO_PAGINATION_LIMITS,
     }

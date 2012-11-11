@@ -98,7 +98,7 @@ class SmallRepositoryTest(BaseAptRepoTest):
         Removes a specified package instance
         """
         response = self.client.post(
-            '/aptrepo/packages/delete', {
+            self._ROOT_WEBDIR + '/packages/delete', {
                 'distribution' : self.distribution_name, 'section' : self.section_name,
                 'name' : package_name, 'version': version, 'architecture': architecture})
         self.failUnlessEqual(response.status_code, 302)
@@ -260,11 +260,11 @@ class SmallRepositoryTest(BaseAptRepoTest):
 
     @skipRepoTestIfExcluded
     def test_browse_distributions(self):
-        response = self.client.get(BaseAptRepoTest._ROOT_WEBDIR + '/dists/')
+        response = self.client.get(BaseAptRepoTest._ROOT_WEBDIR + '/distributions/')
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, _('Distributions'))
-        self.assertContains(response, _('test_distribution'))
-        self.assertContains(response, _('test_section'))
+        self.assertContains(response, 'test_distribution')
+        self.assertContains(response, 'test_section')
 
 class LargeRepositoryTest(BaseAptRepoTest):
 

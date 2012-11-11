@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load url_extras %}
+{% load url from future %}
 
 {% block title %}{% trans 'Distributions' %}{% endblock %}
 
@@ -10,6 +11,10 @@
 		{% else %}
 			<script type="text/javascript" src="{% static_media_url "js/lib/jquery.jstree.min-1.0-rc3.js" 1 %}"></script>
 		{% endif %}
+		
+		{# Links for autodiscovery of history syndication feeds #}
+		<link rel="alternate" type="application/rss+xml" title="RSS history feed" href="{% url 'aptrepo:all_history' %}rss/" />
+		<link rel="alternate" type="application/atom+xml" title="Atom history feed" href="{% url 'aptrepo:all_history' %}atom/" />
 {% endblock %}
 
 
@@ -20,24 +25,24 @@
 </div>
 
 <div id="distributions_recent_activity_container">
-	<a href="history/" class="common_command_link">
+	<a href="{% url 'aptrepo:all_history' %}" class="common_command_link">
 		{# TODO Create clock icon for 'recent history' #}
 		<img src="{% raster_image_url '16x16/scroll.png'%}" />{% trans "Recent History" %}
 	</a>
-	<a href="history/rss/" class="common_command_link">
+	<a href="{% url 'aptrepo:all_history' %}rss/" class="common_command_link">
 		<img src="{% raster_image_url '16x16/rss_feed.png'%}" />RSS
 	</a>
-	<a href="history/atom/" class="common_command_link">
+	<a href="{% url 'aptrepo:all_history' %}atom/" class="common_command_link">
 		<img src="{% raster_image_url '16x16/atom_feed.png' %}" />Atom
 	</a>
 </div>
 
 <div id="distributions_main_container">
 	<div id="distribution_controls_container">
-		<a href="../packages/upload/" class="common_command_link">
+		<a href="{% url 'aptrepo:package_upload' %}" class="common_command_link">
 			<img src="{% raster_image_url '16x16/upload.png'%}" />{% trans "Upload" %}
 		</a>
-		<a href="help/" class="common_command_link">
+		<a href="{% url 'aptrepo:help' %}" class="common_command_link">
 			<img src="{% raster_image_url '16x16/help.png'%}" />{% trans "Help" %}
 		</a>
 	</div>
@@ -50,11 +55,11 @@
 					<ul>
 						{% for distribution_name, distribution in distributions_tree %}
 						<li>
-							<a href="#" distribution_id="{{ distribution.id }}">{{ distribution_name }}</a>
+							<a href="#" distribution_name="{{ distribution_name }}">{{ distribution_name }}</a>
 							<ul>
 								{% for section in distribution.sections %}
 								<li>
-									<a href="{{distribution_name}}/{{section.name}}/">{{ section.name }}</a>
+									<a href="{{distribution_name}}/sections/{{section.name}}/">{{ section.name }}</a>
 								</li>
 								{% endfor %}
 							</ul>

@@ -1,6 +1,6 @@
 from django.conf.urls.defaults import *
 from django.contrib import admin
-from django.conf import settings
+from django.shortcuts import redirect
 
 
 admin.autodiscover()
@@ -20,17 +20,6 @@ urlpatterns = patterns('',
     (r'^aptrepo/admin/', include(admin.site.urls)),
     (r'^aptrepo/api/', include('aptrepo.views.api.urls')),
     (r'^aptrepo/repository/', include('aptrepo.views.repo.urls')),
-    (r'^aptrepo/', include('aptrepo.views.webpages.urls')),
-    
-    # static files
-    url(r'^aptrepo/media/(?P<path>.*)$', 'django.views.static.serve', 
-        {
-            'document_root': settings.STATIC_ROOT,
-        }
-    ),
-    url(r'^aptrepo/public/(?P<path>.*)$', 'django.views.static.serve', 
-        {
-            'document_root': settings.MEDIA_ROOT,
-        }
-    ),
+    (r'^aptrepo/web/', include('aptrepo.views.webpages.urls', namespace='aptrepo')),
+    (r'^aptrepo/{0,1}$', lambda request: redirect(request.path + 'web/')),
 )

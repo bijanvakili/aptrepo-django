@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% load url from future %}
 
 {% block title %}
 	{% trans 'Upload' %}
@@ -12,7 +13,7 @@
 
 {% block body %}
 
-	<form class="upload_form" action="/aptrepo/packages/upload/" enctype="multipart/form-data" method="post">
+	<form class="upload_form" action="{% url 'aptrepo:package_upload' %}" enctype="multipart/form-data" method="post">
 		{% csrf_token %}
 	
 		<table>

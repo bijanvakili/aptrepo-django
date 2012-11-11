@@ -27,8 +27,8 @@ function get_instance_url(
 /*
  * Construct a REST API URL for a specific distribution
  */
-function get_distribution_url( distribution_id ) {
-	return '/aptrepo/dists/' + distribution_id + '/';
+function get_distribution_url( distribution_name ) {
+	return '/aptrepo/web/distributions/' + distribution_name + '/';
 }
 
 
@@ -65,7 +65,7 @@ function on_click_package_anchor(ev) {
  * Downloads the package based on the path in the metadata 
  */
 function download_package_for_instance( instance_metadata ) {
-	window.location.href = '/aptrepo/public/' + instance_metadata['package']['path'];
+	window.location.href = '/aptrepo/repository/' + instance_metadata['package']['path'];
 }
 
 /*
@@ -281,13 +281,13 @@ function initialize_distributions_treecontrol( elem_distributions_container ) {
 			}
 		}
 	};
-	elem_distributions_container.on('click', 'a[distribution_id]', function() {
+	elem_distributions_container.on('click', 'a[distribution_name]', function() {
 		
 		// query and populate information on the distribution
-		var distribution_id = $(this).attr('distribution_id');
+		var distribution_name = $(this).attr('distribution_name');
 		info_table.html('');
 
-		$.getJSON( get_distribution_url(distribution_id ) )
+		$.getJSON( get_distribution_url(distribution_name) )
 		.success( function( distribution_data ) {
 			append_data_to_table( distribution_data );
 		})

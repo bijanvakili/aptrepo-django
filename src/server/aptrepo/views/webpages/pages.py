@@ -111,11 +111,15 @@ def repository_home(request):
     Outputs the home page
     """
     menu_items_list = [ 
-        (_('Browse Repository'), _('Browse the packages in the repository'), 'dists/', 'browse'),
-        (_('Upload package'), _('Upload a package to the repository'), 'packages/upload/', 'upload'),
+        (_('Browse Repository'), _('Browse the packages in the repository'), 
+            reverse('aptrepo:browse_distributions'), 'browse'),
+        (_('Upload package'), _('Upload a package to the repository'), 
+            reverse('aptrepo:package_upload'), 'upload'),
         (_('Recent Activity'), _('Review the change history in the repository'), 'history/', 'scroll'),
-        (_('Download Public Key'), _('Download the GPG public key used for signing metadata'), 'dists/publickey.gpg', 'key'),
-        (_('Administration'), _('Manage your repository (requires administrative privileges)'), 'admin/', 'admin'),
+        (_('Download Public Key'), _('Download the GPG public key used for signing metadata'), 
+            reverse('aptrepo.views.repo.files.gpg_public_key'), 'key'),
+        (_('Administration'), _('Manage your repository (requires administrative privileges)'), 
+            reverse('admin:index'), 'admin'),
         (_('Help'), _('Documentation for using the repository'), 'help/', 'help')
     ]
     
@@ -155,12 +159,12 @@ def browse_distributions(request):
 
 @handle_exception
 @require_http_methods(["GET"])
-def get_distribution_info(request, distribution_id):
+def get_distribution_info(request, distribution_name):
     """
     Returns JSON data on the distribution including other metadata metrics
     for the browse distribution page
     """
-    distribution = models.Distribution.objects.get(id=distribution_id)
+    distribution = models.Distribution.objects.get(name=distribution_name)
     f_entry = lambda header,value: (header, value)
     distribution_data = []
     distribution_data.append( f_entry( _('Name'), distribution.name ) )
@@ -172,10 +176,10 @@ def get_distribution_info(request, distribution_id):
         distribution.creation_date.strftime( _('%a %b %d %Y, %H:%M:%S') ) ) )
     distribution_data.append( f_entry( _('Supported Architectures'), ', '.join(distribution.get_architecture_list()) ) )
     distribution_data.append( f_entry( _('Number of Packages'), models.PackageInstance.objects.filter(
-        section__distribution_id=distribution_id).count() ) )
+        section__distribution_id=distribution.id).count() ) )
     distribution_data.append( f_entry( _('Sections'), ', '.join(
         models.Section.objects.filter(
-            distribution_id=distribution_id).order_by('name').values_list('name', flat=True)) ) )
+            distribution_id=distribution.id).order_by('name').values_list('name', flat=True)) ) )
 
     return HttpResponse(json.dumps(distribution_data))
 
@@ -186,14 +190,14 @@ def login(request):
     """
     breadcrumbs = [ Breadcrumb(_('Login'), None) ]
     return django.contrib.auth.views.login(request=request, template_name='aptrepo/login.html', 
-                                           extra_context={ 'breadcrumbs': breadcrumbs })
+                                           extra_context={ 'breadcrumbs': breadcrumbs, 'hide_login_link': True })
 
 def logout(request):
     """
     Logs the user out
     """
     breadcrumbs = [ Breadcrumb(_('Logout'), None) ]    
-    return django.contrib.auth.views.logout(request=request, template_name='aptrepo/logout.html',
+    return django.contrib.auth.views.logout(request=request,
                                             extra_context={ 'breadcrumbs': breadcrumbs})
 
 @handle_exception
@@ -284,9 +288,13 @@ def upload(request, distribution_name=None, section_name=None):
         
     if target_section:
         breadcrumbs = [
-                       Breadcrumb(_('Distributions'), '/aptrepo/dists'),
-                       Breadcrumb(distribution_name, '/aptrepo/dists/' + distribution_name),
-                       Breadcrumb(section_name, '/aptrepo/dists/{0}/{1}'.format(distribution_name, section_name)),
+                       Breadcrumb(_('Distributions'), reverse('aptrepo:browse_distributions')),
+                       Breadcrumb(distribution_name, None),
+                       Breadcrumb(
+                            section_name, 
+                            reverse(
+                                    'aptrepo:section_contents', 
+                                    kwargs={'distribution':distribution_name, 'section':section_name})),
                        Breadcrumb(_('Upload'), None)]
     else:
         breadcrumbs = [
@@ -339,12 +347,18 @@ def history(request, distribution=None, section=None):
     limit = request.GET.get('limit', settings.APTREPO_PAGINATION_LIMITS[0])
     
     # construct query and breadcrumb links based on query parameters
-    breadcrumbs = [Breadcrumb(_('Distributions'), '/aptrepo/dists')]
+    root_distribution_url = reverse('aptrepo:browse_distributions')
+    breadcrumbs = [Breadcrumb(_('Distributions'), root_distribution_url)]
     if distribution:
-        breadcrumbs.append( Breadcrumb(distribution, "/aptrepo/dists/{0}".format(distribution)) )
+        breadcrumbs.append( 
+            Breadcrumb(distribution, "{0}{1}".format(root_distribution_url, distribution)) 
+        )
         if section:
             breadcrumbs.append(
-                Breadcrumb(section, "/aptrepo/dists/{0}/{1}".format(distribution, section)))
+                Breadcrumb(
+                    section, 
+                    "{0}{1}/sections/{2}".format(root_distribution_url, distribution, section))
+            )
     breadcrumbs.append( Breadcrumb(_('Recent History'), None) )
     
     # retrieve historical actions
@@ -360,10 +374,6 @@ def history(request, distribution=None, section=None):
         urls['change_pagination_links'].append(
             { 'limit': limit, 'url': _url_replace_get_param(request, 'limit', limit) }
     )
-    urls['syndication_feeds'] = {
-        'rss' : request.get_full_path().replace('/history/', '/rss/'),
-        'atom' : request.get_full_path().replace('/history/', '/atom/'),
-    }
     
     # render result along with data for pagination    
     page_navigate = PageNavigation(request, actions.count())
@@ -375,6 +385,12 @@ def history(request, distribution=None, section=None):
                                'urls': urls,
                                'view_type': view_type },
                               context_instance=RequestContext(request))  
+
+
+@handle_exception
+@require_http_methods(["GET"])
+def help(request):
+    return HttpResponse('Not implemented yet')
 
 @handle_exception
 @require_http_methods(["POST"])
@@ -406,7 +422,7 @@ def _handle_add_file_to_repository(request, sections, file_to_add, comment):
         args['uploaded_package_file'] = file_to_add
         
     repository.add_package(**args)
-    return HttpResponseRedirect(reverse(upload_success))
+    return HttpResponseRedirect(reverse('aptrepo:package_upload_success'))
     
 def _handle_remove_package(request, package_instance_id):
     """
@@ -414,7 +430,7 @@ def _handle_remove_package(request, package_instance_id):
     """
     repository = get_repository_controller(request=request)
     repository.remove_package(package_instance_id)
-    return HttpResponseRedirect(reverse(remove_success))
+    return HttpResponseRedirect(reverse('aptrepo:package_delete_success'))
 
 def _url_replace_get_param(request, param_name, param_value):
     """

@@ -38,6 +38,8 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+APTREPO_PROJECT_URL='http://bijan.dyndns.org'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
@@ -68,7 +70,7 @@ LANGUAGE_CODE = env_override('APTREPO_LANGUAGE', 'en-us')
 
 LOCALE_PATHS = (os.path.join(APTREPO_ROOT, 'locale'),)
 
-SITE_ID = 1
+#SITE_ID = 1
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
@@ -166,18 +168,21 @@ INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.admin',
     'django.contrib.staticfiles',
+    
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
+    
+    # Uncomment the next line to re-enable sites
+    #'django.contrib.sites',    
     
     'aptrepo'
 )
 
-LOGIN_URL = '/aptrepo/login/'
-LOGIN_REDIRECT_URL = '/aptrepo/packages/'
+LOGIN_URL = '/aptrepo/web/login/'
+LOGIN_REDIRECT_URL = '/aptrepo/web/'
 
 # Authentication configuration
 AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',)

@@ -35,7 +35,7 @@ def skipRepoTestIfExcluded(test_case):
 class BaseAptRepoTest(TestCase):
 
     _ROOT_REPODIR = '/aptrepo/repository'
-    _ROOT_WEBDIR = '/aptrepo'
+    _ROOT_WEBDIR = '/aptrepo/web'
     _ROOT_APIDIR = '/aptrepo/api'
     _DEFAULT_ARCHITECTURE = 'i386'
 

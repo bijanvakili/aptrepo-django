@@ -1,9 +1,11 @@
 from django.conf import settings
 from django.contrib.syndication.views import Feed
+from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404
 from django.utils.feedgenerator import Atom1Feed
 from django.utils.translation import ugettext as _
 from server.aptrepo import models
+from server.aptrepo.templatetags.action_tags import summarize_action
 from server.aptrepo.views import get_repository_controller
 
 class BaseRepositoryFeed(Feed):
@@ -14,23 +16,38 @@ class BaseRepositoryFeed(Feed):
         return str(obj)
 
     def item_title(self, item):
-        return item.summary
+        if item.action_type == models.Action.UPLOAD:
+            title_format = _('{package_name} uploaded to {section}')
+        elif item.action_type == models.Action.DELETE:
+            title_format = _('{package_name} removed from {section}')
+        elif item.action_type == models.Action.COPY:
+            title_format = _('{package_name} cloned to {section}')
+        elif item.action_type == models.Action.PRUNE:
+            title_format = _('{package_name} pruned from {section}')
+            
+        return title_format.format(package_name=item.package_name, 
+                                   section=str(item.target_section))
     
     def item_link(self, item):
-        if item.package:
-            return item.package.path.url
+        # if the package exists, returns its URL
+        # otherwise, return the URL of the section where this action took place
+        package = self._get_package_for_item(item)
+        if package:
+            return package.path.url
         else:
-            return '/dists/{0}/{1}'.format(item.section.distribution.name, item.section.name)
+            return self._get_section_url(item.target_section.distribution.name,
+                                         item.target_section.name)
 
     def item_author_name(self, item):
         return item.user
 
     def item_description(self, item):
-        description = item.summary
+        description = summarize_action(item)
         if item.comment:
-            description += '\n' + item.comment
-        if item.package:
-            description += '\n\n' + item.package.control
+            description += '\n\n' + item.comment
+        package = self._get_package_for_item(item)
+        if package:
+            description += '\n\n' + package.control
             
         return description.replace('\n', '<br/>')
 
@@ -46,6 +63,20 @@ class BaseRepositoryFeed(Feed):
         
     def _constrain_result(self, result):
         return result[self.offset:].reverse()[:self.limit]
+    
+    def _get_section_url(self, distribution_name, section_name):
+            return reverse('aptrepo:section_contents', 
+                           kwargs={ 'distribution':distribution_name,
+                                    'section': section_name})
+            
+    def _get_package_for_item(self, item):
+        query = models.Package.objects.filter(package_name=item.package_name, 
+                                             version=item.version, 
+                                             architecture=item.architecture)
+        if query:
+            return query[0]
+        else:
+            return None
             
 
 # TODO Try and collapse the Repository, Distribution and Feed classes into one class which behaves based
@@ -57,13 +88,13 @@ class RepositoryRSSFeed(BaseRepositoryFeed):
     """
     def get_object(self, request):
         self._init_query_limits(request)
-        return None
+        return _('Repository')
     
-    def description(self):
+    def description(self, obj):
         return _("Activity for repository")
     
-    def link(self):
-        return "/"
+    def link(self, obj):
+        return reverse('aptrepo:browse_distributions')
     
     def items(self):
         repository = get_repository_controller()
@@ -91,7 +122,7 @@ class DistributionRSSFeed(BaseRepositoryFeed):
         return _("Activity for distribution {0}".format(str(obj)))
     
     def link(self, obj):
-        return "/dists/" + obj.name
+        return reverse('aptrepo:distribution_info', kwargs={'distribution_name': obj.name})
     
     def items(self, obj):
         repository = get_repository_controller()
@@ -119,7 +150,7 @@ class SectionRSSFeed(BaseRepositoryFeed):
         return _("Activity for section {0}".format(str(obj)))    
      
     def link(self, obj):
-        return "/dists/{0}/{1}/".format(obj.distribution.name, obj.name)
+        return self._get_section_url(obj.distribution.name, obj.name)
     
     def items(self, obj):
         repository = get_repository_controller()

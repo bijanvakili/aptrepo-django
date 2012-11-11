@@ -45,9 +45,9 @@
 								{{ user.username }}
 							{% endif %}
 							&nbsp;|&nbsp;
-							<a href="/aptrepo/logout/?next={{ request.get_full_path }}">{% trans 'Logout' %}</a>
-						{% else %}
-							<a href="/aptrepo/login/?next={{ request.get_full_path }}">{% trans 'Login' %}</a>
+							<a href="{% url 'aptrepo:logout' %}?next={% url 'aptrepo:repository_home'%}">{% trans 'Logout' %}</a>
+						{% elif not hide_login_link %}
+							<a href="{% url 'aptrepo:login' %}?next={{ request.get_full_path }}">{% trans 'Login' %}</a>
 						{% endif %}
 					</div>
 					
@@ -64,7 +64,7 @@
 	    	
 	    	<!-- Breadcumb bar -->
 	    	<div id="nav_breadcrumbs">
-	    		<a href="/aptrepo">{% trans "Home" %}</a>
+	    		<a href="{% url 'aptrepo:repository_home' %}">{% trans "Home" %}</a>
 	    		
 	    		{% for crumb in breadcrumbs %}
 	    			<span>&nbsp;&gt;&nbsp;</span>{{ crumb.get_html_tag|safe }}
@@ -89,7 +89,7 @@
 				</div>
 				
 				<div id="nav_projectlink">
-					<a href="http://bijan.dyndns.org">apt repository v{{ repository_version }}</a>
+					<a href="{{ repository_project_url }}">apt repository v{{ repository_version }}</a>
 				</div>
 	        </div>
         </div>

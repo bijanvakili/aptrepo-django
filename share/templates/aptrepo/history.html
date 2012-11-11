@@ -6,7 +6,11 @@
 {% block title %}{% trans 'History' %} | {{ current_area.description }}{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" type="text/css" href="{% static_media_url 'css/history.css' %}" />
+	<link rel="stylesheet" type="text/css" href="{% static_media_url 'css/history.css' %}" />
+	
+	{# Links for autodiscovery of history syndication feeds #}
+	<link rel="alternate" type="application/rss+xml" title="RSS history feed" href="rss/" />
+	<link rel="alternate" type="application/atom+xml" title="Atom history feed" href="atom/" />
 {% endblock %}
 
 {% block body %}
@@ -117,10 +121,10 @@
 {% include "aptrepo/page_navigator.html" %}
 <div id="feed_links">
 	{% trans "Also available in:" %}
-	<a href="{{ urls.syndication_feeds.rss }}" class="history_icon">
+	<a href="rss/" class="history_icon">
 		<img src="{% raster_image_url '16x16/rss_feed.png'%}" />RSS
 	</a>
-	<a href="{{ urls.syndication_feeds.atom }}" class="history_icon">
+	<a href="atom/" class="history_icon">
 		<img src="{% raster_image_url '16x16/atom_feed.png' %}" />Atom
 	</a>
 </div>

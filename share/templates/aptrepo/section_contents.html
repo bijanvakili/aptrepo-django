@@ -1,4 +1,13 @@
 {% load i18n %}
+{% load url from future %}
+
+<head>
+	{# Links for autodiscovery of history syndication feeds #}
+	<link rel="alternate" type="application/rss+xml" title="RSS history feed" href="history/rss/" />
+	<link rel="alternate" type="application/atom+xml" title="Atom history feed" href="history/atom/" />
+</head>
+
+<body>
 <h2>{% blocktrans %}List of packages for {{ section }}{% endblocktrans %}</h2>
 <table border="1">
 	<tr>
@@ -15,10 +24,11 @@
 		<td>{{ instance.package.version }}</td>
 		<td>{{ instance.package.architecture }}</td>
 		<td>
-			<form action="/aptrepo/packages/delete/" method="post">
+			<form action="{% url 'aptrepo:package_delete' %}" method="post">
 				<input type="submit" value="{% trans 'Delete' %}" />
 				<input type="hidden" name="package_instance" value="{{instance.id}}" />
 			</form>
 		</td>
 	{% endfor %}
 </table>
+</body>
