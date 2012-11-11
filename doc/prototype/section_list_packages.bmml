@@ -2,7 +2,7 @@
   <controls>
     <control controlID="0" controlTypeID="com.balsamiq.mockups::BrowserWindow" x="35" y="2" w="801" h="646" measuredW="450" measuredH="400" zOrder="0" locked="false" isInGroup="-1">
       <controlProperties>
-        <text>lucid%3Amain%20%7C%20apt%20repository%0Ahttp%3A//www.aptrepository.com/distributions/lucid/main/%3Fview%3Dsimple%5C%26offset%3D25%5C%26limit%3D10</text>
+        <text>lucid%3Amain%20%7C%20apt%20repository%0Ahttp%3A//www.repository.com/aptrepo/web/distributions/lucid/sections/main/%3Foffset%3D25%5C%26limit%3D10</text>
         <verticalScrollbar>true</verticalScrollbar>
       </controlProperties>
     </control>
@@ -71,8 +71,10 @@
         <icon>RightFillTriangleIcon%7Cxsmall</icon>
       </controlProperties>
     </control>
-    <control controlID="70" controlTypeID="com.balsamiq.mockups::Component" x="428" y="218" w="112" h="21" measuredW="112" measuredH="21" zOrder="12" locked="false" isInGroup="-1">
+    <control controlID="70" controlTypeID="com.balsamiq.mockups::Component" x="428" y="218" w="113" h="21" measuredW="113" measuredH="21" zOrder="12" locked="false" isInGroup="-1">
       <controlProperties>
+        <override controlID="3" x="0" y="0" w="113" h="21"/>
+        <override controlID="-1"/>
         <src>./assets/repo_sections_button_group.bmml</src>
       </controlProperties>
     </control>

@@ -9,15 +9,13 @@ Current -> 0.01 (Core implementation)
 
 	> fix logout screen for admin pages to allow going back to main page
 	> unit tests for feeds
-	> how to get to distirbution history links?
+	> how to get to distribution history links?
 	> better handling of upload/delete success
 
 	> user help pages (initial simple version)
 	> show API client setup instructions at a URL
 	> logo and favicon
 - restrict admin access
-- centralize URL generation
-	> finalize URL hierarchy (based on UI mockups?)	
 - consider renaming 'prune' admin command to 'cleanup' (subclass the django.core command)
 - text document for manual setup
 	NOTE:  --insecure is required to serve static files

@@ -1,13 +1,16 @@
-<mockup version="1.0" skin="sketch" measuredW="836" measuredH="648" mockupW="801" mockupH="646">
+<mockup version="1.0" skin="sketch" fontFace="Balsamiq Sans" measuredW="836" measuredH="648" mockupW="801" mockupH="646">
   <controls>
     <control controlID="0" controlTypeID="com.balsamiq.mockups::BrowserWindow" x="35" y="2" w="801" h="646" measuredW="450" measuredH="400" zOrder="0" locked="false" isInGroup="-1">
       <controlProperties>
-        <text>Upload%20%7C%20lucid%3Amain%20%7C%20apt%20repository%0Ahttp%3A//www.aptrepository.com/distributions/lucid/main/upload/</text>
+        <text>Upload%20%7C%20lucid%3Amain%20%7C%20apt%20repository%0Ahttp%3A//www.repository.com/aptrepo/web/distributions/lucid/sections/main/upload/</text>
         <verticalScrollbar>true</verticalScrollbar>
       </controlProperties>
     </control>
-    <control controlID="55" controlTypeID="com.balsamiq.mockups::Component" x="46" y="79" w="747" h="61" measuredW="747" measuredH="61" zOrder="7" locked="false" isInGroup="-1">
+    <control controlID="55" controlTypeID="com.balsamiq.mockups::Component" x="46" y="79" w="747" h="66" measuredW="747" measuredH="66" zOrder="7" locked="false" isInGroup="-1">
       <controlProperties>
+        <override controlID="13" x="0" y="0" w="747" h="66"/>
+        <override controlID="14" x="513" y="6" w="232" h="22"/>
+        <override controlID="-1"/>
         <src>./assets/repo_header_withlogin.bmml</src>
       </controlProperties>
     </control>
@@ -30,7 +33,7 @@
         <src>./assets/repo_footer.bmml</src>
       </controlProperties>
     </control>
-    <control controlID="58" controlTypeID="com.balsamiq.mockups::Button" x="175" y="342" w="-1" h="-1" measuredW="63" measuredH="28" zOrder="10" locked="false" isInGroup="-1">
+    <control controlID="58" controlTypeID="com.balsamiq.mockups::Button" x="175" y="342" w="-1" h="-1" measuredW="63" measuredH="27" zOrder="10" locked="false" isInGroup="-1">
       <controlProperties>
         <text>Upload</text>
       </controlProperties>
@@ -50,7 +53,7 @@
         <text>/home/bijanv/Documents/mypackage_1.0_i386.deb</text>
       </controlProperties>
     </control>
-    <control controlID="62" controlTypeID="com.balsamiq.mockups::Button" x="520" y="192" w="-1" h="-1" measuredW="90" measuredH="28" zOrder="4" locked="false" isInGroup="-1">
+    <control controlID="62" controlTypeID="com.balsamiq.mockups::Button" x="520" y="192" w="-1" h="-1" measuredW="91" measuredH="27" zOrder="4" locked="false" isInGroup="-1">
       <controlProperties>
         <text>Choose%20File</text>
       </controlProperties>
@@ -65,12 +68,12 @@
         <text>Here%20is%20a%20package%20I%20am%20uploading...</text>
       </controlProperties>
     </control>
-    <control controlID="68" controlTypeID="com.balsamiq.mockups::CheckBoxGroup" x="175" y="262" w="154" h="65" measuredW="110" measuredH="63" zOrder="11" locked="false" isInGroup="-1">
+    <control controlID="68" controlTypeID="com.balsamiq.mockups::CheckBoxGroup" x="175" y="262" w="154" h="65" measuredW="114" measuredH="63" zOrder="11" locked="false" isInGroup="-1">
       <controlProperties>
         <text>%5B%20%5D%20lucid%3Atest%20%0A%5Bx%5D%20lucid%3Amain%0A%5Bx%5D%20maverick%3Amain</text>
       </controlProperties>
     </control>
-    <control controlID="71" controlTypeID="com.balsamiq.mockups::CheckBoxGroup" x="336" y="262" w="169" h="65" measuredW="132" measuredH="42" zOrder="12" locked="false" isInGroup="-1">
+    <control controlID="71" controlTypeID="com.balsamiq.mockups::CheckBoxGroup" x="336" y="262" w="169" h="65" measuredW="136" measuredH="42" zOrder="12" locked="false" isInGroup="-1">
       <controlProperties>
         <text>%5B%20%5D%20maverick%3Auniverse%0A%5B%20%5D%20lucid%3Alynx</text>
       </controlProperties>
