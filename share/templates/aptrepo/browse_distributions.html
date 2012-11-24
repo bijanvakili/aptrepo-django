@@ -1,22 +1,29 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% load url_extras %}
 {% load url from future %}
+{% load url_extras %}
 
 {% block title %}{% trans 'Distributions' %}{% endblock %}
 
 {% block head %}
-		{% if debug %}
-			<script type="text/javascript" src="http://static.jstree.com/v.1.0pre/jquery.jstree.js"></script>
-		{% else %}
-			<script type="text/javascript" src="{% static_media_url "js/lib/jquery.jstree.min-1.0-rc3.js" 1 %}"></script>
-		{% endif %}
+	{% if debug %}
+		<script type="text/javascript" src="http://static.jstree.com/v.1.0pre/jquery.jstree.js"></script>
+	{% else %}
+		<script type="text/javascript" src="{% static_media_url "js/lib/jquery.jstree.min-1.0-rc3.js" 1 %}"></script>
+	{% endif %}
+	
+	{% include "aptrepo/common/autodiscovery_feed_links.html" %}
 		
-		{# Links for autodiscovery of history syndication feeds #}
-		<link rel="alternate" type="application/rss+xml" title="RSS history feed" href="{% url 'aptrepo:all_history' %}rss/" />
-		<link rel="alternate" type="application/atom+xml" title="Atom history feed" href="{% url 'aptrepo:all_history' %}atom/" />
+	<script type="text/javascript">
+		$(document).ready(function() {
+			// initialize the tree control
+			$('div#distributions_tree').each ( function() {
+				initialize_distributions_treecontrol($(this));
+			});
+		});
+	</script>
+	
 {% endblock %}
-
 
 {% block body %}
 
@@ -24,27 +31,11 @@
 	<span class="aptrepo_subtitle">{% trans "Browse Repository" %}</span>
 </div>
 
-<div id="distributions_recent_activity_container">
-	<a href="{% url 'aptrepo:all_history' %}" class="common_command_link">
-		{# TODO Create clock icon for 'recent history' #}
-		<img src="{% raster_image_url '16x16/scroll.png'%}" />{% trans "Recent History" %}
-	</a>
-	<a href="{% url 'aptrepo:all_history' %}rss/" class="common_command_link">
-		<img src="{% raster_image_url '16x16/rss_feed.png'%}" />RSS
-	</a>
-	<a href="{% url 'aptrepo:all_history' %}atom/" class="common_command_link">
-		<img src="{% raster_image_url '16x16/atom_feed.png' %}" />Atom
-	</a>
-</div>
+{% include "aptrepo/common/recent_activity.html" %}
 
 <div id="distributions_main_container">
 	<div id="distribution_controls_container">
-		<a href="{% url 'aptrepo:package_upload' %}" class="common_command_link">
-			<img src="{% raster_image_url '16x16/upload.png'%}" />{% trans "Upload" %}
-		</a>
-		<a href="{% url 'aptrepo:help' %}" class="common_command_link">
-			<img src="{% raster_image_url '16x16/help.png'%}" />{% trans "Help" %}
-		</a>
+		{% include "aptrepo/common/command_links.html" %}
 	</div>
 	
 	<div id="distributions_tree_container">
@@ -77,15 +68,5 @@
 		</table>
 	</div>
 </div>
-
-<script type="text/javascript">
-
-	$(document).ready(function() {
-		// initialize the tree control
-		$('div#distributions_tree').each ( function() {
-			initialize_distributions_treecontrol($(this));
-		});
-	});
-</script>
 
 {% endblock %}

@@ -2,7 +2,6 @@
 	"defaults": {
 		"package": {
 			"name-prefix": "test-package",
-			"subdir": "XX",
 			"section": "test",
 			"priority": "optional",
             "priority": "optional",
@@ -16,6 +15,7 @@
 		"upload": {
 			"section": 2,
 			"creator": "testuser0",
+			"creation_date": "2012-01-01 10:00",
 			"comment": "For testing"
 		}
 	},

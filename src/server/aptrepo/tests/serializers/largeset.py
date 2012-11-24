@@ -1,7 +1,9 @@
 from debian_bundle import deb822
+from django.conf import settings
 from django.core.serializers import base
 from django.core.serializers.python import Deserializer as PythonDeserializer
 import json
+import os
 from server.aptrepo import models
 from server.aptrepo.util import AptRepoException
 from StringIO import StringIO
@@ -58,7 +60,10 @@ class LargeDatasetGenerator(object):
             fields['package_name'], 
             fields['version'], 
             fields['architecture'])
-        fields['path'] = '{0}/{1}'.format(package_defaults['subdir'], filename)
+        fields['path'] = os.path.join(
+                    settings.APTREPO_FILESTORE['packages_subdir'],
+                    fields['hash_md5'][:2],  
+                    filename)
         data['fields'] = fields
         
         self.curr_package += 1
@@ -72,6 +77,7 @@ class LargeDatasetGenerator(object):
         fields = { 'package': self.curr_instance }
         fields['section'] = upload_defaults['section']
         fields['creator'] = upload_defaults['creator']
+        fields['creation_date'] = upload_defaults['creation_date']
         data['fields'] = fields
         
         self.curr_instance += 1
@@ -83,6 +89,7 @@ class LargeDatasetGenerator(object):
         data = {'pk': self.curr_action }
         data['model'] = 'aptrepo.action'
         fields = {'target_section': upload_defaults['section'] }
+        fields['timestamp'] = upload_defaults['creation_date'] 
         fields['action_type'] = models.Action.UPLOAD
         
         fields['user'] = upload_defaults['creator']

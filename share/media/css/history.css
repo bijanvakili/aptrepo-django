@@ -1,17 +1,15 @@
 /* History header */
+
+#history_header {
+	float: left;
+}
+
 #history_header>form>* {
 	vertical-align: bottom;
 	margin-top: 0px;
 }
 
 /* History content styles */
-a.history_icon {
-	text-decoration: none;
-}
-a.history_icon>img {
-	vertical-align: top;	
-}
-
 div.history_item_comment_line {
 	padding-left: 2em;	
 }
@@ -48,9 +46,9 @@ div.history_item_comment_line {
     background-color: #7f7f7f;
 }
 
-#history_table td,th {
+#history_table td, #history_table th {
 	border-width: 1px;
-    border-style: solid;
+    border-style: none solid;
     border-color: black;
     border-collapse: separate;
     padding: 5px;
@@ -67,11 +65,4 @@ div.history_item_comment_line {
 
 #history_table td:nth-child(5) {
 	text-align: center;
-}
-
-/* Syndication link group */
-#feed_links {
-	float: right;
-	text-align: right;
-	padding-bottom: 0.5em;
 }

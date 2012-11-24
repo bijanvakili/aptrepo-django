@@ -75,21 +75,27 @@
 	    	<!-- Main content -->
 	    	<div id="content">
 	        	{% block body %}{% endblock %}
+	        	
+				<!-- Footer proxy -->
+				<div id="push_footer" />
 	        </div>
 	        
-	        <!-- Page navigation -->
-	        <div id="nav_pages">
-	        	{% block page_navigator %}{% endblock %}
-	        </div>
 	        
 	        <!-- Footer -->
 			<div id="footer">
-				<div id="nav_webmaster">
-					{% trans "Contact: " %}<a href="mailto:{{ webmaster.email }}">{{ webmaster.name }} &lt;{{webmaster.email}}&gt;</a>
+		        <!-- Page navigation -->
+		        <div id="pagination_controls">
+			        {% block page_navigator %}{% endblock %}
 				</div>
-				
-				<div id="nav_projectlink">
-					<a href="{{ repository_project_url }}">apt repository v{{ repository_version }}</a>
+				<div id="core_footer">				
+					<div id="nav_webmaster">
+						{% trans "Contact: " %}<a href="mailto:{{ webmaster.email }}">{{ webmaster.name }} &lt;{{webmaster.email}}&gt;</a>
+					</div>
+					
+					<div id="nav_projectlink">
+						<a href="{{ repository_project_url }}">apt repository v{{ repository_version }}</a>
+					
+					</div>
 				</div>
 	        </div>
         </div>

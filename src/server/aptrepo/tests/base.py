@@ -132,24 +132,29 @@ class BaseAptRepoTest(TestCase):
                 shutil.rmtree(pkgsrc_dir)
             
     
-    def _upload_package(self, pkg_filename, section_name=None):
+    def _upload_package(self, pkg_filename):
         """
         Internal method to upload a package to the apt repo
         
         pkg_filename -- Filename of package to upload
         """
-        if not section_name:
-            section_name = self.section_name
-        
         with open(pkg_filename) as f:
             response = self.client.post(
-                self._ROOT_WEBDIR + '/packages/', {
-                    'file' : f, 
-                    'distribution': self.distribution_name, 
-                    'section': self.section_name,
+                self._ROOT_WEBDIR + '/packages/upload/', {
+                    'file' : f,
+                    'sections': [self.section_id], 
                     'comment': 'Another test upload',
                 })
             self.failUnlessEqual(response.status_code, 302)
+
+    def _get_section_web_url(self):
+        """
+        Returns the URL of the listing page for the repository section
+        """
+        return '{0}/distributions/{1}/sections/{2}'.format(
+                                   self._ROOT_WEBDIR,
+                                   self.distribution_name,
+                                   self.section_name)
 
     def _exists_package(self, package_name, version, architecture):
         """

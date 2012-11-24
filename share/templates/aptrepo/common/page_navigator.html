@@ -1,14 +1,10 @@
 {% load i18n %}
 {% load url_extras %}
 
-{% block head %}
-<link rel="stylesheet" type="text/css" href="{% static_media_url 'css/page_navigator.css' %}" />
-{% endblock %}
-
 {% block page_navigator %}
 
 {% if page_navigate.total_items > 1 %}
-	<div id="nav_pages_pagelinks">
+	<div id="pagination_page_links">
 	
 			{# page links -- Previous,...1,2,3,...,Next #}
 			{% if page_navigate.total_pages > 1 %}
@@ -27,14 +23,17 @@
 				{% if page_navigate.has_next %}
 					<a href="{{ page_navigate.next_page_link }}">{% trans "Next >>" %}</a>
 				{% endif %}
-				<br/>
+
+				{# page summary -- (page_min-page_max/total) for items #}
+				{{ page_navigate.position_summary }}
 			{% endif %}
-			
-			{# page summary -- (page_min-page_max/total) for items #}
-			{{ page_navigate.position_summary }} | {% trans "Per page:" %}
-			{% for item in urls.change_pagination_links %}
-				<a href="{{ item.url }}">{{ item.limit }}</a><span> </span>
-			{% endfor %}
+	</div>
+	
+	<div id="pagination_limit_links">		
+		{% trans "Per page:" %}
+		{% for item in page_navigate.limit_links %}
+			<a href="{{ item.url }}">{{ item.limit }}</a><span> </span>
+		{% endfor %}
 	</div>
 {% endif %}
 

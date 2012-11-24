@@ -67,8 +67,9 @@ class AuthenticationTest(BaseAptRepoTest):
         self.assertEqual(response.status_code, 200)
         
         # test listing the packages (will be empty)
-        response = self.client.get(self._ROOT_WEBDIR + '/packages/')
-        self.assertContains(response, 'Current package list')
+        response = self.client.get(self._get_section_web_url())
+        self.assertContains(response, 'Packages for {0}:{1}'.format(self.distribution_name, 
+                                                                    self.section_name))
         response = self.client.get(self._ROOT_APIDIR + '/packages')
         self.assertEqual(response.status_code, 200)
                 
@@ -88,7 +89,7 @@ class AuthenticationTest(BaseAptRepoTest):
             
             # test a package upload
             response = self.client.post(
-                self._ROOT_WEBDIR + '/packages/', 
+                self._ROOT_WEBDIR + '/packages/upload/', 
                 {
                     'file' : pkg_fh, 'distribution': self.distribution_name, 
                     'section': self.section_name}

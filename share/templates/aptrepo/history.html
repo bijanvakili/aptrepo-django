@@ -8,9 +8,7 @@
 {% block head %}
 	<link rel="stylesheet" type="text/css" href="{% static_media_url 'css/history.css' %}" />
 	
-	{# Links for autodiscovery of history syndication feeds #}
-	<link rel="alternate" type="application/rss+xml" title="RSS history feed" href="rss/" />
-	<link rel="alternate" type="application/atom+xml" title="Atom history feed" href="atom/" />
+	{% include "aptrepo/common/autodiscovery_feed_links.html" %}
 {% endblock %}
 
 {% block body %}
@@ -27,7 +25,9 @@
 	</form>
 </div>
 
-<br/>
+{% include "aptrepo/common/recent_activity.html" %}
+
+<br/><br/>
 
 {# History content #}
 <div id="history_content">
@@ -39,7 +39,7 @@
 			
 			<div>
 				{% summarize_action action %}
-				{% include "aptrepo/history_item_links.html" %}
+				{% include "aptrepo/common/history_item_links.html" %}
 			</div>
 
 			{% if action.comment %}
@@ -71,7 +71,7 @@
 					<td>{{ action.package_name }}</td>
 					<td>{{ action.version }}</td>
 					<td>{{ action.architecture }}</td>
-					<td>{% include "aptrepo/history_item_links.html" %}</td>
+					<td>{% include "aptrepo/common/history_item_links.html" %}</td>
 					<td>{% summarize_sections_for_action action %}
 						{% if action.comment %}
 						<br/><span class="history_item_comment">{{ action.comment }}</span>
@@ -102,11 +102,11 @@
 		).attr('checked', true);
 		
 		// set the download links
-		$('a.history_icon[link_type="download"]').click(
+		$('a.package_operation_icon[link_type="download"]').click(
 			{'package_callback': download_package_callback}, 
 			on_click_package_anchor 
 		); 
-		$('a.history_icon[link_type="info"]').click( 
+		$('a.package_operation_icon[link_type="info"]').click( 
 			{'package_callback': show_package_info_dialog}, 
 			on_click_package_anchor 
 		);
@@ -116,16 +116,6 @@
 
 {% endblock %}
 
-{# page navigators and links to syndication feeds  #}
 {% block page_navigator %}
-{% include "aptrepo/page_navigator.html" %}
-<div id="feed_links">
-	{% trans "Also available in:" %}
-	<a href="rss/" class="history_icon">
-		<img src="{% raster_image_url '16x16/rss_feed.png'%}" />RSS
-	</a>
-	<a href="atom/" class="history_icon">
-		<img src="{% raster_image_url '16x16/atom_feed.png' %}" />Atom
-	</a>
-</div>
+	{% include "aptrepo/common/page_navigator.html" %}
 {% endblock %}

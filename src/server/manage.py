@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import sys
+import apt_pkg
 from django.core.management import execute_manager
 from django.utils.translation import ugettext as _
 try:
@@ -14,4 +15,5 @@ except ImportError:
     sys.exit(1)
 
 if __name__ == "__main__":
+    apt_pkg.init_system()
     execute_manager(settings)

@@ -5,7 +5,6 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.utils.translation import ugettext as _
-from server.aptrepo.util import AptRepoException
 
 def nowhitespace(value):
     """

@@ -1,0 +1,10 @@
+{# Links for autodiscovery of syndication feeds #}
+
+{% if autodiscover_feed_title %}
+	<link rel="alternate" type="application/rss+xml" 
+		title="{{ autodiscover_feed_title }} (RSS 2.0)" href="{{ history_url_prefix }}rss/" 
+	/>
+	<link rel="alternate" type="application/atom+xml" 
+		title="{{ autodiscover_feed_title }} (Atom)" href="{{ history_url_prefix }}atom/" 
+	/>
+{% endif %}

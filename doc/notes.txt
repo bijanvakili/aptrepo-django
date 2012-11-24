@@ -2,15 +2,18 @@ Plan
 ====
 Current -> 0.01 (Core implementation)
 - proper web UI templates and interface
-	> how to browse sections? (simple/advanced?)
+	> browse sections page
+		> refactor serializers to use common class for logic
 	> top level search UI and search in API
-	> copy package
+	> copy package dialog
+	> delete package dialog
+		> better handling of upload/delete success
 	> error pages (404 and 500)
 
 	> fix logout screen for admin pages to allow going back to main page
-	> unit tests for feeds
 	> how to get to distribution history links?
-	> better handling of upload/delete success
+	> support only one feed type (autodiscovery)?
+	> unit tests for feeds
 
 	> user help pages (initial simple version)
 	> show API client setup instructions at a URL

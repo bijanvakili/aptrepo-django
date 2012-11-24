@@ -15,15 +15,17 @@
 	<tr>
 		<td />
 		<td class="login_error_msg">
-			{% for error in form.non_field_errors %}
-				{{ error }}
-			{% endfor %}
-			{% for error in form.username.errors %}
-				{{ form.username.label_tag }}: {{ error }}
-			{% endfor %}
-			{% for error in form.password.errors %}
-				{{ form.password.label_tag }}: {{ error }}
-			{% endfor %}
+			<div class="login_error_msg_text">
+				{% for error in form.non_field_errors %}
+					{{ error }}
+				{% endfor %}
+				{% for error in form.username.errors %}
+					{{ form.username.label_tag }}: {{ error }}
+				{% endfor %}
+				{% for error in form.password.errors %}
+					{{ form.password.label_tag }}: {{ error }}
+				{% endfor %}
+			</div>
 		</td>
 	</tr>
 	<tr>
@@ -37,10 +39,8 @@
 	<tr>
 		<td/>
 		<td class="login_holder">
-			<div>
-				<a class="login_help_link" href="mailto:{{ webmaster.email }}">{% trans 'Help! I forgot my username or password...' %}</a>
-			</div>
 			<div class="login_submit_container">
+				<a class="login_help_link" href="mailto:{{ webmaster.email }}">{% trans 'Help! I forgot my username or password...' %}</a>
 				<input id="login_submit" type="submit" value="{% trans 'Login' %}" />
 			</div>
 		<td/>

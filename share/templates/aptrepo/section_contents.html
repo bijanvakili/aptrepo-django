@@ -1,34 +1,106 @@
+{% extends "base.html" %}
 {% load i18n %}
 {% load url from future %}
+{% load debian_tags %}
+{% load url_extras %}
 
-<head>
-	{# Links for autodiscovery of history syndication feeds #}
-	<link rel="alternate" type="application/rss+xml" title="RSS history feed" href="history/rss/" />
-	<link rel="alternate" type="application/atom+xml" title="Atom history feed" href="history/atom/" />
-</head>
+{% block title %}{{ section }}{% endblock %}
 
-<body>
-<h2>{% blocktrans %}List of packages for {{ section }}{% endblocktrans %}</h2>
-<table border="1">
-	<tr>
-		<td>{% trans 'ID' %}</td>			
-		<td>{% trans 'Name' %}</td>
-		<td>{% trans 'Version' %}</td>
-		<td>{% trans 'Architecture' %}</td>
-		<td>{% trans 'Operations' %}</td>
-	</tr>
-	{% for instance in package_instances %}
-	<tr>
-		<td>{{ instance.id }}</td>
-		<td>{{ instance.package.package_name }}</td>
-		<td>{{ instance.package.version }}</td>
-		<td>{{ instance.package.architecture }}</td>
-		<td>
-			<form action="{% url 'aptrepo:package_delete' %}" method="post">
-				<input type="submit" value="{% trans 'Delete' %}" />
-				<input type="hidden" name="package_instance" value="{{instance.id}}" />
-			</form>
-		</td>
-	{% endfor %}
-</table>
-</body>
+{% block head %}
+	{% include "aptrepo/common/autodiscovery_feed_links.html" %}
+	
+	{# Initialize the javascript callbacks #}
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$('a.package_operation_icon[link_type="info"]').click( 
+				{'package_callback': show_package_info_dialog}, 
+				on_click_package_anchor 
+			);
+		});
+	</script>
+{% endblock %}
+
+{% block body %}
+
+{% include "aptrepo/package_info_dialog.html" %}
+
+<div id="section_contents_header">
+	<span class="section_contents_subtitle">{% blocktrans %}Packages for {{ section }}{% endblocktrans %}</span>	
+</div>
+
+{% include "aptrepo/common/recent_activity.html" %}
+
+<br/><br/>
+
+<div id="section_contents_main_container">
+	
+	<div id="section_contents_controls_container">
+		{% include "aptrepo/common/command_links.html" %}
+	</div>
+
+	<div id="section_contents_listing_container">
+		
+		{% regroup package_instances by package.package_name as instances_by_package_name %}
+		
+		<table class="section_contents_table">
+			<tr>
+				<th>{% trans 'Package' %}</th>
+				<th>{% trans 'Version' %}</th>
+				<th>{% trans 'Architecture' %}</th>
+				<th></th>
+			</tr>
+			{% for package_name in instances_by_package_name %}
+				<tr>
+					<td>{{ package_name.grouper }}</td>
+					
+					{% regroup package_name.list|deb822version_sort by package.version as instance_subset_by_version %}
+					{% spaceless %}
+					<td>
+						{% for instance_version in instance_subset_by_version %}
+						<span>{{ instance_version.grouper }}</span>{% if not forloop.last %}<br/>{% endif %}
+						{% endfor %}
+					</td>
+					
+					<td>
+						{% for instance_version in instance_subset_by_version %}
+							{% for instance in instance_version.list %}
+								<a href="{{ instance.package.path.url }}">{{ instance.package.architecture }}</a>
+								{% if not forloop.last %}
+									<span>&nbsp;</span>
+								{% endif %}
+							{% endfor %}
+							{% if not forloop.last %}
+								<br/>
+							{% endif %}
+						{% endfor %}
+					</td>
+					<td>
+						{# TODO Use a template tag #}
+						{# TODO Switch to using instance id #}
+						
+						{% for instance_version in instance_subset_by_version %}
+							<a href="#" class="package_operation_icon"
+								link_type="info"
+								target_section_id="{{ section.id }}"	
+								target_section_name="{{ section }}"
+								package_name="{{ package_name.grouper }}" 
+								version="{{ instance_version.grouper }}"
+								architecture="{{ instance_version.list.0.package.architecture }}"
+							>
+								<img src="{% raster_image_url '16x16/info.png' %}" />
+							</a>
+							{% if not forloop.last %}<br/>{% endif %}
+						{% endfor %}
+					</td>
+					{% endspaceless %}
+				</tr>
+			{% endfor %}
+		</table>
+	</div>
+</div>
+
+{% endblock %}
+
+{% block page_navigator %}
+	{% include "aptrepo/common/page_navigator.html" %}
+{% endblock %}

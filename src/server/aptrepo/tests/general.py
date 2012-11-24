@@ -171,8 +171,12 @@ class SmallRepositoryTest(BaseAptRepoTest):
                     os.remove(pkg_filename)
         
         # retrieve package list
-        response = self.client.get(self._ROOT_WEBDIR + '/packages/')
+        response = self.client.get(self._get_section_web_url())
+        
+        # TODO Check the actual content of the listings?
         #print response.content
+        
+        
         self.failUnlessEqual(response.status_code, 200)
 
         # verify the entire repo metadata        

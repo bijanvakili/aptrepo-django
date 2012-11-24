@@ -52,7 +52,9 @@ DATABASES = {
 }
 
 SERIALIZATION_MODULES = {
-    'largeset': 'aptrepo.util.serializers.largeset'
+    'largeset': 'aptrepo.tests.serializers.largeset',
+    'groupedset' : 'aptrepo.tests.serializers.groupedset',
+    'deb822' : 'aptrepo.tests.serializers.deb822',
 }
 
 # Local time zone for this installation. Choices can be found here:

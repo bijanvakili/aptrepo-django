@@ -1,0 +1,18 @@
+{% load i18n %}
+{% load url_extras %}
+
+<div id="recent_activity_container">
+	{# Only show the history web page if an URL prefix was specified #}
+	{% if history_url_prefix %}
+		<a href="{{ history_url_prefix }}" class="common_command_link">
+			{# TODO Create clock icon for 'recent history' #}
+			<img src="{% raster_image_url '16x16/scroll.png'%}" />{% trans "Recent History" %}
+		</a>
+	{% endif %}
+	<a href="{{ history_url_prefix }}rss/" class="common_command_link">
+		<img src="{% raster_image_url '16x16/rss_feed.png'%}" />RSS
+	</a>
+	<a href="{{ history_url_prefix }}atom/" class="common_command_link">
+		<img src="{% raster_image_url '16x16/atom_feed.png' %}" />Atom
+	</a>
+</div>

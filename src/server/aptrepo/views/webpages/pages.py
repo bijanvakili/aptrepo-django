@@ -99,6 +99,15 @@ class PageNavigation():
                 page_links.append({'page': total_pages, 'link': self._get_page_url(total_pages)})
                 
         return page_links
+    
+    def limit_links(self):
+        links = []
+        for limit in settings.APTREPO_PAGINATION_LIMITS:
+            links.append( { 'limit': limit, 
+                          'url': _url_replace_get_param(self.request, 
+                                                        'limit', limit) } )
+        return links
+
 
     def _get_page_url(self, page_number):
         return _url_replace_get_param(self.request, 'offset', self.page_limit * (page_number - 1))
@@ -153,7 +162,9 @@ def browse_distributions(request):
     return render_to_response('aptrepo/browse_distributions.html', 
                               { 
                                 'breadcrumbs': breadcrumbs, 
-                                'distributions_tree': sorted(distributions_tree.iteritems()) 
+                                'distributions_tree': sorted(distributions_tree.iteritems()),
+                                'autodiscover_feed_title': _('Recent history for repository'),
+                                'history_url_prefix' : reverse('aptrepo:all_history')
                               }, 
                               context_instance=RequestContext(request))
 
@@ -201,27 +212,47 @@ def logout(request):
                                             extra_context={ 'breadcrumbs': breadcrumbs})
 
 @handle_exception
-@require_http_methods(["GET", "POST"])
-def packages(request):
-    """ 
-    Handles package requests (no UI) 
-    """
-    if request.method == 'POST':
-        return _packages_post(request)
-    
-    elif request.method == 'GET':
-        # Get method at root will list all packages
-        package_list = models.Package.objects.all().order_by('package_name')
-        return render_to_response('aptrepo/packages_index.html', {'packages': package_list})
-    
-@handle_exception
 @require_http_methods(["GET"])
 def section_contents_list(request, distribution, section):
+    """
+    List the instances in a repository section
+
+    distribution - name of distribution to filter (defaults to entire repository)
+    section - name of section to filter (defaults to all sections in a distribution)
+
+    offset - offset within historical query (defaults to 0)
+    limit - page limit (see util.constrain_queryset)
+    """
     section_obj = models.Section.objects.get(distribution__name=distribution, name=section)
-    instances = models.PackageInstance.objects.filter(section=section_obj)
+    
+    # paginate the instance listings by package name
+    unique_package_names = models.PackageInstance.objects \
+        .filter(section=section_obj) \
+        .values('package__package_name') \
+        .distinct() \
+        .order_by('package__package_name')
+    instances = models.PackageInstance.objects.filter(section=section_obj,
+        package__package_name__in=constrain_queryset(request, unique_package_names)). \
+        order_by('package__package_name')
+    
+    # setup breadcrumbs
+    root_distribution_url = reverse('aptrepo:browse_distributions') 
+    breadcrumbs = [
+                   Breadcrumb(_('Distributions'), root_distribution_url),
+                   Breadcrumb(distribution, "{0}{1}".format(root_distribution_url, distribution)),
+                   Breadcrumb( section, None) ]
+    
+    # render the instance listing for this page in the section
+    page_navigate = PageNavigation(request, unique_package_names.count())
     return render_to_response('aptrepo/section_contents.html', 
-                              { 'section' : section_obj, 
-                                'package_instances': instances} )
+                              { 'section' : section_obj,
+                                'breadcrumbs': breadcrumbs,
+                                'autodiscover_feed_title' : _('Recent history for section {0}').format(section),
+                                'package_instances': instances,
+                                'page_navigate': page_navigate,
+                                'history_url_prefix' : 'history/',
+                                'url_upload' : 'upload/'},
+                                context_instance=RequestContext(request) )
 
 def upload_success(request):
     """
@@ -340,11 +371,9 @@ def history(request, distribution=None, section=None):
     
     offset - offset within historical query (defaults to 0)
     limit - page limit (see util.constrain_queryset)
-     
     """
     # set the default view type
     view_type = request.GET.get('view_type', 'simple')
-    limit = request.GET.get('limit', settings.APTREPO_PAGINATION_LIMITS[0])
     
     # construct query and breadcrumb links based on query parameters
     root_distribution_url = reverse('aptrepo:browse_distributions')
@@ -359,6 +388,11 @@ def history(request, distribution=None, section=None):
                     section, 
                     "{0}{1}/sections/{2}".format(root_distribution_url, distribution, section))
             )
+            autodiscover_feed_title = _('Recent history for section {0}').format(section)
+        else:
+            autodiscover_feed_title = _('Recent history for distribution {0}').format(distribution)
+    else:
+        autodiscover_feed_title = _('Recent history for repository')
     breadcrumbs.append( Breadcrumb(_('Recent History'), None) )
     
     # retrieve historical actions
@@ -369,11 +403,6 @@ def history(request, distribution=None, section=None):
     urls = {}
     urls['view_simple'] = _url_replace_get_param(request, 'view_type', 'simple')
     urls['view_table'] = _url_replace_get_param(request, 'view_type', 'table')
-    urls['change_pagination_links'] = []
-    for limit in settings.APTREPO_PAGINATION_LIMITS:
-        urls['change_pagination_links'].append(
-            { 'limit': limit, 'url': _url_replace_get_param(request, 'limit', limit) }
-    )
     
     # render result along with data for pagination    
     page_navigate = PageNavigation(request, actions.count())
@@ -383,8 +412,9 @@ def history(request, distribution=None, section=None):
                                'actions': constrain_queryset(request, actions),
                                'page_navigate': page_navigate,
                                'urls': urls,
-                               'view_type': view_type },
-                              context_instance=RequestContext(request))  
+                               'view_type': view_type,
+                               'autodiscover_feed_title': autodiscover_feed_title },
+                               context_instance=RequestContext(request))  
 
 
 @handle_exception
@@ -392,20 +422,6 @@ def history(request, distribution=None, section=None):
 def help(request):
     return HttpResponse('Not implemented yet')
 
-@handle_exception
-@require_http_methods(["POST"])
-@login_required
-def _packages_post(request):
-    """ 
-    POST requests will upload a package and create a new record 
-    (separate internal method to enforce authentication only for POST, not GET)
-    """
-    uploaded_file = request.FILES['file']
-    sections = [ _find_section( request.POST['distribution'], request.POST['section'] ) ]
-    comment = request.POST['comment']
-
-    # store result and redirect to success page
-    return _handle_add_file_to_repository(request, sections, uploaded_file, comment)
 
 def _handle_add_file_to_repository(request, sections, file_to_add, comment):
     """ 

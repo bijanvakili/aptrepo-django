@@ -11,7 +11,7 @@ def _span_element(css_type_suffix, value):
                                                                 value)
 
 def _section_link(section):
-    return '<a href="{1}">{0}</a>'.format(section.name, reverse('aptrepo:section_contents',kwargs={
+    return '<a href="{1}/">{0}</a>'.format(section.name, reverse('aptrepo:section_contents',kwargs={
         'distribution':section.distribution.name, 'section':section.name}))
 
 @register.simple_tag

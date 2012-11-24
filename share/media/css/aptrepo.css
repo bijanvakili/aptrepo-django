@@ -1,5 +1,11 @@
-/* Default styles */
-html {
+/*
+ * Default styles 
+ */
+* {
+	margin: 0;
+}
+
+html, body {
 	height: 100%;
 }
 
@@ -8,31 +14,52 @@ body {
 	color: black;
 	font-family: Arial, Helvetica, Sans-Serif;
 	font-size: 0.75em;
-	margin: 0;
 	padding: 0;
-	height: 100%; 
 }
 
-#container {
-	margin: 0 auto;
-	width: 100%;
-}
-
-#header {
+div#container {
 	position: relative;
+	min-height: 100%;
+	height: 100%;
+	height: auto !important;
+	width: 100%;
+	margin: 0 auto -2em;
+	
+}
+
+div#header {
+	position: relative;
+	top: 0;
+	height: 100px;
 	background-color: #efefef;
 	border-bottom: 1px solid #000;
-	height: 100px;
 	padding: 0.5em;
 }
 
-#footer {
-	margin-top: 10px;
-	border-top: 1px solid #000;
-	padding: 0.5em;
+div#content {
+	clear: both;
+	display: block;
+	min-height: 600px;
+	margin: 0.5em;
 }
 
-/* Common links */
+div#push_footer, div#footer {
+	height: 3em;
+	min-height: 3em;
+}
+
+div#footer {
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	width: 100%;
+	padding-top: 0.5em;
+}
+
+
+/* 
+ * Common links 
+ */
 a.common_command_link {
 	text-decoration: none;
 }
@@ -41,8 +68,20 @@ a.common_command_link>img {
 	vertical-align: top;	
 }
 
+/*
+ * Icons
+ */
+a.package_operation_icon {
+	text-decoration: none;
+}
+a.package_operation_icon>img {
+	vertical-align: top;	
+}
 
-/* Header styles */
+
+/*
+ * Header styles 
+ */
 #logo {
 	float: left;
 	width: 225px;
@@ -55,8 +94,8 @@ a.common_command_link>img {
 
 #nav_search {
 	position: absolute;
-	bottom: 0;
-	right: 0;
+	bottom: 2px;
+	right: 2px;
 }
 
 div#nav_breadcrumbs {
@@ -70,32 +109,57 @@ div#nav_breadcrumbs>* {
 	vertical-align: middle;
 }
 
-/* Footer styles */
-div#footer {
-	clear: both;
-	margin-top: 0.5em;
+/* Internal Footer styles */
+div#pagination_controls, div#core_footer {
+	height: 1.5em;
+	min-height: 1.5em;
+	width: 100%;	
+} 
+
+div#pagination_controls {
+	position: relative;
+	line-height: 1.5em;
 }
 
-#nav_webmaster {
-	clear: both;
-	float: left;
+div#pagination_page_links {
+	display: inline;
+	position: relative;
 	text-align: left;
-	width: 50%;	
+	left: 0.5em;
+	z-index: 2;
 }
 
-#nav_projectlink {
-	float: left;
-	text-align: right;
+div#core_footer {
+	border-top: 1px solid #000;
+}
+
+div#core_footer>div {
+	display: inline;
+	height: 100%;
 	width: 50%;
+	margin: 0 0.5em 0 0.5em;
+	vertical-align: middle;
 }
 
-/* Content styles */
-div#content {
+
+div#nav_webmaster {
 	clear: both;
-	min-height: 600px;
-	height: 600px;
-	margin: 0.5em 0.5em 0.5em 0.5em;
+	text-align: left;
 }
+
+div#nav_projectlink {
+	float: right;
+	text-align: right;
+}
+
+div#pagination_limit_links {
+	position: absolute;
+	left: 0;
+	top: 0;
+	text-align: center;
+	width: 100%;
+}
+
 
 /* Home page menu styles */
 .homepage_menu_item {
@@ -147,14 +211,17 @@ div#content {
 
 
 /* Login screen styles */
-.login_form {
-	position: relative;
-	left: 20%;
-}
-
 .login_label {
 	text-align: right;
 	font-weight: bold;
+}
+
+login_error_msg, .login_textfield, .login_holder {
+	padding-left: 100px;
+}
+
+login_error_msg_text {
+	min-height: 3em;
 }
 
 input#id_username,input#id_password {
@@ -162,23 +229,25 @@ input#id_username,input#id_password {
 	width: 100%;
 }
 
-td.login_holder {
-	position: relative;
-}
-
 td.login_error_msg,ul.errorlist {
 	color: red;
 }
 
 .login_help_link {
-	position: absolute;
-	left: 0px;
 	font-size: 0.90em;
 }
 
 .login_submit_container {
+	position: relative;
+}
+
+.login_holder {
+	padding-right: 0;
+}
+
+#login_submit {
 	position: absolute;
-	right: 0px;
+	right: 0;
 	margin: 2px 0px;
 }
 
@@ -290,7 +359,7 @@ table#package_info_dialog_misc_data th,td:nth-child(1) {
  */
 span.ui-button-icon-primary {
 	float: left;
-}distributions_recent_activity_container
+}
 
 #package_info_dialog_buttons button#close {
 	float: right;
@@ -307,7 +376,7 @@ div#distributions_header_container {
 	width: 50%;
 }
 
-div#distributions_recent_activity_container {
+div#recent_activity_container {
 	float: right;
 	width: 50%;
 	text-align: right;
@@ -315,7 +384,10 @@ div#distributions_recent_activity_container {
 
 div#distributions_main_container {
 	width: 100%;
-	height: 100%;
+	
+	/* TODO is there a better way to measure this? */
+	min-height: 600px;
+	height: 600px;
 }
 
 #distribution_controls_container,#distributions_tree_container {
@@ -362,4 +434,60 @@ div#distribution_controls_container {
 
 #distributions_section_info_table td:nth-child(2) {
 	width: 70%;
+}
+
+/* Package listings for sections */
+#section_contents_header {
+	float: left;
+}
+
+.section_contents_subtitle {
+	font-size: 1.5em;
+	font-weight: bold;	
+}
+
+div#section_contents_main_container {
+	display: inline-block;
+	width: auto;
+}
+
+div#section_contents_controls_container {
+	text-align: right;
+}
+
+div#section_contents_listing_container {
+	float: none;
+}
+
+.section_contents_table {
+    border-width: 2px;
+    border-style: solid;
+    border-color: black;
+    border-collapse: collapse;
+    margin: 0;
+    padding: 0;
+}
+
+.section_contents_table th {
+    background-color: #BFBFBF;
+}
+
+.section_contents_table td, .section_contents_table th {
+	border-width: 1px;
+    border-style: none solid;
+    border-color: black;
+    border-collapse: separate;
+    padding: 0.25em;
+    text-align: left;
+    line-height: 18px;
+}
+
+/* make package name aligned to the top */
+.section_contents_table tr>td:nth-child(1) {
+	vertical-align: text-top;
+}
+
+/* alternate background color */
+.section_contents_table tr:nth-child(odd) {
+	background-color: #DFE0F5;
 }

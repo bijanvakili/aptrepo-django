@@ -3,7 +3,7 @@
 
 <!-- TODO Consolidate repeated anchor elements into a new django template tag -->
 {% if action.show_package_links %} 
-	<a href="#" class="history_icon"
+	<a href="#" class="package_operation_icon"
 		target_section_id="{{ action.target_section.id }}"	
 		target_section_name="{{ action.target_section }}"
 		package_name="{{ action.package_name }}" version="{{ action.version }}"
@@ -13,7 +13,7 @@
 		<img src="{% raster_image_url '16x16/info.png' %}" />
 	</a>
 	
-	<a href="#" class="history_icon"
+	<a href="#" class="package_operation_icon"
 		target_section_id="{{ action.target_section.id }}"
 		target_section_name="{{ action.target_section }}"
 		package_name="{{ action.package_name }}" version="{{ action.version }}"
