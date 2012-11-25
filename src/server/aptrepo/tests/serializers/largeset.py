@@ -1,38 +1,34 @@
 from debian_bundle import deb822
-from django.conf import settings
-from django.core.serializers import base
-from django.core.serializers.python import Deserializer as PythonDeserializer
-import json
-import os
 from server.aptrepo import models
 from server.aptrepo.util import AptRepoException
-from StringIO import StringIO
+from base import BaseTestDataGenerator
+from django.core.serializers import base
 
-class LargeDatasetGenerator(object):
+class LargeDatasetGenerator(BaseTestDataGenerator):
     """
     Internal generator class to procedurally produce a objects that can be
     read by the PythonDeserializer
     """
     
     def __init__(self, stream):
-        # load the data set parameters
-        self.params = json.load(stream)
-        if 'defaults' not in self.params:
-            raise AptRepoException("No 'defaults' specified in fixture")
+        super(LargeDatasetGenerator, self).__init__(stream)
         if 'dataset' not in self.params:
             raise AptRepoException("No 'dataset' specified in fixture")
 
         # preload natural keys
         self.default_architecture = models.Architecture.objects.get(
             pk=self.params['defaults']['package']['architecture']).name
-         
-        # initialize the counters
         self.size = self.params['dataset']['size']
-        self.curr_package = 0
-        self.curr_instance = 0
-        self.curr_action = 0
 
-    def _next_package(self):
+    def build(self):
+        for i in xrange(self.size):
+            self.pk_count = i
+            package_data = self._make_next_package_from_index(i)
+            yield package_data
+            yield self._make_instance_data(package_data)
+            yield self._make_action_data(package_data)
+
+    def _make_next_package_from_index(self, index):
         package_defaults = self.params['defaults']['package']
         
         control_map = deb822.Deb822()
@@ -40,111 +36,21 @@ class LargeDatasetGenerator(object):
         control_map['Priority'] = package_defaults['priority']
         control_map['Architecture'] = self.default_architecture
         control_map['Maintainer'] = 'Test User <test@test.com>'
-        control_map['Package'] = self._get_package_name(self.curr_package)
-        control_map['Version'] = self._get_package_version(self.curr_package)
-        control_map['Description'] = str(self.curr_package)
-        
-        data = {'pk' : self.curr_package}
-        data['model'] = 'aptrepo.package'
-        fields = {'package_name': control_map['Package']}
-        fields['architecture'] = control_map['Architecture']
-        fields['version'] = control_map['Version']
-        fields['control'] = control_map.dump()
-        fields['size'] = 100
-        fields['hash_md5'] = 'XX' 
-        fields['hash_sha1'] = 'XX'
-        fields['hash_sha256'] = 'XX'
+        control_map['Package'] = self._get_package_name(index)
+        control_map['Version'] = self._get_package_version(index)
+        control_map['Description'] = str(index)
+        return self._make_package_data(control_map) 
 
-        # create an empty package file
-        filename = '{0}_{1}_{2}.deb'.format( 
-            fields['package_name'], 
-            fields['version'], 
-            fields['architecture'])
-        fields['path'] = os.path.join(
-                    settings.APTREPO_FILESTORE['packages_subdir'],
-                    fields['hash_md5'][:2],  
-                    filename)
-        data['fields'] = fields
-        
-        self.curr_package += 1
-        return data
-
-    def _next_instance(self):
-        
-        upload_defaults = self.params['defaults']['upload']
-        data = {'pk' : self.curr_instance }
-        data['model'] = 'aptrepo.packageinstance'
-        fields = { 'package': self.curr_instance }
-        fields['section'] = upload_defaults['section']
-        fields['creator'] = upload_defaults['creator']
-        fields['creation_date'] = upload_defaults['creation_date']
-        data['fields'] = fields
-        
-        self.curr_instance += 1
-        return data
-
-    def _next_action(self):
-        
-        upload_defaults = self.params['defaults']['upload']
-        data = {'pk': self.curr_action }
-        data['model'] = 'aptrepo.action'
-        fields = {'target_section': upload_defaults['section'] }
-        fields['timestamp'] = upload_defaults['creation_date'] 
-        fields['action_type'] = models.Action.UPLOAD
-        
-        fields['user'] = upload_defaults['creator']
-        fields['comment'] = upload_defaults['comment']
-        
-        fields['package_name'] = self._get_package_name(self.curr_action)
-        fields['version'] = self._get_package_version(self.curr_action)
-        fields['architecture'] = self.default_architecture
-        data['fields'] = fields
-        
-        self.curr_action += 1
-        return data
-    
     def _get_package_name(self, index):
         return self.params['defaults']['package']['name-prefix'] + str(index)
     
     def _get_package_version(self, index):
         return '1.{0:03d}'.format(index)
         
-    def __iter__(self):
-        return self
-        
-    def next(self):
-        """
-        Iteration callback for adding the next object
-        
-        1. Add all packages
-        2. Add all associated instances
-        3. Add all associated actions
-        """
-        if self.curr_package < self.size:
-            return self._next_package()
-        elif self.curr_instance < self.size:
-            return self._next_instance()
-        elif self.curr_action < self.size:
-            return self._next_action()
-        else:
-            raise StopIteration
         
             
 def Deserializer(stream_or_string, **options):
-    """
-    Deserialize method which converts data from LargeDatasetGenerator using
-    the standard django PythonDeserializer
-    """
-    if isinstance(stream_or_string, basestring):
-        stream = StringIO(stream_or_string)
-    else:
-        stream = stream_or_string
-    for obj in PythonDeserializer(LargeDatasetGenerator(stream), **options):
-        yield obj
-
+    return LargeDatasetGenerator(stream_or_string).get_generator(**options)
 
 class Serializer(base.Serializer):
-    """
-    Not implemented
-    """
     pass

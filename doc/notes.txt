@@ -3,7 +3,6 @@ Plan
 Current -> 0.01 (Core implementation)
 - proper web UI templates and interface
 	> browse sections page
-		> refactor serializers to use common class for logic
 	> top level search UI and search in API
 	> copy package dialog
 	> delete package dialog
