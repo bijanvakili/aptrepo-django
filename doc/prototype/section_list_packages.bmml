@@ -24,7 +24,7 @@
             </control>
           </groupChildrenDescriptors>
         </control>
-        <control controlID="1" controlTypeID="com.balsamiq.mockups::BreadCrumbs" x="4" y="9" w="-1" h="-1" measuredW="219" measuredH="24" zOrder="1" locked="false" isInGroup="49">
+        <control controlID="1" controlTypeID="com.balsamiq.mockups::BreadCrumbs" x="4" y="9" w="-1" h="-1" measuredW="218" measuredH="24" zOrder="1" locked="false" isInGroup="49">
           <controlProperties>
             <text>Home%2C%20Distributions%2C%20lucid%2C%20main</text>
           </controlProperties>
@@ -74,7 +74,6 @@
     <control controlID="70" controlTypeID="com.balsamiq.mockups::Component" x="428" y="218" w="113" h="21" measuredW="113" measuredH="21" zOrder="12" locked="false" isInGroup="-1">
       <controlProperties>
         <override controlID="3" x="0" y="0" w="113" h="21"/>
-        <override controlID="-1"/>
         <src>./assets/repo_sections_button_group.bmml</src>
       </controlProperties>
     </control>
@@ -114,7 +113,7 @@
         </control>
       </groupChildrenDescriptors>
     </control>
-    <control controlID="75" controlTypeID="com.balsamiq.mockups::IconLabel" x="575" y="189" w="-1" h="-1" measuredW="110" measuredH="21" zOrder="16" locked="false" isInGroup="-1">
+    <control controlID="75" controlTypeID="com.balsamiq.mockups::IconLabel" x="575" y="189" w="-1" h="-1" measuredW="110" measuredH="21" zOrder="15" locked="false" isInGroup="-1">
       <controlProperties>
         <icon>SmallClockIcon%7Cxsmall</icon>
         <labelPosition>right</labelPosition>
@@ -127,20 +126,6 @@
         <size>16</size>
         <text>Packages%20for%20*lucid%3Amain*</text>
       </controlProperties>
-    </control>
-    <control controlID="77" controlTypeID="__group__" x="50" y="216" w="242" h="25" measuredW="242" measuredH="25" zOrder="15" locked="false" isInGroup="-1">
-      <groupChildrenDescriptors>
-        <control controlID="2" controlTypeID="com.balsamiq.mockups::SearchBox" x="39" y="0" w="203" h="-1" measuredW="120" measuredH="25" zOrder="0" locked="false" isInGroup="77">
-          <controlProperties>
-            <text>search</text>
-          </controlProperties>
-        </control>
-        <control controlID="3" controlTypeID="com.balsamiq.mockups::Label" x="0" y="2" w="39" h="21" measuredW="39" measuredH="21" zOrder="1" locked="false" isInGroup="77">
-          <controlProperties>
-            <text>Filter%3A</text>
-          </controlProperties>
-        </control>
-      </groupChildrenDescriptors>
     </control>
   </controls>
 </mockup>
