@@ -2,12 +2,7 @@
 {% load url from future %}
 {% load url_extras %}
 
-<a
-{% if url_upload %} 
-	href="{{ url_upload }}"
-{% else %}
-	href="{% url 'aptrepo:package_upload' %}"
-{% endif %} 
+<a href="{% if url_upload %}{{ url_upload }}{% else %}{% url 'aptrepo:package_upload' %}{% endif %}?next={{ request.get_full_path }}"
 	class="common_command_link"
 >
 	<img src="{% raster_image_url '16x16/upload.png'%}" />{% trans "Upload" %}

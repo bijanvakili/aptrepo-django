@@ -28,6 +28,8 @@ class UploadPackageForm(forms.Form):
     sections = forms.ModelMultipleChoiceField(label=_('Sections'),
                                               queryset=models.Section.objects.all(),
                                               widget=forms.CheckboxSelectMultiple)
+    next_redirect = forms.CharField(widget=forms.HiddenInput(),
+                                    required=True)
     
 class Breadcrumb():
     """
@@ -254,13 +256,6 @@ def section_contents_list(request, distribution, section):
                                 'url_upload' : 'upload/'},
                                 context_instance=RequestContext(request) )
 
-def upload_success(request):
-    """
-    Successful upload view
-    """
-    return HttpResponse(_('Package successfully uploaded.'))
-
-
 def remove_success(request):
     """
     Successful removal view
@@ -308,14 +303,27 @@ def upload(request, distribution_name=None, section_name=None):
                     
                 sections = form.cleaned_data['sections']
                 comment = form.cleaned_data['comment']
-                return _handle_add_file_to_repository(request, sections, 
-                                                      file_to_add, comment)
+                
+                # add the package
+                repository = get_repository_controller(request=request)
+                args = {'sections':sections, 'comment':comment}
+                if isinstance(file_to_add, TemporaryDownloadedFile):
+                    args['package_fh'] = file_to_add.get_fh()
+                    args['package_path'] = file_to_add.get_path()
+                    args['package_size'] = file_to_add.get_size()
+                else:
+                    args['uploaded_package_file'] = file_to_add
+                    
+                repository.add_package(**args)
+                return HttpResponseRedirect(form.cleaned_data['next_redirect'])
+            
             finally:
                 if isinstance(file_to_add, TemporaryDownloadedFile):
                     file_to_add.close()
 
     elif request.method == 'GET':
-        form = UploadPackageForm(initial={'sections': [target_section]})
+        form = UploadPackageForm(initial={'sections': [target_section], 
+                                          'next_redirect': request.GET.get('next', reverse('aptrepo:repository_home'))})
         
     if target_section:
         breadcrumbs = [
@@ -423,23 +431,6 @@ def help(request):
     return HttpResponse('Not implemented yet')
 
 
-def _handle_add_file_to_repository(request, sections, file_to_add, comment):
-    """ 
-    Handles a successfully uploaded files 
-    """
-    # add the package
-    repository = get_repository_controller(request=request)
-    args = {'sections':sections, 'comment':comment}
-    if isinstance(file_to_add, TemporaryDownloadedFile):
-        args['package_fh'] = file_to_add.get_fh()
-        args['package_path'] = file_to_add.get_path()
-        args['package_size'] = file_to_add.get_size()
-    else:
-        args['uploaded_package_file'] = file_to_add
-        
-    repository.add_package(**args)
-    return HttpResponseRedirect(reverse('aptrepo:package_upload_success'))
-    
 def _handle_remove_package(request, package_instance_id):
     """
     Handles removing packages

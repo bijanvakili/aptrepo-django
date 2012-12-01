@@ -144,6 +144,7 @@ class BaseAptRepoTest(TestCase):
                     'file' : f,
                     'sections': [self.section_id], 
                     'comment': 'Another test upload',
+                    'next_redirect': self._ROOT_WEBDIR + '/'
                 })
             self.failUnlessEqual(response.status_code, 302)
 

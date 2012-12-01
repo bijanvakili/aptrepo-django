@@ -42,7 +42,6 @@ distribution_urls = patterns('aptrepo.views.webpages.pages',
 # Web forms/pages for packages
 package_urls = patterns('aptrepo.views.webpages.pages',
     # TODO /packages/ URL hierarchy needs to be revised
-    url(r'^upload_success', 'upload_success', name='package_upload_success'),
     url(r'^delete_success', 'remove_success', name='package_delete_success'),
 
     url(r'^upload', 'upload', name='package_upload'),    

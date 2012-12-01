@@ -21,6 +21,7 @@
 			<th />
 			<td id="upload_button_container">
 				<input class="upload_form_upload_button" type="submit" value="{% trans 'Upload' %}" />
+				<input name="cancel" type="button" value="{% trans 'Cancel' %}" />
 			</td>
 		</table>
 		
@@ -31,6 +32,10 @@
 		$(document).ready(function() {
 			$('.adv_file_group_container').each ( function() {
 				initialize_advanced_fileinput($(this));
+			});
+			$('input[name=cancel]').click( function() {
+				var url_next_direct = $('input[name=next_redirect]').val();
+				window.location.href = url_next_direct;
 			});
 		});
 	</script>
