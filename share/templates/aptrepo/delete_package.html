@@ -2,42 +2,40 @@
 {% load i18n %}
 {% load url from future %}
 
-{% block title %}
-	{% trans 'Upload' %}
-	{% if upload_target %} | {{ upload_target }}{% endif %}
-{% endblock %}
+{% block title %}{% trans 'Delete' %}{% endblock %}
 
 {% block head %}
 	{{ form.media }}
-	
 	<script type="text/javascript">
 		$(document).ready(function() {
-			$('.adv_file_group_container').each ( function() {
-				initialize_advanced_fileinput($(this));
-			});
+			$('a.package_operation_icon[link_type="info"]').click( 
+				{'package_callback': show_package_info_dialog,
+				 'aux_flags': {'enable_delete_button': false} }, 
+				on_click_package_anchor 
+			);
 			$('input[name=cancel]').click( function() {
 				var url_next_direct = $('input[name=next_redirect]').val();
 				window.location.href = url_next_direct;
 			});
-		});
+		});			
 	</script>
-	
+
 {% endblock %}
 
 {% block body %}
 
-	<form class="package_form" action="{% url 'aptrepo:package_upload' %}" enctype="multipart/form-data" method="post">
+	{% include "aptrepo/package_info_dialog.html" %}
+
+	<form class="package_form" action="{% url 'aptrepo:package_delete' %}" method="post">
 		{% csrf_token %}
-	
 		<table>
 			{{ form.as_table }}
 			<th />
 			<td id="upload_button_container">
-				<input class="upload_form_upload_button" type="submit" value="{% trans 'Upload' %}" />
+				<input class="upload_form_upload_button" type="submit" value="{% trans 'Delete' %}" />
 				<input name="cancel" type="button" value="{% trans 'Cancel' %}" />
 			</td>
-		</table>
-		
-	</form>
+		</table>		
+	</form
 
 {% endblock %}

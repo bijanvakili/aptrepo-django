@@ -41,19 +41,26 @@ function on_click_package_anchor(ev) {
 	// retrieve the URL of the package by making an Ajax API call on its metadata
 	var section_name = $(this).attr('target_section_name'),
 		section_id = $(this).attr('target_section_id'),
+		aux_flags = {},
 		instance_metadata_url = get_instance_url(
 			section_id, 
 			$(this).attr('package_name'),
 			$(this).attr('version'),
 			$(this).attr('architecture')
 		);
+	
+	if ( ev.data.hasOwnProperty('aux_flags') ) {
+		aux_flags = ev.data.aux_flags; 
+	}
+	
 	$.getJSON( instance_metadata_url)
 	.success( function( instance_metadata ) {
 		ev.data.package_callback(
 			ev, 
 			instance_metadata, 
 			section_name,
-			section_id
+			section_id,
+			aux_flags
 		);
 	})
 	.error( function() {
@@ -71,7 +78,7 @@ function download_package_for_instance( instance_metadata ) {
 /*
  * Wrapper callback for a package's download link
  */
-function download_package_callback(ev, instance_metadata, section_name, section_id) {
+function download_package_callback(ev, instance_metadata, section_name, section_id, aux_flags) {
 	download_package_for_instance( instance_metadata );
 }
 
@@ -102,12 +109,13 @@ function setup_delete_button( button, instance_metadata ) {
 /*
  * Populates the package info dialog with the metadata from a package instance
  */
-function populate_package_info_dialog( instance_metadata, section_name )
+function populate_package_info_dialog( instance_metadata, section_name, aux_flags )
 {
 	// set the dialog title
 	var package_info_dialog = $('div#package_info_dialog'),
 		package_path = instance_metadata['package']['path'],
 		filename = package_path.substr(package_path.lastIndexOf('/') + 1),
+		enable_delete_button = true,
 		PACKAGE_MISC_INFO_ROWS = {
 			creator : 1,
 			creation_date : 2,
@@ -142,14 +150,23 @@ function populate_package_info_dialog( instance_metadata, section_name )
 	
 	// update the button links
 	setup_download_button( $('#package_info_dialog_buttons button#download'), instance_metadata );
-	setup_delete_button( $('#package_info_dialog_buttons button#delete'), instance_metadata );
+	
+	if (aux_flags.hasOwnProperty('enable_delete_button')) {
+		enable_delete_button = aux_flags.enable_delete_button;
+	}
+	if (enable_delete_button) {
+		setup_delete_button( $('#package_info_dialog_buttons button#delete'), instance_metadata );
+	}
+	else {
+		$('#package_info_dialog_buttons button#delete').hide();
+	}
 	// TODO implement copy button
 }
 
 /*
  * Shows a modal dialog of the package metadata
  */
-function show_package_info_dialog(ev, instance_metadata, section_name, section_id) {
+function show_package_info_dialog(ev, instance_metadata, section_name, section_id, aux_flags) {
 	
 	// setup the package info dialog
 	var package_info_dialog = $('div#package_info_dialog'),
@@ -209,7 +226,7 @@ function show_package_info_dialog(ev, instance_metadata, section_name, section_i
 			);
 			$.getJSON( new_instance_url )
 			.success( function( new_instance_metadata ) {
-				populate_package_info_dialog( new_instance_metadata, section_name );
+				populate_package_info_dialog( new_instance_metadata, section_name, aux_flags );
 			})
 			.error( function() {
 				alert( gettext('Unable to retrieve package instance metadata.') );
@@ -221,7 +238,7 @@ function show_package_info_dialog(ev, instance_metadata, section_name, section_i
 	})
 	.then( function() {
 		// initialize the rest of the dialog and open it 
-		populate_package_info_dialog( instance_metadata, section_name );
+		populate_package_info_dialog( instance_metadata, section_name, aux_flags );
 		package_info_dialog.dialog("open");
 	});
 

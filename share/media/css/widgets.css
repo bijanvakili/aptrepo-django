@@ -36,3 +36,12 @@ div.adv_file_group_container input.adv_file_custom_button {
 	margin: 0px;
 	display: block;
 }
+
+/* Package summary */
+div.package_summary {
+	
+}
+
+div.package_summary span.bold_text {
+	font-weight: bold;
+}

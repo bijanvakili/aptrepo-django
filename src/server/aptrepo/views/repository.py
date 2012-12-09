@@ -332,35 +332,41 @@ class Repository():
         return package_instance.id
 
         
-    def remove_package(self, package_instance_id, comment=None):
+    def remove_package_instances(self, package_instance_ids, comment=None):
         """
-        Removes a package instance
-        If there are no instances referencing the actual package, it will be removed as well
+        Removes package instances
         
-        package_instance_id - primary key (id) of package to remove
+        For any removed instances, if the associated package is no longer referenced, 
+        it will be removed as well
+        
+        package_instance_ids - list of primary key (id) of package to remove
         """
-        # remove the instance
-        package_instance = models.PackageInstance.objects.get(id=package_instance_id)
-        section = package_instance.section
-        self._enforce_write_access(section, "Remove package")
-
-        package_id = package_instance.package.id
-        self.logger.info('Removing instance id={0} from section id={1}'.format(
-            package_instance_id, section.id))
-        package_instance.delete()
-
-        # remove the referenced package if it no longer exists
-        package_reference_count = models.PackageInstance.objects.filter(package__id=package_id).count()
-        package = models.Package.objects.get(id=package_id)
-        if package_reference_count == 0:
-            self.logger.info('Removing package id={0}'.format(package.id))
-            package.delete()
-        
-        # update for the package list for the specific section and architecture
-        self._clear_cache(section.distribution.name)
-        
-        # insert action for removal
-        self._record_action(models.Action.DELETE, section, package, comment=comment)
+        package_ids = set()
+        for package_instance_id in package_instance_ids:
+            # remove the instance
+            package_instance = models.PackageInstance.objects.get(id=package_instance_id)
+            section = package_instance.section
+            self._enforce_write_access(section, "Remove package")
+    
+            package = package_instance.package
+            package_ids.add(package.id)
+            self.logger.info('Removing instance id={0} from section id={1}'.format(
+                package_instance_id, section.id))
+            package_instance.delete()
+    
+            # update for the package list for the specific section and architecture
+            self._clear_cache(section.distribution.name)
+            
+            # insert action for removal
+            self._record_action(models.Action.DELETE, section, package, comment=comment)
+            
+        for package_id in package_ids:
+            # remove the referenced package if it no longer exists
+            package_reference_count = models.PackageInstance.objects.filter(package__id=package_id).count()
+            package = models.Package.objects.get(id=package_id)
+            if package_reference_count == 0:
+                self.logger.info('Removing package id={0}'.format(package.id))
+                package.delete()
         
         
     def remove_all_package_instances(self, package_id, comment=None):
@@ -370,8 +376,8 @@ class Repository():
         package_instance_id - primary key (id) of package to remove        
         """
         instances = models.PackageInstance.objects.filter(package__id=package_id)
-        for instance in instances:
-            self.remove_package(package_instance_id=instance.id, comment=comment)
+        self.remove_package_instances(package_instance_ids=instances.values_list('id', flat=True), 
+                            comment=comment)
 
     
     def get_actions(self, **args):

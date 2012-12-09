@@ -266,36 +266,36 @@ a#logout_relogin_link {
 }
 
 /* Package Upload Screen styles */
-.upload_form {
+.package_form {
 	margin-left: 40px;
 	width: 70%;
 }
 
-.upload_form th {
+.package_form th {
 	text-align: left;
 	width: 15%;
 }
 
-.upload_form td:nth-of-type(1) {
+.package_form td:nth-of-type(1) {
 	width: 85%;
 }
 
-.upload_form #id_sections, #id_comment {
+.package_form #id_sections, #id_comment {
 	width: 100%;
 }
 
-.upload_form #id_comment {
+.package_form #id_comment {
 	/* CSS3 styling required to avoid overflow */
  	box-sizing: border-box;
      -webkit-box-sizing:border-box;
      -moz-box-sizing: border-box;	
 }
 
-.upload_form label {
+.package_form label {
 	font-weight: bold;
 }
 
-.upload_form label[for="id_comment"] {
+.package_form label[for="id_comment"] {
 	font-style: italic;
 }
 
@@ -303,12 +303,12 @@ a#logout_relogin_link {
 	text-align: left;
 }
 
-.upload_form input[type='submit'].upload_form_upload_button {
+.package_form input[type='submit'].upload_form_upload_button {
 	width: auto;
 	margin-top: 15px;
 }
 
-.upload_form ul {
+.package_form ul {
 	padding-left: 0px;
 	margin: 0px;
 
@@ -319,11 +319,11 @@ a#logout_relogin_link {
 	column-count:2;	
 }
 
-.upload_form li {
+.package_form li {
 	list-style-type: none 
 }
 
-.upload_form li label {
+.package_form li label {
 	font-weight: normal 
 }
 

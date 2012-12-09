@@ -2,13 +2,12 @@ from django import template
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from server.aptrepo.models import Action
-from server.aptrepo.util import AptRepoException
+from server.aptrepo.util import AptRepoException, span_text
 
 register = template.Library()
 
 def _span_element(css_type_suffix, value):
-    return '<span class="history_item_{0}">{1}</span>'.format(css_type_suffix, 
-                                                                value)
+    return span_text('history_item_' + css_type_suffix, value) 
 
 def _section_link(section):
     return '<a href="{1}/">{0}</a>'.format(section.name, reverse('aptrepo:section_contents',kwargs={

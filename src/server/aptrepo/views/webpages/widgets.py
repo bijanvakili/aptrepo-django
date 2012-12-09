@@ -1,8 +1,11 @@
-from django.forms import FileField,FileInput
+from django.forms import FileField,FileInput,TextInput
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
+from server.aptrepo.util import span_text
 from server.aptrepo.util.download import validate_download_url
 from server.aptrepo.templatetags.url_extras import static_media_url
+from server.aptrepo import models
 
 class WidgetMediaMixin:
     class Media:
@@ -53,4 +56,18 @@ class AdvancedFileInputWidget(FileInput, WidgetMediaMixin):
         else:
             return data[name + '_url']
 
+class PackageSummaryWidget(TextInput, WidgetMediaMixin):
+    """
+    Widget summarizing a package instance
+    """
+    _BOLD_CSS_STYLE = 'bold_text'
     
+    def render(self, name, value, attrs=None ):
+        instance = models.PackageInstance.objects.get(id=value)
+        summary_text = _('{0} version {1}').format(span_text(self._BOLD_CSS_STYLE, instance.package.package_name), 
+                                                   span_text(self._BOLD_CSS_STYLE, instance.package.version))
+        return mark_safe(render_to_string(
+                                          'aptrepo/widgets/package_summary_widget.html',
+                                          {'name': name,
+                                           'instance': instance,
+                                           'summary_text' : mark_safe(summary_text)}));

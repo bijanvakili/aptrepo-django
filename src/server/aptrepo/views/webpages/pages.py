@@ -4,8 +4,8 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 import django.contrib.auth.views
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.http import HttpResponse
+from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
 from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_protect
@@ -30,6 +30,24 @@ class UploadPackageForm(forms.Form):
                                               widget=forms.CheckboxSelectMultiple)
     next_redirect = forms.CharField(widget=forms.HiddenInput(),
                                     required=True)
+    
+class DeletePackageInstanceForm(forms.Form):
+    """
+    Form class for deleting package instances
+    """
+    instance = forms.ModelChoiceField(label=_('Package to Delete'),
+                                      queryset=models.PackageInstance.objects.all(),
+                                      widget=widgets.PackageSummaryWidget)
+    comment = forms.CharField(label=_('Optional comment'),
+                              required=False, 
+                              max_length=models.Action.MAX_COMMENT_LENGTH)
+    architectures = forms.MultipleChoiceField(label=_('Architectures to Delete'),
+                                              widget=forms.CheckboxSelectMultiple)
+    sections = forms.ModelMultipleChoiceField(label=_('Sections'),
+                                              queryset=models.Section.objects.all(),
+                                              widget=forms.CheckboxSelectMultiple)
+    next_redirect = forms.CharField(widget=forms.HiddenInput())
+    
     
 class Breadcrumb():
     """
@@ -315,7 +333,7 @@ def upload(request, distribution_name=None, section_name=None):
                     args['uploaded_package_file'] = file_to_add
                     
                 repository.add_package(**args)
-                return HttpResponseRedirect(form.cleaned_data['next_redirect'])
+                return redirect(form.cleaned_data['next_redirect'])
             
             finally:
                 if isinstance(file_to_add, TemporaryDownloadedFile):
@@ -345,28 +363,67 @@ def upload(request, distribution_name=None, section_name=None):
                                'upload_target': target_section }, 
                               context_instance=RequestContext(request))
     
-    
+
 @handle_exception
-@require_http_methods(["POST"])
+@require_http_methods(["GET", "POST"])
 @login_required
-def delete_package_instance(request):
+@csrf_protect
+def delete_package_instances(request):
     """
-    Basic HTTP POST call to remove a package instance
+    Page to remove package instances
     """
-    # extract the package instance identifier
-    package_instance_id = 0
-    if 'package_instance' in request.POST:
-        package_instance_id = request.POST['package_instance']
-    else:
-        package_instance = models.PackageInstance.objects.get(
-            section__distribution__name=request.POST['distribution'],
-            section__name=request.POST['section'],
-            package__package_name=request.POST['name'],
-            package__architecture=request.POST['architecture'],
-            package__version=request.POST['version'])
-        package_instance_id = package_instance.id
+    if request.method == 'POST':
+        # construct architecture list
+        all_available_architectures = [unicode(models.Architecture.ARCHITECTURE_ALL)]
+        for arch in models.Architecture.objects.all().values_list('name', flat=True):
+            all_available_architectures.append(arch)
         
-    return _handle_remove_package(request, package_instance_id)
+        # initialize the form and re-clean after extending the allowed architectures
+        form = DeletePackageInstanceForm(data=request.POST)
+        form.fields['architectures'].choices = map(lambda x: (x,x), all_available_architectures)
+        form.full_clean()
+
+        # validate and parse the form to determine the package instances to remove 
+        if form.is_valid():
+            primary_instance = form.cleaned_data['instance']
+            package_instances = models.PackageInstance.objects.filter(
+                package__package_name=primary_instance.package.package_name,
+                package__version=primary_instance.package.version,
+                package__architecture__in=form.cleaned_data['architectures'],
+                section__in=form.cleaned_data['sections'])
+        
+            # remove the package instances
+            repository = get_repository_controller(request=request)
+            repository.remove_package_instances(package_instance_ids=package_instances.values_list('id', flat=True),
+                                                comment=form.cleaned_data['comment'])
+            return redirect(form.cleaned_data['next_redirect'])
+
+    elif request.method == 'GET':
+        instance = models.PackageInstance.objects.get(id=request.GET['instance']) 
+        associated_packages = models.Package.objects.filter( \
+            package_name=instance.package.package_name, 
+            version=instance.package.version)
+        available_architectures = associated_packages.values_list('architecture', flat=True)
+
+        form = DeletePackageInstanceForm(initial={'instance': instance.id,
+                                                  'sections': [instance.section], 
+                                                  'architectures': available_architectures,
+                                                  'next_redirect': request.GET.get('next', reverse('aptrepo:repository_home'))})
+        
+        available_sections = models.PackageInstance.objects.filter(package__in=associated_packages).values_list('section',
+                                                                                                                flat=True) 
+        form.fields['sections'].queryset = models.Section.objects.filter(id__in=available_sections)
+        form.fields['architectures'].choices = map(lambda x: (x,x), 
+                                                   available_architectures) 
+        
+        
+    breadcrumbs = [Breadcrumb(_('Packages'), None),
+                   Breadcrumb(_('Delete'), None)]
+    return render_to_response('aptrepo/delete_package.html', 
+                              {'form':form, 
+                               'breadcrumbs': breadcrumbs }, 
+                              context_instance=RequestContext(request))
+
 
 @handle_exception
 @require_http_methods(["GET"])
@@ -429,15 +486,6 @@ def history(request, distribution=None, section=None):
 @require_http_methods(["GET"])
 def help(request):
     return HttpResponse('Not implemented yet')
-
-
-def _handle_remove_package(request, package_instance_id):
-    """
-    Handles removing packages
-    """
-    repository = get_repository_controller(request=request)
-    repository.remove_package(package_instance_id)
-    return HttpResponseRedirect(reverse('aptrepo:package_delete_success'))
 
 def _url_replace_get_param(request, param_name, param_value):
     """

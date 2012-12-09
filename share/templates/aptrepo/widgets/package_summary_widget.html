@@ -1,0 +1,21 @@
+{% load i18n %}
+{% load url_extras %}
+
+<div class="package_summary">
+	<input type="hidden" name="{{ name }}" value="{{ instance.id }}" />
+	{{ summary_text }}
+	
+	{# TODO Consolidate package button anchor elements into a new django template tag #}
+	<a 
+		class="package_operation_icon"
+		href="#" 
+		target_section_id="{{ instance.section.id }}"	
+		target_section_name="{{ instance.section }}"
+		package_name="{{ instance.package.package_name }}" 
+		version="{{ instance.package.version }}"
+		architecture="{{ instance.package.architecture }}"
+		link_type="info"
+	>
+		<img src="{% raster_image_url '16x16/info.png' %}" />
+	</a>
+</div>

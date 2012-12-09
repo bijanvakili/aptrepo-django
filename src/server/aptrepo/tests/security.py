@@ -109,11 +109,16 @@ class AuthenticationTest(BaseAptRepoTest):
             self.assertEqual(response.status_code, 401)
             
 
-            # test deleting a package
+            # attempt to deleting a package via the web interface to ensure that it redirects
+            # to the login page first 
             response = self.client.post(
-                self._ROOT_WEBDIR + '/packages/delete',
+                self._ROOT_WEBDIR + '/packages/delete/',
                 {
-                    'package_instance': 1
+                    'instance': 1,
+                    'architectures' : 'all',
+                    'comment': 'test delete',
+                    'sections' : str(self.section_id),
+                    'next_redirect': '/' 
                 }
             )
             self.assertEqual(response.status_code, 302)
@@ -122,7 +127,7 @@ class AuthenticationTest(BaseAptRepoTest):
                 'Verify redirect for package delete'
             )
 
-            # test deleting a package instance
+            # test deleting a package instance via the API instead
             response = self.client.delete(self._ROOT_APIDIR + '/package-instances/1')
             self.assertEqual(response.status_code, 401)
             response = self.client.delete(

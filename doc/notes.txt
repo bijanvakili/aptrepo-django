@@ -3,7 +3,6 @@ Plan
 Current -> 0.01 (Core implementation)
 - proper web UI templates and interface
 	> browse sections page
-		> delete package page and redirect upon success
 		> copy package page
 		> animation of versions and architectures
 	> error pages (404 and 500)
@@ -11,8 +10,12 @@ Current -> 0.01 (Core implementation)
 
 	> fix logout screen for admin pages to allow going back to main page
 	> how to get to distribution history links?
+	> memorize user specific configuration
+		> e.g. pagination size
 	> support only one feed type (autodiscovery)?
-	> unit tests for feeds
+	> unit tests for:
+		- feeds
+		- package information dialog
 
 	> user help pages (initial simple version)
 	> show API client setup instructions at a URL
@@ -41,17 +44,19 @@ Next -> 0.02 (Deployment)
 - web media minification (JS and CSS)
 - HTTP request caching
 	> memcached
-- consider denormalizing (package,version,arch) at the instance level instead of the package level
-	> this may help reduce the number of SQL joins
+- database optimizations
+	> consider denormalizing (package,version,arch) at the instance level instead of the package level to reduce joins
 
 0.04 (UI improvements)
 ======================
-- proper UI images & polished layout
 - .csv export for wherever there is an syndication feed
 - testing
 	- code coverage
 	- regression tests that install packages from the repo
 	- performance testing
+	- better test client library (e.g. 'mechanize' for python)
+- proper UI images & polished layout
+	> consider outsourcing to elance
 	
 future
 ======

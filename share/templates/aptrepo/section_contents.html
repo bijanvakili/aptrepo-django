@@ -89,6 +89,12 @@
 							>
 								<img src="{% raster_image_url '16x16/info.png' %}" />
 							</a>
+							<a class="package_operation_icon"
+								link_type="delete"
+								href="{% url 'aptrepo:package_delete' %}?instance={{instance_version.list.0.id}}&next={{ request.get_full_path|escape }}" 
+							>
+								<img src="{% raster_image_url '16x16/delete.png' %}" />							
+							</a>
 							{% if not forloop.last %}<br/>{% endif %}
 						{% endfor %}
 					</td>

@@ -4,6 +4,7 @@ General unit tests for apt repo
 import hashlib
 import json
 import os
+import re
 import shutil
 import tempfile
 import zlib
@@ -91,17 +92,7 @@ class SmallRepositoryTest(BaseAptRepoTest):
             if pkg_fh:
                 pkg_fh.close()
             os.remove(pkg_filename)
-
                 
-    def _remove_package(self, package_name, version, architecture):
-        """
-        Removes a specified package instance
-        """
-        response = self.client.post(
-            self._ROOT_WEBDIR + '/packages/delete', {
-                'distribution' : self.distribution_name, 'section' : self.section_name,
-                'name' : package_name, 'version': version, 'architecture': architecture})
-        self.failUnlessEqual(response.status_code, 302)
         
     @skipRepoTestIfExcluded
     def test_single_package_upload(self):
@@ -124,9 +115,29 @@ class SmallRepositoryTest(BaseAptRepoTest):
             self.assertTrue(self._exists_package(control_map['Package'], control_map['Version'], 
                             control_map['Architecture']))
             
-            # test removing the package
-            self._remove_package(control_map['Package'], control_map['Version'], 
-                                 control_map['Architecture'])
+            # ensure the package appears in the section list and extract the instance ID
+            section_url = self._get_section_web_url()
+            response = self.client.get(section_url)
+            self.failUnlessEqual(response.status_code, 200, 'Retreieve section listing after upload')
+            self.assertContains(response=response, text=control_map['Package'])
+            self.assertContains(response=response, text=control_map['Version'])
+            instance_id = re.search(r'/packages/delete/\?instance=(?P<instance_id>\d+)', 
+                response.content).group('instance_id')
+            
+            # test removing the package by going to the delete page first
+            response = self.client.get(self._ROOT_WEBDIR + '/packages/delete/', 
+                                       {'instance' : instance_id, 'next': section_url})
+            self.failUnlessEqual(response.status_code, 200)
+            response = self.client.post(
+                self._ROOT_WEBDIR + '/packages/delete/', {
+                    'instance': instance_id,
+                    'sections' : str(self.section_id),
+                    'architectures': control_map['Architecture'],
+                    'next_redirect': section_url})
+            self.assertRedirects(response=response, expected_url=section_url, 
+                                 msg_prefix='Verifying redirection back to section listing')
+            
+            
             self._verify_repo_metadata()
             self.assertFalse(self._exists_package(control_map['Package'], control_map['Version'], 
                              control_map['Architecture']))
@@ -170,15 +181,11 @@ class SmallRepositoryTest(BaseAptRepoTest):
                 if pkg_filename is not None:
                     os.remove(pkg_filename)
         
-        # retrieve package list
+        # retrieve and verify the section list at least contains the package names 
         response = self.client.get(self._get_section_web_url())
+        for id in range(0,num_packages):        
+            self.assertContains(response=response, text=package_names[id])
         
-        # TODO Check the actual content of the listings?
-        #print response.content
-        
-        
-        self.failUnlessEqual(response.status_code, 200)
-
         # verify the entire repo metadata        
         self._verify_repo_metadata()
         

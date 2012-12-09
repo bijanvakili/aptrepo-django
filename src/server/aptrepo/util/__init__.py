@@ -56,3 +56,10 @@ def constrain_queryset(request, query_set, default_limit=None):
         result_set = result_set.reverse()
         
     return result_set
+
+
+def span_text(css_style, text):
+    """
+    Wraps text in an HTML <span> element with a specific CSS style 
+    """
+    return '<span class="{0}">{1}</span>'.format(css_style, text)

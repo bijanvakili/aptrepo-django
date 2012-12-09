@@ -222,7 +222,7 @@ class PackageInstanceHandler(BaseAptRepoHandler):
             package_instance=self._find_package_instance(instance_id, section_id, 
                                                          package_name, version, architecture)
             repository = get_repository_controller(request=request)
-            repository.remove_package(package_instance.id)
+            repository.remove_package_instances([package_instance.id])
             return rc.DELETED
         else:
             return rc.FORBIDDEN      
