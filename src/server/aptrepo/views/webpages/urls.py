@@ -33,6 +33,9 @@ distribution_urls = patterns('aptrepo.views.webpages.pages',
     # direct upload to section                  
     (r'^(?P<distribution_name>\w+)/sections/(?P<section_name>\w+)/upload/{0,1}$',
         'upload'),
+    (r'^(?P<distribution_name>\w+)/sections/(?P<section_name>\w+)/copy/{0,1}$',
+        'upload',
+        {'is_clone' : True}),
                              
     # browse distribution page and Ajax call                   
     url(r'^(?P<distribution_name>\w+)/$', 'get_distribution_info', name='distribution_info'),
@@ -41,7 +44,8 @@ distribution_urls = patterns('aptrepo.views.webpages.pages',
 
 # Web forms/pages for packages
 package_urls = patterns('aptrepo.views.webpages.pages',
-    url(r'^upload/', 'upload', name='package_upload'),    
+    url(r'^upload/', 'upload', name='package_upload'),
+    url(r'^copy/', 'upload', {'is_clone' : True}, name='package_copy'),
     url(r'^delete/', 'delete_package_instances', name='package_delete'),
 ) 
 

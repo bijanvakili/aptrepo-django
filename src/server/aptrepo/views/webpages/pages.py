@@ -11,17 +11,21 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 from server.aptrepo import models
-from server.aptrepo.util import constrain_queryset
+from server.aptrepo.util import constrain_queryset, AptRepoException
 from server.aptrepo.util.download import TemporaryDownloadedFile
 from server.aptrepo.views import get_repository_controller
 from server.aptrepo.views.decorators import handle_exception
 from server.aptrepo.views.webpages import widgets
 
-class UploadPackageForm(forms.Form):
-    """
-    Form class for package uploads
-    """
+class FileFieldForm(forms.Form):
     file = widgets.AdvancedFileField(label=_('Package File or URL'))
+
+class PackageFilenameForm(forms.Form):
+    instance = forms.ModelChoiceField(label=_('Package File'),
+                                      queryset=models.PackageInstance.objects.all(),
+                                      widget=widgets.PackageSummaryWidget(attrs={'show_package_filename': True}))
+
+class CommonPackageCreationForm(forms.Form):
     comment = forms.CharField(label=_('Optional comment'),
                               required=False, 
                               max_length=models.Action.MAX_COMMENT_LENGTH)
@@ -30,6 +34,20 @@ class UploadPackageForm(forms.Form):
                                               widget=forms.CheckboxSelectMultiple)
     next_redirect = forms.CharField(widget=forms.HiddenInput(),
                                     required=True)
+
+
+
+class UploadPackageForm(FileFieldForm, CommonPackageCreationForm):
+    """
+    Form for package uploads
+    """
+    pass
+
+class ClonePackageForm(PackageFilenameForm, CommonPackageCreationForm):
+    """
+    Form for package cloning
+    """
+    pass
     
 class DeletePackageInstanceForm(forms.Form):
     """
@@ -285,7 +303,7 @@ def remove_success(request):
 @require_http_methods(["GET", "POST"])
 @login_required
 @csrf_protect
-def upload(request, distribution_name=None, section_name=None):
+def upload(request, distribution_name=None, section_name=None, is_clone=False):
     """ 
     Provides a form to upload packages
     """
@@ -295,54 +313,81 @@ def upload(request, distribution_name=None, section_name=None):
     if distribution_name and section_name:
         target_section = _find_section( distribution_name, section_name )
 
-    sections = []    
+    package_to_clone = None
     if request.method == 'POST':
         initial_data = {}
         if target_section:
             initial_data['sections'] = [target_section]
-        form = UploadPackageForm(data=request.POST, 
-                                 files=request.FILES, 
-                                 initial=initial_data)
         
-        # TODO why is this explicit full_clean() call required?
-        form.full_clean()   
+        if is_clone:
+            form = ClonePackageForm(data=request.POST, initial=initial_data)
+        else:
+            form = UploadPackageForm(data=request.POST, files=request.FILES, initial=initial_data)
         
         if form.is_valid():
-            try:
-                file_to_add = form.cleaned_data['file']
-                
-                # determine if this an URL (requiring a temporary download) or the file
-                # content was included with the POST request
-                if isinstance(file_to_add, unicode):
-                    file_to_add = TemporaryDownloadedFile(file_to_add)
-                    file_to_add.download()
-                else:
-                    file_to_add = request.FILES['file'] 
-                    
-                sections = form.cleaned_data['sections']
-                comment = form.cleaned_data['comment']
-                
-                # add the package
-                repository = get_repository_controller(request=request)
-                args = {'sections':sections, 'comment':comment}
-                if isinstance(file_to_add, TemporaryDownloadedFile):
-                    args['package_fh'] = file_to_add.get_fh()
-                    args['package_path'] = file_to_add.get_path()
-                    args['package_size'] = file_to_add.get_size()
-                else:
-                    args['uploaded_package_file'] = file_to_add
-                    
-                repository.add_package(**args)
-                return redirect(form.cleaned_data['next_redirect'])
             
-            finally:
-                if isinstance(file_to_add, TemporaryDownloadedFile):
-                    file_to_add.close()
+            repository = get_repository_controller(request=request)
+            args = {'sections':form.cleaned_data['sections'], 
+                    'comment':form.cleaned_data['comment']}
 
-    elif request.method == 'GET':
-        form = UploadPackageForm(initial={'sections': [target_section], 
-                                          'next_redirect': request.GET.get('next', reverse('aptrepo:repository_home'))})
+            if is_clone:
+                package_to_clone = form.cleaned_data['instance'].package
+                args['package_id'] = package_to_clone.id
+                repository.clone_package(**args)
+                
+            else:
+                try:
+                    file_to_add = form.cleaned_data['file']
+                    
+                    # determine if this an URL (requiring a temporary download) or the file
+                    # content was included with the POST request
+                    if isinstance(file_to_add, unicode):
+                        file_to_add = TemporaryDownloadedFile(file_to_add)
+                        file_to_add.download()
+                    else:
+                        file_to_add = request.FILES['file'] 
+                    
+                    # add the package
+                    if isinstance(file_to_add, TemporaryDownloadedFile):
+                        args['package_fh'] = file_to_add.get_fh()
+                        args['package_path'] = file_to_add.get_path()
+                        args['package_size'] = file_to_add.get_size()
+                    else:
+                        args['uploaded_package_file'] = file_to_add
+                    
+                    repository.add_package(**args)
+                finally:
+                    if isinstance(file_to_add, TemporaryDownloadedFile):
+                        file_to_add.close()
+                
+            return redirect(form.cleaned_data['next_redirect'])
+
+    if is_clone and not package_to_clone:
+        if request.method == 'POST':
+            instance_id_to_clone = request.POST.get('instance', None)
+        else:
+            instance_id_to_clone = request.GET.get('instance', None)
+        package_to_clone = models.PackageInstance.objects.get(id=instance_id_to_clone).package
+        if instance_id_to_clone is None or not instance_id_to_clone.isdigit():
+            raise AptRepoException(_('No valid package specified'))
         
+    if request.method == 'GET':
+        if is_clone:
+            form = ClonePackageForm(initial={
+                                             'instance': request.GET['instance'],
+                                             'sections': [target_section],
+                                             'next_redirect': request.GET.get('next', reverse('aptrepo:repository_home'))})
+        else:
+            form = UploadPackageForm(initial={'sections': [target_section], 
+                                              'next_redirect': request.GET.get('next', reverse('aptrepo:repository_home'))})
+
+    if is_clone:
+        existing_sections_with_package = models.PackageInstance.objects.filter(
+            package=package_to_clone).values_list('section', flat=True)
+        form.fields['sections'].queryset = models.Section.objects.exclude(id__in=existing_sections_with_package)
+    
+    # setup breadcrumbs
+    upload_type_text = _('Copy') if is_clone else _('Upload') 
     if target_section:
         breadcrumbs = [
                        Breadcrumb(_('Distributions'), reverse('aptrepo:browse_distributions')),
@@ -352,15 +397,17 @@ def upload(request, distribution_name=None, section_name=None):
                             reverse(
                                     'aptrepo:section_contents', 
                                     kwargs={'distribution':distribution_name, 'section':section_name})),
-                       Breadcrumb(_('Upload'), None)]
+                       Breadcrumb(upload_type_text, None)]
     else:
         breadcrumbs = [
                        Breadcrumb(_('Packages'), None),
-                       Breadcrumb(_('Upload'), None) ]
-        
+                       Breadcrumb(upload_type_text, None) ]
+    
+    # render the page
     return render_to_response('aptrepo/upload_package.html', 
                               {'form':form, 'breadcrumbs': breadcrumbs,
-                               'upload_target': target_section }, 
+                               'upload_target': target_section, 
+                               'upload_type_text': upload_type_text }, 
                               context_instance=RequestContext(request))
     
 
@@ -372,6 +419,7 @@ def delete_package_instances(request):
     """
     Page to remove package instances
     """
+    primary_instance = None
     if request.method == 'POST':
         # construct architecture list
         all_available_architectures = [unicode(models.Architecture.ARCHITECTURE_ALL)]
@@ -398,24 +446,32 @@ def delete_package_instances(request):
                                                 comment=form.cleaned_data['comment'])
             return redirect(form.cleaned_data['next_redirect'])
 
-    elif request.method == 'GET':
-        instance = models.PackageInstance.objects.get(id=request.GET['instance']) 
-        associated_packages = models.Package.objects.filter( \
-            package_name=instance.package.package_name, 
-            version=instance.package.version)
-        available_architectures = associated_packages.values_list('architecture', flat=True)
 
-        form = DeletePackageInstanceForm(initial={'instance': instance.id,
-                                                  'sections': [instance.section], 
-                                                  'architectures': available_architectures,
-                                                  'next_redirect': request.GET.get('next', reverse('aptrepo:repository_home'))})
+    if not primary_instance:
+        if request.method == 'POST':
+            primary_instance_id = request.POST.get('instance', None)
+        else: 
+            primary_instance_id = request.GET.get('instance', None)
+        if primary_instance_id is None or not primary_instance_id.isdigit():
+            raise AptRepoException(_('No valid package specified'))
+        primary_instance = models.PackageInstance.objects.get(id=primary_instance_id)
+
+    # determine all associated packages and architectures        
+    associated_packages = models.Package.objects.filter( \
+        package_name=primary_instance.package.package_name, 
+        version=primary_instance.package.version)
+    available_architectures = associated_packages.values_list('architecture', flat=True)
+
+    if request.method == 'GET':
+        form = DeletePackageInstanceForm(initial={'instance': primary_instance.id,
+            'sections': [primary_instance.section], 'architectures': available_architectures,
+            'next_redirect': request.GET.get('next', reverse('aptrepo:repository_home'))})
         
-        available_sections = models.PackageInstance.objects.filter(package__in=associated_packages).values_list('section',
-                                                                                                                flat=True) 
-        form.fields['sections'].queryset = models.Section.objects.filter(id__in=available_sections)
-        form.fields['architectures'].choices = map(lambda x: (x,x), 
-                                                   available_architectures) 
-        
+    # put constraints on displayed architectures
+    available_sections = models.PackageInstance.objects.filter(
+        package__in=associated_packages).values_list('section', flat=True) 
+    form.fields['sections'].queryset = models.Section.objects.filter(id__in=available_sections)
+    form.fields['architectures'].choices = map(lambda x: (x,x), available_architectures) 
         
     breadcrumbs = [Breadcrumb(_('Packages'), None),
                    Breadcrumb(_('Delete'), None)]
@@ -504,4 +560,3 @@ def _find_section(distribution_name, section_name):
     """
     return models.Section.objects.get(distribution__name=distribution_name,
                                       name=section_name)
-    

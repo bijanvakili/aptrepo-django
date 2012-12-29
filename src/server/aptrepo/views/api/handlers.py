@@ -243,7 +243,7 @@ class PackageInstanceHandler(BaseAptRepoHandler):
             [new_instance_id] = repository.add_package(sections=[section], 
                                                        uploaded_package_file=uploaded_file,
                                                        comment=comment)
-        # if an URL was specified, downlaod it to a temporary location and
+        # if an URL was specified, download it to a temporary location and
         # add it to the repository
         elif 'url' in request.POST:
             url = request.POST['url']
@@ -261,7 +261,7 @@ class PackageInstanceHandler(BaseAptRepoHandler):
 
         # otherwise, clone based of the source package or instance ID
         else:
-            clone_args = {'dest_section' : section, 'comment':comment }
+            clone_args = {'sections' : [section], 'comment':comment }
             if 'source_id' in request.POST:
                 clone_args['instance_id'] = request.POST['instance_id']
             elif 'package_id' in request.POST:

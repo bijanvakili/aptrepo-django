@@ -425,8 +425,70 @@ class LargeRepositoryTest(BaseAptRepoTest):
         action_list = self._download_json_object(actions_url, constraint_params)     
         self.assertLessEqual(len(action_list), limit)
         
-        # disabling since it's invalid
-        #self.assertEqual(len(action_list), len(expected_list))
-        #for i in xrange(len(action_list)):
-        #    self.assertEqual(action_list[i]['details'], self._make_details(instance_list[i]['package']))
 
+class CloneTest(BaseAptRepoTest):
+    """
+    Test package cloning using web interface
+    """
+    fixtures = ['simple_repository', 'secured_repository']
+    
+    @skipRepoTestIfExcluded
+    def test_clone_package(self):
+
+        self.client.logout()
+        self.client.login(username='testuser1', password='testing')
+        
+        pkg_filename = None
+        try:
+            # create the package
+            control_map = self._make_common_debcontrol()
+            control_map['Version'] = '1.01'
+            control_map['Depends'] = 'vim'
+            control_map['Description'] = 'Test package for apt repo test suite'
+            
+            pkg_fd, pkg_filename = tempfile.mkstemp(suffix='.deb', prefix='mypackage')
+            os.close(pkg_fd)
+            self._create_package(control_map, pkg_filename)
+            pkg_fh = open(pkg_filename, 'rb')
+            
+            # upload the package to test_distribution:test_section
+            redirect_url = self._get_section_web_url() 
+            response = self.client.post(self._ROOT_WEBDIR + '/packages/upload/',
+                              {'file': pkg_fh,
+                               'sections': [self.section_id],
+                               'comment': 'Original upload',
+                               'next_redirect': redirect_url})
+            self.assertRedirects(response, redirect_url, msg_prefix='First package upload')
+            
+            # determine the instance ID of the package that was previously uploaded
+            instance_id = models.PackageInstance.objects.all()[0].id
+            
+            # clone package to the other section
+            response = self.client.post(self._ROOT_WEBDIR + '/packages/copy/',
+                                         {'instance' : instance_id,
+                                          'sections' : [3],
+                                          'comment' : 'This is the cloned instance',
+                                          'next_redirect': redirect_url})
+            self.assertRedirects(response, redirect_url, msg_prefix='Cloning the package via the web')
+            
+            # delete original package
+            response = self.client.post(self._ROOT_WEBDIR + '/packages/delete/',
+                                        {'instance': instance_id,
+                                         'sections' : [self.section_id],
+                                         'architectures' : [control_map['Architecture']],
+                                         'next_redirect' : redirect_url})
+            self.assertRedirects(response, redirect_url, msg_prefix='Cloning the package via the web')
+            
+            # verify the package no longer exists in the first section
+            response = self.client.get(self._ROOT_WEBDIR + '/distributions/test_distribution/sections/test_section')
+            self.assertNotContains(response, 'test-package', msg_prefix='Verify original instance deleted')
+                        
+            # ensure you can still view the package in the second section
+            response = self.client.get(self._ROOT_WEBDIR + '/distributions/test_distribution/sections/test_section_2')
+            self.assertContains(response, 'test-package', msg_prefix='Verify cloned instance still exists')
+            
+        finally:
+            if pkg_fh:
+                pkg_fh.close()
+            if pkg_filename:
+                os.remove(pkg_filename)

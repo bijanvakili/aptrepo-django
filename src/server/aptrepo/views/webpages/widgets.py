@@ -1,3 +1,4 @@
+import os
 from django.forms import FileField,FileInput,TextInput
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
@@ -62,10 +63,14 @@ class PackageSummaryWidget(TextInput, WidgetMediaMixin):
     """
     _BOLD_CSS_STYLE = 'bold_text'
     
-    def render(self, name, value, attrs=None ):
+    def render(self, name, value, attrs={} ):
+        show_package_filename = self.attrs.get('show_package_filename', False)
         instance = models.PackageInstance.objects.get(id=value)
-        summary_text = _('{0} version {1}').format(span_text(self._BOLD_CSS_STYLE, instance.package.package_name), 
-                                                   span_text(self._BOLD_CSS_STYLE, instance.package.version))
+        if show_package_filename:
+            summary_text = os.path.basename(instance.package.path.path)
+        else:
+            summary_text = _('{0} version {1}').format(span_text(self._BOLD_CSS_STYLE, instance.package.package_name), 
+                                                       span_text(self._BOLD_CSS_STYLE, instance.package.version))
         return mark_safe(render_to_string(
                                           'aptrepo/widgets/package_summary_widget.html',
                                           {'name': name,

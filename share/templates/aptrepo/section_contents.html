@@ -76,9 +76,9 @@
 					</td>
 					<td>
 						{# TODO Use a template tag #}
-						{# TODO Switch to using instance id #}
 						
 						{% for instance_version in instance_subset_by_version %}
+							{# TODO Switch to using instance id for 'info' button #}
 							<a href="#" class="package_operation_icon"
 								link_type="info"
 								target_section_id="{{ section.id }}"	
@@ -88,6 +88,12 @@
 								architecture="{{ instance_version.list.0.package.architecture }}"
 							>
 								<img src="{% raster_image_url '16x16/info.png' %}" />
+							</a>
+							<a class="package_operation_icon"
+								link_type="copy"
+								href="{% url 'aptrepo:package_copy' %}?instance={{instance_version.list.0.id}}&next={{ request.get_full_path|escape }}"
+							>
+								 <img src="{% raster_image_url '16x16/copy.png' %}" />
 							</a>
 							<a class="package_operation_icon"
 								link_type="delete"

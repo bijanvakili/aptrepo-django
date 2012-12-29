@@ -82,12 +82,6 @@ function download_package_callback(ev, instance_metadata, section_name, section_
 	download_package_for_instance( instance_metadata );
 }
 
-function setup_download_button( button, instance_metadata ) {
-	button.off('click').click( function() {
-		download_package_for_instance( instance_metadata );
-	});
-}
-
 function setup_delete_button( button, instance_metadata ) {
 	button.off('click').click( function() {
 		if ( confirm(gettext('Are you sure you want to delete the package?')) ) {
@@ -116,6 +110,7 @@ function populate_package_info_dialog( instance_metadata, section_name, aux_flag
 		package_path = instance_metadata['package']['path'],
 		filename = package_path.substr(package_path.lastIndexOf('/') + 1),
 		enable_delete_button = true,
+		enable_copy_button = true,
 		PACKAGE_MISC_INFO_ROWS = {
 			creator : 1,
 			creation_date : 2,
@@ -148,19 +143,33 @@ function populate_package_info_dialog( instance_metadata, section_name, aux_flag
 	fn_set_table_entry( PACKAGE_MISC_INFO_ROWS.sha1, instance_metadata['package']['hash_sha1'] );
 	fn_set_table_entry( PACKAGE_MISC_INFO_ROWS.sha256, instance_metadata['package']['hash_sha256'] );
 	
-	// update the button links
-	setup_download_button( $('#package_info_dialog_buttons button#download'), instance_metadata );
-	
+	// setup the buttons
 	if (aux_flags.hasOwnProperty('enable_delete_button')) {
 		enable_delete_button = aux_flags.enable_delete_button;
 	}
+	if (aux_flags.hasOwnProperty('enable_copy_button')) {
+		enable_copy_button = aux_flags.enable_copy_button;
+	}
+	
+	$('#package_info_dialog_buttons button#download').off('click').click( function() {
+		download_package_for_instance( instance_metadata );
+	});
+	if (enable_copy_button) {
+		$('#package_info_dialog_buttons button#copy').off('click').click( function() {
+			window.location.href = '/aptrepo/web/packages/copy/?instance=' + 
+				instance_metadata['id'] + '&next=' + window.location.href;
+		});
+	}
+	else {
+		$('#package_info_dialog_buttons button#copy').hide();
+	}
+	
 	if (enable_delete_button) {
 		setup_delete_button( $('#package_info_dialog_buttons button#delete'), instance_metadata );
 	}
 	else {
 		$('#package_info_dialog_buttons button#delete').hide();
 	}
-	// TODO implement copy button
 }
 
 /*

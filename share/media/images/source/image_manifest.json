@@ -37,6 +37,10 @@
 		"sizes": ["16x16"]
 	},
 	{
+		"name": "copy",
+		"sizes": ["16x16"]
+	},
+	{
 		"name": "download",
 		"sizes": ["16x16"]
 	},

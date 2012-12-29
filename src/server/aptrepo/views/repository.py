@@ -125,7 +125,8 @@ class Repository():
         """
         Add a package to the repository
 
-        sections    - list of sections 
+        sections - list of sections 
+        comment - optional user-defined comment
         
         uploaded_package_file - instance of Django TemporaryUploadedFile
         OR
@@ -287,11 +288,11 @@ class Repository():
                 del dirs[:]
 
 
-    def clone_package(self, dest_section, package_id=None, instance_id=None, comment=None):
+    def clone_package(self, sections, package_id=None, instance_id=None, comment=None):
         """
         Clones a package to create another instance
         
-        dest_section - destination section (model)
+        sections - list of sections
         
         package_id - primary key (id) of package from which to create a new instance
         OR
@@ -299,8 +300,8 @@ class Repository():
         
         Returns the new instance id
         """
-        
-        self._enforce_write_access(dest_section, "Clone package")
+        for section in sections:
+            self._enforce_write_access(section, "Clone package")
         
         # locate the target section and the source package
         src_package = None
@@ -310,25 +311,26 @@ class Repository():
         elif instance_id:
             src_instance = models.PackageInstance.objects.get(id=instance_id)
             src_section = src_instance.section
-            if src_instance.section.id == dest_section.id:
+            if src_instance.section in sections:
                 raise AptRepoException(_('Cannot clone into the same section'))
             src_package=src_instance.package
         
-        # create the new instance
-        self.logger.info('Cloning package id={0} into section={1}'.format(
-            src_package.id, dest_section.id))
-        package_instance = models.PackageInstance.objects.create(package=src_package,
-                                                                 section=dest_section,
-                                                                 creator=self._get_username())
-        
-        # insert action for clone
-        self._record_action(action_type=models.Action.COPY,
-                            target_section=dest_section, 
-                            package=src_package,
-                            comment=comment,
-                            source_section=src_section)
-        
-        self._clear_cache(dest_section.distribution.name)
+        # create the new instance(s) and associated actions
+        for dest_section in sections:
+            self.logger.info('Cloning package id={0} into section={1}'.format(
+                src_package.id, dest_section.id))
+            package_instance = models.PackageInstance.objects.create(package=src_package,
+                                                                     section=dest_section,
+                                                                     creator=self._get_username())
+            
+            self._record_action(action_type=models.Action.COPY,
+                                target_section=dest_section, 
+                                package=src_package,
+                                comment=comment,
+                                source_section=src_section)
+            
+            self._clear_cache(dest_section.distribution.name)
+
         return package_instance.id
 
         
