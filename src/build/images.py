@@ -35,7 +35,7 @@ class ImageConverter:
     
     def _svg2png(self, src_svg, dest_png, width, height):
         retcode = subprocess.call(
-            ["rsvg", '-w '+ str(width), '-h ' + str(height), src_svg, dest_png]
+            ["rsvg-convert", '-w', str(width), '-h', str(height), '-o', dest_png, src_svg]
         )
         if retcode != 0:
             raise ConvertImagesException("Unable to convert: " + src_svg)

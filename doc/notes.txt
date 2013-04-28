@@ -25,8 +25,12 @@ Current -> 0.01 (Core implementation)
 	NOTE:  --insecure is required to serve static files
 - pylint all python source code
 
+
 Next -> 0.02 (Deployment)
 ============
+- support django 1.5
+	> need to use version django-piston newer than commit 7c90898
+	> may still need to be patched to remove dependency on simplejson
 - load settings from etc directory
 - Apache and nginx deployment
 	> reuse django's templating engine for this?
@@ -67,9 +71,10 @@ future
 Build dependencies
 ==================
 GNU make
-python
-	django
-rsvg
+python >= 2.6
+	django = 1.4
+gettext
+rsvg-convert (librsvg2-bin)
 
 Optional build dependencies
 ===========================
@@ -78,23 +83,32 @@ pylint
 
 Test dependencies
 =================
-SQLite
+sqlite3
 
 Runtime dependencies
 ====================
 python >= 2.6
-	django
-	django-piston
+	django = 1.4
+	django-piston = 0.2.3
 	lockfile
 	python-apt
 	python-debian
 	python-pyme
+	sqlite3 (default)	
 		
 Optional runtime dependencies
 =============================
 django-auth-ldap
 pycurl
 poster
+
+Environment variable overrides
+==============================
+APTREPO_ROOT - root folder path of aptrepo
+APTREPO_DEBUG - debug level (e.g. 'true' or 'db' or 'true db')
+APTREPO_LANGUAGE - language code (e.g. 'en-us')
+APTREPO_LOGHANDLERS - logging handlers (e.g. console_stdout ... see LOGGING configuration in settings.py)
+APTREPO_GPG_SECRETKEY - path to gpg secret key
 
 REST API DESIGN
 ===============

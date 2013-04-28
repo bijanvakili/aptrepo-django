@@ -3,7 +3,7 @@ General Notes
 All commands must be executed as the apt repo system user (www-data).
 
 Assuming GPG home directory is 
-	~/.gnupg (/srv/apt/repos-ng/.gnupg)
+	~/.gnupg
 
 (otherwise use --homedir /path/to/home/.gnupg)
 

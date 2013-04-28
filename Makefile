@@ -3,7 +3,9 @@
 all: build
 
 DJANGO_ADMINCMD=\
-	APTREPO_ROOT=`pwd` python src/server/manage.py
+	APTREPO_ROOT=`pwd` \
+	APTREPO_GPG_SECRETKEY=etc/testrepo-private.asc.gpg \
+	python src/server/manage.py
 DJANGO_TESTSERVER_ADDRESS=0.0.0.0:8000
 BUILD_DIR=.build
 TOOLS_ROOT_DIR=tools
@@ -22,8 +24,8 @@ OUTPUT_IMAGES=$(shell $(IMAGE_CONVERTER) destfiles)
 
 $(OUTPUT_IMAGES): $(SOURCE_IMAGES) $(IMAGE_MANIFEST)
 	mkdir -p $(DEST_IMAGES_DIR)
-	$(IMAGE_CONVERTER) build $(SRC_IMAGES_DIR) $(DEST_IMAGES_DIR)
- 
+	$(IMAGE_CONVERTER) build
+
 images: $(OUTPUT_IMAGES)
 
 # Localize strings using django gettext

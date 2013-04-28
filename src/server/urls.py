@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import patterns, include 
 from django.contrib import admin
 from django.shortcuts import redirect
 
@@ -21,5 +21,6 @@ urlpatterns = patterns('',
     (r'^aptrepo/api/', include('aptrepo.views.api.urls')),
     (r'^aptrepo/repository/', include('aptrepo.views.repo.urls')),
     (r'^aptrepo/web/', include('aptrepo.views.webpages.urls', namespace='aptrepo')),
-    (r'^aptrepo/{0,1}$', lambda request: redirect(request.path + 'web/')),
+    (r'^aptrepo/$', lambda request: redirect(request.path + 'web/')),
+    (r'^aptrepo$', lambda request: redirect(request.path + '/web/')),
 )

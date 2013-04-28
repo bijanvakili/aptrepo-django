@@ -122,7 +122,9 @@ if django.get_version() < '1.4':
 SECRET_KEY = 'o0__bdt)eggafe6gp#4*&^+w7ma-bb1y(6n%o7k2u7)!fyk#8w'
 
 # Used for GPG signing files
-GPG_SECRET_KEY = os.path.join(APTREPO_CONFIG_ROOT, 'repo-privatekey.asc.gpg')
+GPG_SECRET_KEY = env_override(
+                              'APTREPO_GPG_SECRETKEY', 
+                              os.path.join(APTREPO_CONFIG_ROOT, 'repo-privatekey.asc.gpg'))
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
