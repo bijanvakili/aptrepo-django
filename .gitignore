@@ -8,3 +8,4 @@ var/public/*
 *.mo
 .build
 .DS_Store*
+tools/share/puppet/modules
