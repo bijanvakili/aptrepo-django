@@ -12,7 +12,7 @@ from django.core.files import File
 from django.db.models import Q
 from django.utils.translation import ugettext as _
 from debian_bundle import deb822, debfile
-from lockfile import FileLock
+from lockfile.mkdirlockfile import MkdirLockFile
 from server.aptrepo import models
 from server.aptrepo.util import AptRepoException, AuthorizationException, constants
 from server.aptrepo.util.hash import hash_file_by_fh, GPGSigner
@@ -624,11 +624,13 @@ class Repository():
         
         self.logger.debug('Rebuilding Debian Releases for distribution=' + distribution_name)
 
+        # TODO Consider using database as lock backend for Release files
+
         # Use an interprocess file lock for reconstructing all Release data to ensure that
         # its hashes are valid since the Packages files much be computed separately.  The lock file
         # is specific to each distribution
         lock_filename = os.path.join(settings.APTREPO_VAR_ROOT, '.releases-' + distribution_name)
-        with FileLock(lock_filename):
+        with MkdirLockFile(lock_filename, threaded=False, timeout=settings.APTREPO_RELEASE_LOCK_TIMEOUT):
         
             distribution = models.Distribution.objects.get(name=distribution_name)
             sections = models.Section.objects.filter(distribution=distribution).values_list('name', flat=True)

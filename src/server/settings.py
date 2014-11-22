@@ -29,7 +29,10 @@ DEBUG = 'true' in APTREPO_DEBUG
 DB_DEBUG = 'db' in APTREPO_DEBUG
 if DEBUG:
     INTERNAL_IPS = ['127.0.0.1']
-    
+
+# timeout for locking Debian Release files (in seconds)
+APTREPO_RELEASE_LOCK_TIMEOUT = 10
+
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (

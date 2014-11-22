@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import shutil
+import subprocess
 import tempfile
 from debian_bundle import deb822
 import pyme.core
@@ -119,13 +120,16 @@ class BaseAptRepoTest(TestCase):
         """
         try:
             pkgsrc_dir = tempfile.mkdtemp()
+            
+            # create package metadata
             debian_dir = os.path.join(pkgsrc_dir,'DEBIAN') 
             os.mkdir(debian_dir)
             with open(os.path.join(debian_dir,'control'), 'wt') as fh_control:
                 control_map.dump(fh_control)
-            
-            ret = os.system('dpkg --build {0} {1} >/dev/null 2>&1'.format(pkgsrc_dir, pkg_filename))
-            self.failUnlessEqual( ret >> 16, 0 )
+                
+            # build the package
+            ret = subprocess.call(['dpkg-deb','--build','-Zgzip',pkgsrc_dir, pkg_filename])
+            self.failUnlessEqual( ret, 0 )
             
         finally:
             if pkgsrc_dir is not None:

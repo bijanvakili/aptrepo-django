@@ -3,19 +3,30 @@
 
 class aptrepo::params {
   $owner = 'vagrant'
-  $virtualenv_dir = '/vagrant/pyenv'
+  $group = 'vagrant'
+  $virtualenv_dir = '/opt/aptrepo_pyenv'
   $requirements_path = '/vagrant/aptrepo/requirements.txt'
+  $install_build_dependencies = false
 }
 
 class aptrepo (
   $owner = $aptrepo::params::owner,
   $virtualenv_dir = $aptrepo::params::virtualenv_dir,
-  $requirements_path = $aptrepo::params::requirements_path  
+  $requirements_path = $aptrepo::params::requirements_path,
+  $install_build_dependencies = $aptrepo::params::install_build_dependencies  
 ) inherits aptrepo::params 
 {
   package {
-    [ 'python-apt', 'python-debian', 'python-pyme', 'sqlite3' ]:
+    [ 'python-apt', 'python-debian', 'python-pyme' ]:
     ensure => installed,
+  }
+  
+  # build dependencies
+  if $install_build_dependencies {
+    package {
+      [ 'make', 'gettext', 'librsvg2-bin', 'rhino', 'pylint', 'sqlite3'] :
+      ensure => installed,
+    }
   }
 
 	class { 'python' :
@@ -27,18 +38,17 @@ class aptrepo (
 	python::virtualenv { $virtualenv_dir :
     venv_dir     => $virtualenv_dir,
     owner        => $owner,
+    group        => $group,
 	  ensure       => present,
+	  systempkgs   => true,
 	  version      => 'system',
-	}
-	
-	python::requirements { $requirements_path : 
-	  virtualenv => $virtualenv_dir,
-	  owner => $owner
+	  requirements => $requirements_path,
 	}
 }
 
 node /^vagrant.*/ {
   class { 'aptrepo':
-    requirements_path => '/vagrant/aptrepo/tools/share/puppet/requirements.txt'
+    requirements_path => '/vagrant/aptrepo/tools/share/puppet/requirements.txt',
+    install_build_dependencies => true
   }
 }
