@@ -5,7 +5,7 @@ class aptrepo::params {
   $owner = 'vagrant'
   $group = 'vagrant'
   $virtualenv_dir = '/opt/aptrepo_pyenv'
-  $requirements_path = '/vagrant/aptrepo/requirements.txt'
+  $requirements_path = '/vagrant/tools/share/python/requirements.txt'
   $install_build_dependencies = false
 }
 
@@ -48,7 +48,6 @@ class aptrepo (
 
 node /^vagrant.*/ {
   class { 'aptrepo':
-    requirements_path => '/vagrant/aptrepo/tools/share/puppet/requirements.txt',
     install_build_dependencies => true
   }
 }

@@ -8,4 +8,6 @@ var/public/*
 *.mo
 .build
 .DS_Store*
+.settings
+.vagrant
 tools/share/puppet/modules
